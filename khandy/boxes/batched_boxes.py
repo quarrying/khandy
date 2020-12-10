@@ -7,7 +7,7 @@ def convert_boxes_list_to_batched_boxes(boxes_list):
         boxes_list: list or tuple of ndarray with shape (N_i, 4+K)
         
     Returns:
-        ndarray with shape (M, 5+K)
+        ndarray with shape (M, 5+K) where M is sum of N_i.
         
     References:
         `convert_boxes_to_roi_format` in TorchVision
