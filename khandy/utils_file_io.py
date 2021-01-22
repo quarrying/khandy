@@ -19,13 +19,13 @@ def load_list(filename, encoding='utf-8', start=0, stop=None, step=1):
     return lines
 
 
-def save_list(filename, written_list, encoding='utf-8', append_break=True):
+def save_list(filename, list_obj, encoding='utf-8', append_break=True):
     with open(filename, 'w', encoding=encoding) as f:
         if append_break:
-            for item in written_list:
+            for item in list_obj:
                 f.write(str(item) + '\n')
         else:
-            for item in written_list:
+            for item in list_obj:
                 f.write(str(item))
 
 
