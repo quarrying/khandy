@@ -79,7 +79,7 @@ def listdirs(paths, path_sep=None, full_path=True):
     return all_filenames
 
 
-def get_all_filenames(dirname, extensions=None, is_valid_file=None):
+def get_all_filenames(path, extensions=None, is_valid_file=None):
     if (extensions is not None) and (is_valid_file is not None):
         raise ValueError("Both extensions and is_valid_file cannot "
                          "be not None at the same time")
@@ -92,12 +92,12 @@ def get_all_filenames(dirname, extensions=None, is_valid_file=None):
                 return True
 
     all_filenames = []
-    dirname = os.path.expanduser(dirname)
-    for root, _, filenames in sorted(os.walk(dirname, followlinks=True)):
+    path_ex = os.path.expanduser(path)
+    for root, _, filenames in sorted(os.walk(path_ex, followlinks=True)):
         for filename in sorted(filenames):
-            path = os.path.join(root, filename)
-            if is_valid_file(path):
-                all_filenames.append(path)
+            fullname = os.path.join(root, filename)
+            if is_valid_file(fullname):
+                all_filenames.append(fullname)
     return all_filenames
 
 
@@ -120,7 +120,7 @@ def replace_invalid_filename_char(filename, new_char='_'):
     pattern = r'[\\/*?:"<>|{}]'.format(control_chars)
     return re.sub(pattern, new_char, filename)
 
-    
+
 def copy_file(src, dst_dir, action_if_exist=None):
     """
     Args:
