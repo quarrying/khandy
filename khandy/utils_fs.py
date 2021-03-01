@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 
 
@@ -112,7 +113,14 @@ def get_top_level_dirs(path, full_path=True):
         return [item for item in filenames
                 if os.path.isdir(os.path.join(path_ex, item))]
 
-                
+
+def replace_invalid_filename_char(filename, new_char='_'):
+    assert isinstance(new_char, str)
+    control_chars = ''.join((map(chr, range(0x00, 0x20))))
+    pattern = r'[\\/*?:"<>|{}]'.format(control_chars)
+    return re.sub(pattern, new_char, filename)
+
+    
 def copy_file(src, dst_dir, action_if_exist=None):
     """
     Args:
