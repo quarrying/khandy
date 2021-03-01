@@ -100,6 +100,19 @@ def get_all_filenames(dirname, extensions=None, is_valid_file=None):
     return all_filenames
 
 
+def get_top_level_dirs(path, full_path=True):
+    if path is None:
+        path = os.getcwd()
+    path_ex = os.path.expanduser(path)
+    filenames = os.listdir(path_ex)
+    if full_path:
+        return [os.path.join(path_ex, item) for item in filenames
+                if os.path.isdir(os.path.join(path_ex, item))]
+    else:
+        return [item for item in filenames
+                if os.path.isdir(os.path.join(path_ex, item))]
+
+                
 def copy_file(src, dst_dir, action_if_exist=None):
     """
     Args:
