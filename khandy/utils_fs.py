@@ -127,8 +127,7 @@ def copy_file(src, dst_dir, action_if_exist=None):
         src: source file path
         dst_dir: dest dir
         action_if_exist: 
-            None: when dest file exists, no operation
-            overwritten: when dest file exists, overwritten
+            None: same as shutil.copy
             rename: when dest file exists, rename it
             
     Returns:
@@ -138,14 +137,7 @@ def copy_file(src, dst_dir, action_if_exist=None):
     dst_fullname = os.path.join(dst_dir, src_basename)
     
     if action_if_exist is None:
-        if not os.path.exists(dst_fullname):
-            makedirs(dst_dir)
-            shutil.copy(src, dst_dir)
-    elif action_if_exist.lower() == 'overwritten':
         makedirs(dst_dir)
-        # shutil.copy
-        # If dst is a directory, a file with the same basename as src is 
-        # created (or overwritten) in the directory specified. 
         shutil.copy(src, dst_dir)
     elif action_if_exist.lower() == 'rename':
         src_stem, src_extname = os.path.splitext(src_basename)
@@ -169,8 +161,7 @@ def move_file(src, dst_dir, action_if_exist=None):
         src: source file path
         dst_dir: dest dir
         action_if_exist: 
-            None: when dest file exists, no operation
-            overwritten: when dest file exists, overwritten
+            None: same as shutil.move
             rename: when dest file exists, rename it
             
     Returns:
@@ -180,16 +171,7 @@ def move_file(src, dst_dir, action_if_exist=None):
     dst_fullname = os.path.join(dst_dir, src_basename)
     
     if action_if_exist is None:
-        if not os.path.exists(dst_fullname):
-            makedirs(dst_dir)
-            shutil.move(src, dst_dir)
-    elif action_if_exist.lower() == 'overwritten':
-        if os.path.exists(dst_fullname):
-            os.remove(dst_fullname)
         makedirs(dst_dir)
-        # shutil.move
-        # If the destination already exists but is not a directory, 
-        # it may be overwritten depending on os.rename() semantics.
         shutil.move(src, dst_dir)
     elif action_if_exist.lower() == 'rename':
         src_stem, src_extname = os.path.splitext(src_basename)
