@@ -29,14 +29,14 @@ def save_list(filename, list_obj, encoding='utf-8', append_break=True):
                 f.write(str(item))
 
 
-def load_dict(filename, encoding='utf-8'):
+def load_json(filename, encoding='utf-8'):
     with open(filename, 'r', encoding=encoding) as f:
         dict_obj = json.load(f, object_pairs_hook=OrderedDict)
     return dict_obj
 
 
-def save_dict(filename, dict_obj, encoding='utf-8', sort=False):
+def save_json(filename, dict_obj, encoding='utf-8', sort_keys=False):
     with open(filename, 'w', encoding=encoding) as f:
         json.dump(dict_obj, f, indent=4, separators=(',',': '),
-                  ensure_ascii=False, sort_keys=sort)
+                  ensure_ascii=False, sort_keys=sort_keys)
 
