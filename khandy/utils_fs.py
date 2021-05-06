@@ -189,3 +189,36 @@ def move_file(src, dst_dir, action_if_exist=None):
     return os.path.basename(dst_fullname)
     
 
+def rename_file(old_name, new_name, action_if_exist=None):
+    """
+    Args:
+        old_name: old filename
+        new_name: new filename
+        action_if_exist: 
+            None: same as os.rename
+            rename: when dest file exists, rename it
+            
+    Returns:
+        dest file basename
+    """
+    if new_name == old_name:
+        return new_name
+        
+    if action_if_exist is None:
+        os.rename(old_name, new_name)
+    elif action_if_exist.lower() == 'rename':
+        dirname, basename = os.path.split(new_name)
+        stem, extname = os.path.splitext(basename)
+        suffix = 2
+        while os.path.exists(new_name):
+            new_basename = '{} ({}){}'.format(stem, suffix, extname)
+            new_name = os.path.join(dirname, new_basename)
+            suffix += 1
+        makedirs(dirname)
+        os.rename(old_name, new_name)
+    else:
+        raise ValueError('Invalid action_if_exist, got {}.'.format(action_if_exist))
+        
+    return os.path.basename(new_name)
+    
+    
