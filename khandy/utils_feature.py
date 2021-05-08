@@ -22,14 +22,6 @@ def convert_feature_array_to_dict(key_list, feature_array):
         feature_dict[key] = feature_array[k]
     return feature_dict
     
-    
-def get_feature_array(feature_dict, keys):
-    one_feature = _get_dict_first_item(feature_dict)[1]
-    feature_array = np.empty((len(keys), len(one_feature)), one_feature.dtype)
-    for i, key in enumerate(keys):
-        feature_array[i, :] = feature_dict[key]
-    return feature_array
-
 
 def pairwise_distances(x, y, squared=True):
     """Compute pairwise (squared) Euclidean distances.
