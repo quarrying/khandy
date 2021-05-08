@@ -121,7 +121,7 @@ def replace_invalid_filename_char(filename, new_char='_'):
     return re.sub(pattern, new_char, filename)
 
 
-def copy_file(src, dst_dir, action_if_exist=None):
+def copy_file(src, dst_dir, action_if_exist='rename'):
     """
     Args:
         src: source file path
@@ -131,31 +131,31 @@ def copy_file(src, dst_dir, action_if_exist=None):
             rename: when dest file exists, rename it
             
     Returns:
-        dest file basename
+        dest filename
     """
     src_basename = os.path.basename(src)
-    dst_fullname = os.path.join(dst_dir, src_basename)
+    src_stem, src_extname = os.path.splitext(src_basename)
+    dst = os.path.join(dst_dir, src_basename)
     
     if action_if_exist is None:
-        makedirs(dst_dir)
+        os.makedirs(dst_dir, exist_ok=True)
         shutil.copy(src, dst_dir)
     elif action_if_exist.lower() == 'rename':
-        src_stem, src_extname = os.path.splitext(src_basename)
         suffix = 2
-        while os.path.exists(dst_fullname):
+        while os.path.exists(dst):
             dst_basename = '{} ({}){}'.format(src_stem, suffix, src_extname)
-            dst_fullname = os.path.join(dst_dir, dst_basename)
+            dst = os.path.join(dst_dir, dst_basename)
             suffix += 1
         else:
-            makedirs(dst_dir)
-            shutil.copy(src, dst_fullname)
+            os.makedirs(dst_dir, exist_ok=True)
+            shutil.copy(src, dst)
     else:
         raise ValueError('Invalid action_if_exist, got {}.'.format(action_if_exist))
         
-    return os.path.basename(dst_fullname)
+    return dst
     
     
-def move_file(src, dst_dir, action_if_exist=None):
+def move_file(src, dst_dir, action_if_exist='rename'):
     """
     Args:
         src: source file path
@@ -165,60 +165,60 @@ def move_file(src, dst_dir, action_if_exist=None):
             rename: when dest file exists, rename it
             
     Returns:
-        dest file basename
+        dest filename
     """
     src_basename = os.path.basename(src)
-    dst_fullname = os.path.join(dst_dir, src_basename)
+    src_stem, src_extname = os.path.splitext(src_basename)
+    dst = os.path.join(dst_dir, src_basename)
     
     if action_if_exist is None:
-        makedirs(dst_dir)
+        os.makedirs(dst_dir, exist_ok=True)
         shutil.move(src, dst_dir)
     elif action_if_exist.lower() == 'rename':
-        src_stem, src_extname = os.path.splitext(src_basename)
         suffix = 2
-        while os.path.exists(dst_fullname):
+        while os.path.exists(dst):
             dst_basename = '{} ({}){}'.format(src_stem, suffix, src_extname)
-            dst_fullname = os.path.join(dst_dir, dst_basename)
+            dst = os.path.join(dst_dir, dst_basename)
             suffix += 1
         else:
-            makedirs(dst_dir)
-            shutil.move(src, dst_fullname)
+            os.makedirs(dst_dir, exist_ok=True)
+            shutil.move(src, dst)
     else:
         raise ValueError('Invalid action_if_exist, got {}.'.format(action_if_exist))
         
-    return os.path.basename(dst_fullname)
+    return dst
     
-
-def rename_file(old_name, new_name, action_if_exist=None):
+    
+def rename_file(src, dst, action_if_exist='rename'):
     """
     Args:
-        old_name: old filename
-        new_name: new filename
+        src: source file path
+        dst: dest file path
         action_if_exist: 
             None: same as os.rename
             rename: when dest file exists, rename it
             
     Returns:
-        dest file basename
+        dest filename
     """
-    if new_name == old_name:
-        return new_name
+    if dst == src:
+        return dst
         
     if action_if_exist is None:
-        os.rename(old_name, new_name)
+        os.rename(src, dst)
     elif action_if_exist.lower() == 'rename':
-        dirname, basename = os.path.split(new_name)
+        dirname, basename = os.path.split(dst)
         stem, extname = os.path.splitext(basename)
         suffix = 2
-        while os.path.exists(new_name):
+        while os.path.exists(dst):
             new_basename = '{} ({}){}'.format(stem, suffix, extname)
-            new_name = os.path.join(dirname, new_basename)
+            dst = os.path.join(dirname, new_basename)
             suffix += 1
-        makedirs(dirname)
-        os.rename(old_name, new_name)
+        os.makedirs(dirname, exist_ok=True)
+        os.rename(src, dst)
     else:
         raise ValueError('Invalid action_if_exist, got {}.'.format(action_if_exist))
         
-    return os.path.basename(new_name)
+    return dst
     
     
