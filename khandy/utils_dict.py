@@ -160,5 +160,11 @@ def merge_multidict(*mdicts):
     return merged_multidict
     
     
+def invert_multidict(multidict_obj):
+    inverted_dict = {}
+    for key, value in multidict_obj.items():
+        for item in value:
+            inverted_dict.setdefault(item, []).append(key)
+    return inverted_dict
     
     
