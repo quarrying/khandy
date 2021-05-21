@@ -19,10 +19,8 @@ def get_similarity_transform(src_pts, dst_pts):
     """
     src_pts = np.asarray(src_pts)
     dst_pts = np.asarray(dst_pts)
-    assert src_pts.ndim == 2
-    assert dst_pts.ndim == 2
-    assert src_pts.shape[-1] == 2
-    assert dst_pts.shape[-1] == 2
+    assert src_pts.shape == dst_pts.shape
+    assert (src_pts.ndim == 2) and (src_pts.shape[-1] == 2)
     
     npts = src_pts.shape[0]
     A = np.empty((npts * 2, 4))
