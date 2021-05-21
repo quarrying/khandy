@@ -130,6 +130,19 @@ def get_top_level_dirs(path, full_path=True):
                 if os.path.isdir(os.path.join(path_ex, item))]
 
 
+def get_top_level_files(path, full_path=True):
+    if path is None:
+        path = os.getcwd()
+    path_ex = os.path.expanduser(path)
+    filenames = os.listdir(path_ex)
+    if full_path:
+        return [os.path.join(path_ex, item) for item in filenames
+                if os.path.isfile(os.path.join(path_ex, item))]
+    else:
+        return [item for item in filenames
+                if os.path.isfile(os.path.join(path_ex, item))]
+                
+
 def replace_invalid_filename_char(filename, new_char='_'):
     assert isinstance(new_char, str)
     control_chars = ''.join((map(chr, range(0x00, 0x20))))
