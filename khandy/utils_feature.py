@@ -11,7 +11,7 @@ def convert_feature_dict_to_array(feature_dict):
     
     key_list = []
     start_index = 0
-    feature_array = np.empty((num_features, len(one_feature)), one_feature.dtype)
+    feature_array = np.empty((num_features, one_feature.shape[-1]), one_feature.dtype)
     for key, value in feature_dict.items():
         feature_array[start_index: start_index + len(value)]= value
         key_list += [key] * len(value)
