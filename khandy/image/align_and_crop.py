@@ -31,7 +31,7 @@ def get_similarity_transform(src_pts, dst_pts):
         b[2 * k + 0] = dst_pts[k, 0]
         b[2 * k + 1] = dst_pts[k, 1]
         
-    x = np.linalg.lstsq(A, b)[0]
+    x = np.linalg.lstsq(A, b, rcond=-1)[0]
     xform_matrix = np.empty((3, 3))
     xform_matrix[0] = [x[0], -x[1], x[2]]
     xform_matrix[1] = [x[1], x[0], x[3]]
