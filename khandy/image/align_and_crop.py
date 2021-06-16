@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
 
-from .crop_or_pad import crop_or_pad as _crop_or_pad
-
 
 def get_similarity_transform(src_pts, dst_pts):
     """Get similarity transform matrix from src_pts to dst_pts
@@ -40,7 +38,6 @@ def get_similarity_transform(src_pts, dst_pts):
     
     
 def align_and_crop(image, landmarks, std_landmarks, align_size, 
-                   crop_size=None, crop_center=None,
                    return_transform_matrix=False):
     landmarks = np.asarray(landmarks)
     std_landmarks = np.asarray(std_landmarks)
@@ -49,14 +46,6 @@ def align_and_crop(image, landmarks, std_landmarks, align_size,
     landmarks_ex = np.pad(landmarks, ((0,0),(0,1)), mode='constant', constant_values=1)
     dst_landmarks = np.dot(landmarks_ex, xform_matrix[:2,:].T)
     dst_image = cv2.warpAffine(image, xform_matrix[:2,:], dsize=align_size)
-    if crop_size is not None:
-        crop_center_ex = (crop_center[0], crop_center[1], 1)
-        aligned_crop_center = np.dot(xform_matrix, crop_center_ex)
-        dst_image = _crop_or_pad(dst_image, crop_size, aligned_crop_center)
-        
-        crop_begin_x = int(round(aligned_crop_center[0] - crop_size[0] / 2.0))
-        crop_begin_y = int(round(aligned_crop_center[1] - crop_size[1] / 2.0))
-        dst_landmarks -= np.asarray([[crop_begin_x, crop_begin_y]])
     if return_transform_matrix:
         return dst_image, dst_landmarks, xform_matrix
     else:
