@@ -54,25 +54,24 @@ def crop_or_pad_coords(boxes, image_width, image_height):
         `pad` in https://github.com/kpzhang93/MTCNN_face_detection_alignment
         `MtcnnDetector.pad` in https://github.com/AITTSMD/MTCNN-Tensorflow
     """
-    x_min = boxes[:, 0]
-    y_min = boxes[:, 1]
-    x_max = boxes[:, 2]
-    y_max = boxes[:, 3]
+    x_mins = boxes[:, 0]
+    y_mins = boxes[:, 1]
+    x_maxs = boxes[:, 2]
+    y_maxs = boxes[:, 3]
+
+    src_x_begin = np.maximum(x_mins, 0)
+    src_y_begin = np.maximum(y_mins, 0)
+    src_x_end = np.minimum(x_maxs + 1, image_width)
+    src_y_end = np.minimum(y_maxs + 1, image_height)
     
-    src_x_begin = np.maximum(x_min, 0)
-    src_y_begin = np.maximum(y_min, 0)
-    src_x_end = np.minimum(x_max + 1, image_width)
-    src_y_end = np.minimum(y_max + 1, image_height)
-    
-    dst_widths = x_max - x_min + 1
-    dst_heights = y_max - y_min + 1
-    dst_x_begin = np.maximum(-x_min, 0)
-    dst_y_begin = np.maximum(-y_min, 0)
-    dst_x_end = np.minimum(dst_widths, image_width - x_min)
-    dst_y_end = np.minimum(dst_heights, image_height - y_min)
-    
+    dst_x_begin = src_x_begin - x_mins
+    dst_y_begin = src_y_begin - y_mins
+    dst_x_end = src_x_end - x_mins
+    dst_y_end = src_y_end - y_mins
+
     coords = np.stack([src_x_begin, src_y_begin, src_x_end, src_y_end,
                        dst_x_begin, dst_y_begin, dst_x_end, dst_y_end], axis=1)
     return coords
+    
     
     
