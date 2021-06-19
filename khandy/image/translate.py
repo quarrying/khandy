@@ -15,6 +15,9 @@ def translate_image(image, x_shift, y_shift, border_value=0):
             
     Returns:
         ndarray: The translated image.
+
+    See Also:
+        crop_or_pad
     """
     assert image.ndim in [2, 3]
     assert isinstance(x_shift, int)

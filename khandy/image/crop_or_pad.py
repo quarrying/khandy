@@ -3,6 +3,9 @@ import numpy as np
 
 def crop_or_pad(image, x_min, y_min, x_max, y_max, border_value=0):
     """
+    See Also:
+        translate_image
+        
     References:
         tf.image.resize_image_with_crop_or_pad
     """
