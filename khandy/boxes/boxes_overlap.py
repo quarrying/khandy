@@ -18,12 +18,12 @@ def paired_intersection(boxes1, boxes2):
     """
     x_mins1, y_mins1, x_maxs1, y_maxs1 = np.split(boxes1[:,:4], 4, axis=1)
     x_mins2, y_mins2, x_maxs2, y_maxs2 = np.split(boxes2[:,:4], 4, axis=1)
-    max_xmins = np.maximum(x_mins1, x_mins2)
-    min_xmaxs = np.minimum(x_maxs1, x_maxs2)
-    max_ymins = np.maximum(y_mins1, y_mins2)
-    min_ymaxs = np.minimum(y_maxs1, y_maxs2)
-    intersect_widths = np.maximum(0., min_xmaxs - max_xmins)
-    intersect_heights = np.maximum(0., min_ymaxs - max_ymins)
+    max_x_mins = np.maximum(x_mins1, x_mins2)
+    min_x_maxs = np.minimum(x_maxs1, x_maxs2)
+    max_y_mins = np.maximum(y_mins1, y_mins2)
+    min_y_maxs = np.minimum(y_maxs1, y_maxs2)
+    intersect_widths = np.maximum(0., min_x_maxs - max_x_mins)
+    intersect_heights = np.maximum(0., min_y_maxs - max_y_mins)
     return intersect_widths * intersect_heights
     
     
@@ -54,12 +54,12 @@ def pairwise_intersection(boxes1, boxes2):
         swap = True
 
     for i in range(boxes1.shape[0]):
-        x_start = np.maximum(boxes1[i, 0], boxes2[:, 0])
-        y_start = np.maximum(boxes1[i, 1], boxes2[:, 1])
+        x_begin = np.maximum(boxes1[i, 0], boxes2[:, 0])
+        y_begin = np.maximum(boxes1[i, 1], boxes2[:, 1])
         x_end = np.minimum(boxes1[i, 2], boxes2[:, 2])
         y_end = np.minimum(boxes1[i, 3], boxes2[:, 3])
-        x_end -= x_start
-        y_end -= y_start
+        x_end -= x_begin
+        y_end -= y_begin
         np.maximum(x_end, 0, x_end)
         np.maximum(y_end, 0, y_end)
         x_end *= y_end
