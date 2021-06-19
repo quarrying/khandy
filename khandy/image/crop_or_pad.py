@@ -63,19 +63,22 @@ def crop_or_pad_coords(boxes, image_width, image_height):
     y_mins = boxes[:, 1]
     x_maxs = boxes[:, 2]
     y_maxs = boxes[:, 3]
-
-    src_x_begin = np.maximum(x_mins, 0)
-    src_y_begin = np.maximum(y_mins, 0)
-    src_x_end = np.minimum(x_maxs + 1, image_width)
-    src_y_end = np.minimum(y_maxs + 1, image_height)
+    dst_widths = x_maxs - x_mins + 1
+    dst_heights = y_maxs - y_mins + 1
     
+    src_x_begin = np.maximum(x_mins, 0)
+    src_x_end   = np.minimum(x_maxs + 1, image_width)
     dst_x_begin = src_x_begin - x_mins
+    dst_x_end   = src_x_end - x_mins
+    
+    src_y_begin = np.maximum(y_mins, 0)
+    src_y_end   = np.minimum(y_maxs + 1, image_height)
     dst_y_begin = src_y_begin - y_mins
-    dst_x_end = src_x_end - x_mins
-    dst_y_end = src_y_end - y_mins
+    dst_y_end   = src_y_end - y_mins
 
-    coords = np.stack([src_x_begin, src_y_begin, src_x_end, src_y_end,
-                       dst_x_begin, dst_y_begin, dst_x_end, dst_y_end], axis=1)
+    coords = np.stack([dst_y_begin, dst_y_end, dst_x_begin, dst_x_end, 
+                       src_y_begin, src_y_end, src_x_begin, src_x_end, 
+                       dst_heights, dst_widths], axis=0)
     return coords
     
     
