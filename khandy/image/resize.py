@@ -17,22 +17,22 @@ def scale_image(image, x_scale, y_scale, interpolation='bilinear'):
     Reference:
         mmcv.imrescale
     """
-    ori_height, ori_width = image.shape[:2]
+    src_height, src_width = image.shape[:2]
     
-    new_width = int(round(x_scale * ori_width))
-    new_height = int(round(y_scale * ori_height))
-    resized_image = cv2.resize(image, (new_width, new_height), 
+    dst_width = int(round(x_scale * src_width))
+    dst_height = int(round(y_scale * src_height))
+    resized_image = cv2.resize(image, (dst_width, dst_height), 
                                interpolation=interp_codes[interpolation])
     return resized_image
 
 
-def resize_image(image, width, height, return_scale=False, interpolation='bilinear'):
+def resize_image(image, dst_width, dst_height, return_scale=False, interpolation='bilinear'):
     """Resize image to a given size.
 
     Args:
-        img (ndarray): The input image.
-        width (int): Target width.
-        height (int): Target height.
+        image (ndarray): The input image.
+        dst_width (int): Target width.
+        dst_height (int): Target height.
         return_scale (bool): Whether to return `x_scale` and `y_scale`.
         interpolation (str): Interpolation method, accepted values are
             "nearest", "bilinear", "bicubic", "area", "lanczos".
@@ -43,14 +43,14 @@ def resize_image(image, width, height, return_scale=False, interpolation='biline
     Reference:
         mmcv.imresize
     """
-    ori_height, ori_width = image.shape[:2]
-    resized_image = cv2.resize(image, (width, height), 
+    src_height, src_width = image.shape[:2]
+    resized_image = cv2.resize(image, (dst_width, dst_height), 
                                interpolation=interp_codes[interpolation])
     if not return_scale:
         return resized_image
     else:
-        x_scale = width / ori_width
-        y_scale = height / ori_height
+        x_scale = dst_width / src_width
+        y_scale = dst_height / src_height
         return resized_image, x_scale, y_scale
     
     
