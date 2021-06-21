@@ -137,8 +137,8 @@ def resize_image_to_range(image, min_length, max_length, return_scale=False, int
     
     Returns:
         resized_image: resized image (with bilinear interpolation) so that
-            min(new_height, new_width) == min_length or
-            max(new_height, new_width) == max_length.
+            min(dst_height, dst_width) == min_length or
+            max(dst_height, dst_width) == max_length.
           
     References:
         `resize_to_range` in `models-master/research/object_detection/core/preprocessor.py`
@@ -146,17 +146,17 @@ def resize_image_to_range(image, min_length, max_length, return_scale=False, int
         mmcv.imrescale
     """
     assert min_length < max_length
-    ori_height, ori_width = image.shape[:2]
+    src_height, src_width = image.shape[:2]
     
-    min_side_length = np.minimum(ori_width, ori_height)
-    max_side_length = np.maximum(ori_width, ori_height)
+    min_side_length = min(src_width, src_height)
+    max_side_length = max(src_width, src_height)
     scale = min_length / min_side_length
     if round(scale * max_side_length) > max_length:
         scale = max_length / max_side_length
         
-    new_width = int(round(scale * ori_width))
-    new_height = int(round(scale * ori_height))
-    resized_image = cv2.resize(image, (new_width, new_height), 
+    dst_width = int(round(scale * src_width))
+    dst_height = int(round(scale * src_height))
+    resized_image = cv2.resize(image, (dst_width, dst_height), 
                                interpolation=interp_codes[interpolation])
     if not return_scale:
         return resized_image
