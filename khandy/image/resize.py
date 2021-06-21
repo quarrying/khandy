@@ -94,28 +94,27 @@ def resize_image_long(image, dst_size, return_scale=False, interpolation='biline
         return resized_image, scale
         
         
-def letterbox_resize_image(image, new_width, new_height, pad_val=0,
+def letterbox_resize_image(image, dst_width, dst_height, pad_val=0,
                            return_scale=False, interpolation='bilinear'):
     """Resize an image preserving the original aspect ratio using padding.
     
     References:
         `letterbox_image` in `https://github.com/pjreddie/darknet/blob/master/src/image.c`
     """
-    ori_height, ori_width = image.shape[:2]
-
-    scale = min(new_width / ori_width, new_height / ori_height)
-    resize_w = int(round(scale * ori_width))
-    resize_h = int(round(scale * ori_height))
+    src_height, src_width = image.shape[:2]
+    scale = min(dst_width / src_width, dst_height / src_height)
+    resize_w = int(round(scale * src_width))
+    resize_h = int(round(scale * src_height))
 
     resized_image = cv2.resize(image, (resize_w, resize_h), 
                                interpolation=interp_codes[interpolation])
     padded_shape = list(resized_image.shape)
-    padded_shape[0] = new_height
-    padded_shape[1] = new_width
+    padded_shape[0] = dst_height
+    padded_shape[1] = dst_width
     padded_image = np.full(padded_shape, pad_val, image.dtype)
 
-    dw = int(round((new_width - resize_w) / 2.0))
-    dh = int(round((new_height - resize_h) / 2.0))
+    dw = (dst_width - resize_w) // 2
+    dh = (dst_height - resize_h) // 2
     padded_image[dh: resize_h + dh, dw: resize_w + dw, ...] = resized_image
     
     if not return_scale:
