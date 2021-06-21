@@ -49,8 +49,8 @@ def resize_image(image, width, height, return_scale=False, interpolation='biline
     if not return_scale:
         return resized_image
     else:
-        x_scale = width / float(ori_width)
-        y_scale = height / float(ori_height)
+        x_scale = width / ori_width
+        y_scale = height / ori_height
         return resized_image, x_scale, y_scale
     
     
@@ -64,16 +64,16 @@ def resize_image_short(image, size, return_scale=False, interpolation='bilinear'
     ori_height, ori_width = image.shape[:2]
     new_height, new_width = size, size
     if ori_height > ori_width:
-        new_height = int(round(size * ori_height / float(ori_width)))
+        new_height = int(round(size * ori_height / ori_width))
     else:
-        new_width = int(round(size * ori_width / float(ori_height)))
+        new_width = int(round(size * ori_width / ori_height))
     
     resized_image = cv2.resize(image, (new_width, new_height), 
                                interpolation=interp_codes[interpolation])
     if not return_scale:
         return resized_image
     else:
-        scale = new_width / float(ori_width)
+        scale = new_width / ori_width
         return resized_image, scale
     
     
@@ -87,16 +87,16 @@ def resize_image_long(image, size, return_scale=False, interpolation='bilinear')
     ori_height, ori_width = image.shape[:2]
     new_height, new_width = size, size
     if ori_height < ori_width:
-        new_height = int(round(size * ori_height / float(ori_width)))
+        new_height = int(round(size * ori_height / ori_width))
     else:
-        new_width = int(round(size * ori_width / float(ori_height)))
+        new_width = int(round(size * ori_width / ori_height))
     
     resized_image = cv2.resize(image, (new_width, new_height), 
                                interpolation=interp_codes[interpolation])
     if not return_scale:
         return resized_image
     else:
-        scale = new_width / float(ori_width)
+        scale = new_width / ori_width
         return resized_image, scale
         
         
@@ -109,12 +109,12 @@ def letterbox_resize_image(image, new_width, new_height, pad_val=0,
     """
     ori_height, ori_width = image.shape[:2]
 
-    scale = min(new_width / float(ori_width), new_height / float(ori_height))
+    scale = min(new_width / ori_width, new_height / ori_height)
     resize_w = int(round(scale * ori_width))
     resize_h = int(round(scale * ori_height))
 
     resized_image = cv2.resize(image, (resize_w, resize_h), 
-                       interpolation=interp_codes[interpolation])
+                               interpolation=interp_codes[interpolation])
     padded_shape = list(resized_image.shape)
     padded_shape[0] = new_height
     padded_shape[1] = new_width
@@ -157,9 +157,9 @@ def resize_image_to_range(image, min_length, max_length, return_scale=False, int
     
     min_side_length = np.minimum(ori_width, ori_height)
     max_side_length = np.maximum(ori_width, ori_height)
-    scale = float(min_length) / float(min_side_length)
+    scale = min_length / min_side_length
     if round(scale * max_side_length) > max_length:
-        scale = float(max_length) / float(max_side_length)
+        scale = max_length / max_side_length
         
     new_width = int(round(scale * ori_width))
     new_height = int(round(scale * ori_height))
