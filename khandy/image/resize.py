@@ -18,9 +18,9 @@ def scale_image(image, x_scale, y_scale, interpolation='bilinear'):
         mmcv.imrescale
     """
     src_height, src_width = image.shape[:2]
-    
     dst_width = int(round(x_scale * src_width))
     dst_height = int(round(y_scale * src_height))
+    
     resized_image = cv2.resize(image, (dst_width, dst_height), 
                                interpolation=interp_codes[interpolation])
     return resized_image
@@ -43,12 +43,12 @@ def resize_image(image, dst_width, dst_height, return_scale=False, interpolation
     Reference:
         mmcv.imresize
     """
-    src_height, src_width = image.shape[:2]
     resized_image = cv2.resize(image, (dst_width, dst_height), 
                                interpolation=interp_codes[interpolation])
     if not return_scale:
         return resized_image
     else:
+        src_height, src_width = image.shape[:2]
         x_scale = dst_width / src_width
         y_scale = dst_height / src_height
         return resized_image, x_scale, y_scale
@@ -136,7 +136,7 @@ def resize_image_to_range(image, min_length, max_length, return_scale=False, int
     2. Otherwise, resize so the longest side is equal to `max_length`.
     
     Returns:
-        resized_image: resized image (with bilinear interpolation) so that
+        resized_image: resized image so that
             min(dst_height, dst_width) == min_length or
             max(dst_height, dst_width) == max_length.
           
@@ -153,9 +153,9 @@ def resize_image_to_range(image, min_length, max_length, return_scale=False, int
     scale = min_length / min_side_length
     if round(scale * max_side_length) > max_length:
         scale = max_length / max_side_length
-        
     dst_width = int(round(scale * src_width))
     dst_height = int(round(scale * src_height))
+    
     resized_image = cv2.resize(image, (dst_width, dst_height), 
                                interpolation=interp_codes[interpolation])
     if not return_scale:
