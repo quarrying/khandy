@@ -54,49 +54,43 @@ def resize_image(image, dst_width, dst_height, return_scale=False, interpolation
         return resized_image, x_scale, y_scale
     
     
-def resize_image_short(image, size, return_scale=False, interpolation='bilinear'):
-    """Resize an image so that the length of shorter side is size while 
+def resize_image_short(image, dst_size, return_scale=False, interpolation='bilinear'):
+    """Resize an image so that the length of shorter side is dst_size while 
     preserving the original aspect ratio.
     
     References:
         `resize_min` in `https://github.com/pjreddie/darknet/blob/master/src/image.c`
     """
-    ori_height, ori_width = image.shape[:2]
-    new_height, new_width = size, size
-    if ori_height > ori_width:
-        new_height = int(round(size * ori_height / ori_width))
-    else:
-        new_width = int(round(size * ori_width / ori_height))
+    src_height, src_width = image.shape[:2]
+    scale = max(dst_size / src_width, dst_size / src_height)
+    dst_width = int(round(scale * src_width))
+    dst_height = int(round(scale * src_height))
     
-    resized_image = cv2.resize(image, (new_width, new_height), 
+    resized_image = cv2.resize(image, (dst_width, dst_height), 
                                interpolation=interp_codes[interpolation])
     if not return_scale:
         return resized_image
     else:
-        scale = new_width / ori_width
         return resized_image, scale
     
     
-def resize_image_long(image, size, return_scale=False, interpolation='bilinear'):
-    """Resize an image so that the length of longer side is size while 
+def resize_image_long(image, dst_size, return_scale=False, interpolation='bilinear'):
+    """Resize an image so that the length of longer side is dst_size while 
     preserving the original aspect ratio.
     
     References:
         `resize_max` in `https://github.com/pjreddie/darknet/blob/master/src/image.c`
     """
-    ori_height, ori_width = image.shape[:2]
-    new_height, new_width = size, size
-    if ori_height < ori_width:
-        new_height = int(round(size * ori_height / ori_width))
-    else:
-        new_width = int(round(size * ori_width / ori_height))
+    src_height, src_width = image.shape[:2]
+    scale = min(dst_size / src_width, dst_size / src_height)
+    dst_width = int(round(scale * src_width))
+    dst_height = int(round(scale * src_height))
     
-    resized_image = cv2.resize(image, (new_width, new_height), 
+    resized_image = cv2.resize(image, (dst_width, dst_height), 
                                interpolation=interp_codes[interpolation])
     if not return_scale:
         return resized_image
     else:
-        scale = new_width / ori_width
         return resized_image, scale
         
         
