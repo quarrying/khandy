@@ -72,7 +72,6 @@ def split_multidict_on_key(multidict_obj, split_ratio, use_shuffle=False):
         
     be_split_list = []
     for i in range(len(split_ratio)):
-        #if indices[i] != indices[i + 1]:
         part_keys = dict_keys[indices[i]: indices[i + 1]]
         part_dict = dict([(key, multidict_obj[key]) for key in part_keys])
         be_split_list.append(part_dict)
@@ -94,7 +93,6 @@ def split_multidict_on_value(multidict_obj, split_ratio, use_shuffle=False):
         if use_shuffle: 
             random.shuffle(cloned)
         for i in range(len(split_ratio)):
-            #if indices[i] != indices[i + 1]:
             be_split_list[i][key] = cloned[indices[i]: indices[i + 1]]
     return be_split_list
     

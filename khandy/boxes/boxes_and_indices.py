@@ -27,7 +27,7 @@ def convert_boxes_list_to_boxes_and_indices(boxes_list):
     boxes = _concat(boxes_list, axis=0)
     
     indices_list = [np.full((len(b), 1), i, boxes.dtype) 
-                     for i, b in enumerate(boxes_list)]
+                    for i, b in enumerate(boxes_list)]
     indices = _concat(indices_list, axis=0)
     return boxes, indices
     
