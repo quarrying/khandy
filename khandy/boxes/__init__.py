@@ -7,4 +7,4 @@ from .boxes_transform_scale import *
 from .boxes_transform_translate import *
 from .boxes_utils import *
 
-from .batched_boxes import *
+from .boxes_and_indices import *
