@@ -49,6 +49,14 @@ def convert_boxes_and_indices_to_boxes_list(boxes, indices, num_indices):
         `convert_boxes_to_roi_format` in TorchVision
         `modeling.poolers.convert_boxes_to_pooler_format` in detectron2
     """
+    boxes = np.asarray(boxes)
+    indices = np.asarray(indices)
+    assert boxes.ndim == 2, "boxes ndim must be 2, got {}".format(boxes.ndim)
+    assert (indices.ndim == 1) or (indices.ndim == 2 and indices.shape[-1] == 1), \
+        "indices ndim must be 1 or 2 if last dimension size is 1, got shape {}".format(indices.shape)
+    assert boxes.shape[0] == indices.shape[0], "the 1st dimension size of boxes and indices "\
+        "must be the same, got {} != {}".format(boxes.shape[0], indices.shape[0])
+        
     if boxes.shape[0] == 0:
         return [np.zeros((0, boxes.shape[1]), dtype=np.float32) 
                 for i in range(num_indices)]
