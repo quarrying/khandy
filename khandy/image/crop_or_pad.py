@@ -39,17 +39,19 @@ def crop_or_pad(image, x_min, y_min, x_max, y_max, border_value=0):
     else:
         raise ValueError(
             'Invalid type {} for `border_value`.'.format(type(border_value)))
-        
+
     src_x_begin = max(x_min, 0)
     src_x_end   = min(x_max + 1, src_width)
     dst_x_begin = src_x_begin - x_min
     dst_x_end   = src_x_end - x_min
 
-    src_y_begin = max(y_min, 0, )
+    src_y_begin = max(y_min, 0)
     src_y_end   = min(y_max + 1, src_height)
     dst_y_begin = src_y_begin - y_min
     dst_y_end   = src_y_end - y_min
     
+    if (src_x_begin >= src_x_end) or (src_y_begin >= src_y_end):
+        return dst_image
     dst_image[dst_y_begin: dst_y_end, dst_x_begin: dst_x_end, ...] = \
         image[src_y_begin: src_y_end, src_x_begin: src_x_end, ...]
     return dst_image
