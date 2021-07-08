@@ -38,14 +38,15 @@ def get_similarity_transform(src_pts, dst_pts):
     
     
 def align_and_crop(image, landmarks, std_landmarks, align_size, 
-                   return_transform_matrix=False):
+                   border_value=0, return_transform_matrix=False):
     landmarks = np.asarray(landmarks)
     std_landmarks = np.asarray(std_landmarks)
     xform_matrix = get_similarity_transform(landmarks, std_landmarks)
 
     landmarks_ex = np.pad(landmarks, ((0,0),(0,1)), mode='constant', constant_values=1)
     dst_landmarks = np.dot(landmarks_ex, xform_matrix[:2,:].T)
-    dst_image = cv2.warpAffine(image, xform_matrix[:2,:], dsize=align_size)
+    dst_image = cv2.warpAffine(image, xform_matrix[:2,:], dsize=align_size, 
+                               borderValue=border_value)
     if return_transform_matrix:
         return dst_image, dst_landmarks, xform_matrix
     else:

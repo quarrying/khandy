@@ -94,7 +94,7 @@ def resize_image_long(image, dst_size, return_scale=False, interpolation='biline
         return resized_image, scale
         
         
-def letterbox_resize_image(image, dst_width, dst_height, pad_val=0,
+def letterbox_resize_image(image, dst_width, dst_height, border_value=0,
                            return_scale=False, interpolation='bilinear'):
     """Resize an image preserving the original aspect ratio using padding.
     
@@ -111,7 +111,7 @@ def letterbox_resize_image(image, dst_width, dst_height, pad_val=0,
     padded_shape = list(resized_image.shape)
     padded_shape[0] = dst_height
     padded_shape[1] = dst_width
-    padded_image = np.full(padded_shape, pad_val, image.dtype)
+    padded_image = np.full(padded_shape, border_value, image.dtype)
 
     dw = (dst_width - resize_w) // 2
     dh = (dst_height - resize_h) // 2
