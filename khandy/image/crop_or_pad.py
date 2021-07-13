@@ -57,6 +57,18 @@ def crop_or_pad(image, x_min, y_min, x_max, y_max, border_value=0):
     return dst_image
     
     
+def center_crop(image, dst_width, dst_height):
+    assert image.ndim in [2, 3]
+    assert isinstance(dst_width, int) and isinstance(dst_height, int)
+    assert (image.shape[0] >= dst_height) and (image.shape[1] >= dst_width)
+
+    crop_top = (image.shape[0] - dst_height) // 2
+    crop_left = (image.shape[1] - dst_width) // 2
+    dst_image = image[crop_top: dst_height + crop_top, 
+                      crop_left: dst_width + crop_left, ...]
+    return dst_image
+    
+    
 def crop_or_pad_coords(boxes, image_width, image_height):
     """
     References:
