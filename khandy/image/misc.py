@@ -62,3 +62,26 @@ def stack_image_list(image_list, dtype=np.float32):
     return blob
     
     
+def is_gray_image(image, tol=3):
+    if image.ndim == 2:
+        return True
+    elif image.ndim == 3:
+        num_channels = image.shape[-1]
+        if num_channels == 1:
+            return True
+        elif num_channels == 4:
+            rgb = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+            gray = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
+            gray3 = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+            mae = np.mean(cv2.absdiff(rgb, gray3))
+            return mae <= tol
+        elif num_channels == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            gray3 = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+            mae = np.mean(cv2.absdiff(image, gray3))
+            return mae <= tol
+        else:
+            return False
+    else:
+        return False
+        
