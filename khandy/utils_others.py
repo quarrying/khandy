@@ -66,7 +66,7 @@ class ContextTimer(object):
         return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
     
     def _print_or_log(self, output_str):
-        if self.use_log is True:
+        if self.use_log:
             logging.info(output_str)
         else:
             print(output_str)

@@ -3,7 +3,7 @@ from .boxes_utils import assert_and_normalize_shape
 
 
 def translate_boxes(boxes, x_shift=0, y_shift=0, copy=True):
-    """scale boxes coordinates in x and y dimensions.
+    """translate boxes coordinates in x and y dimensions.
     
     Args:
         boxes: (N, 4+K)
