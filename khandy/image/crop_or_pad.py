@@ -1,3 +1,5 @@
+import numbers
+
 import numpy as np
 
 
@@ -10,8 +12,8 @@ def crop_or_pad(image, x_min, y_min, x_max, y_max, border_value=0):
         tf.image.resize_image_with_crop_or_pad
     """
     assert image.ndim in [2, 3]
-    assert isinstance(x_min, int) and isinstance(y_min, int)
-    assert isinstance(x_max, int) and isinstance(y_max, int)
+    assert isinstance(x_min, numbers.Integral) and isinstance(y_min, numbers.Integral)
+    assert isinstance(x_max, numbers.Integral) and isinstance(y_max, numbers.Integral)
     assert (x_min <= x_max) and (y_min <= y_max)
     
     src_height, src_width = image.shape[:2]
@@ -23,7 +25,7 @@ def crop_or_pad(image, x_min, y_min, x_max, y_max, border_value=0):
     else:
         dst_image_shape = (dst_height, dst_width, channels)
 
-    if isinstance(border_value, (int, float)):
+    if isinstance(border_value, numbers.Real):
         dst_image = np.full(dst_image_shape, border_value, dtype=image.dtype)
     elif isinstance(border_value, tuple):
         assert len(border_value) == channels, \
@@ -59,7 +61,7 @@ def crop_or_pad(image, x_min, y_min, x_max, y_max, border_value=0):
     
 def center_crop(image, dst_width, dst_height):
     assert image.ndim in [2, 3]
-    assert isinstance(dst_width, int) and isinstance(dst_height, int)
+    assert isinstance(dst_width, numbers.Integral) and isinstance(dst_height, numbers.Integral)
     assert (image.shape[0] >= dst_height) and (image.shape[1] >= dst_width)
 
     crop_top = (image.shape[0] - dst_height) // 2

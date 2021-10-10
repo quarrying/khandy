@@ -1,3 +1,5 @@
+import numbers
+
 import numpy as np
 
 
@@ -20,12 +22,12 @@ def translate_image(image, x_shift, y_shift, border_value=0):
         crop_or_pad
     """
     assert image.ndim in [2, 3]
-    assert isinstance(x_shift, int)
-    assert isinstance(y_shift, int)
+    assert isinstance(x_shift, numbers.Integral)
+    assert isinstance(y_shift, numbers.Integral)
     image_height, image_width = image.shape[:2]
     channels = 1 if image.ndim == 2 else image.shape[2]
     
-    if isinstance(border_value, (int, float)):
+    if isinstance(border_value, numbers.Real):
         dst_image = np.full_like(image, border_value)
     elif isinstance(border_value, tuple):
         assert len(border_value) == channels, \

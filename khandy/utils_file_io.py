@@ -1,10 +1,11 @@
 import json
+import numbers
 from collections import OrderedDict
 
 
 def load_list(filename, encoding='utf-8', start=0, stop=None):
-    assert isinstance(start, int) and start >= 0
-    assert (stop is None) or (isinstance(stop, int) and stop > start)
+    assert isinstance(start, numbers.Integral) and start >= 0
+    assert (stop is None) or (isinstance(stop, numbers.Integral) and stop > start)
     
     lines = []
     with open(filename, 'r', encoding=encoding) as f:
