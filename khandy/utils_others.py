@@ -42,7 +42,7 @@ class ContextTimer(object):
     References:
         WithTimer in https://github.com/uber/ludwig/blob/master/ludwig/utils/time_utils.py
     """
-    def __init__(self, name=None, use_log=True, quiet=False):
+    def __init__(self, name=None, use_log=False, quiet=False):
         self.use_log = use_log
         self.quiet = quiet
         if name is None:
