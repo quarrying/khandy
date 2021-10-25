@@ -38,7 +38,6 @@ def pairwise_intersection(boxes1, boxes2):
     References:
         `core.box_list_ops.intersection` in Tensorflow object detection API
         `utils.box_list_ops.intersection` in Tensorflow object detection API
-        `core.evaluation.bbox_overlaps.bbox_overlaps` in mmdetection
     """
     rows = boxes1.shape[0]
     cols = boxes2.shape[0]
@@ -78,9 +77,16 @@ def paired_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
             ioa: Intersection-over-area (ioa) between two boxes box1 and box2 is defined as
                 their intersection area over box2's area. Note that ioa is not symmetric,
                 that is, IOA(box1, box2) != IOA(box2, box1).
+            min: Compute the ratio as the area of intersection between box1 and box2, 
+                divided by the minimum area of the two bounding boxes.
                 
     Returns:
         a numpy array with shape [N,] representing itemwise overlap ratio.
+        
+    References:
+        `core.box_list_ops.matched_iou` in Tensorflow object detection API
+        `structures.boxes.matched_boxlist_iou` in detectron2
+        `mmdet.core.bbox.bbox_overlaps`, see https://mmdetection.readthedocs.io/en/v2.17.0/api.html#mmdet.core.bbox.bbox_overlaps
     """
     intersect_area = paired_intersection(boxes1, boxes2)
     area1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
@@ -111,14 +117,17 @@ def pairwise_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
             ioa: Intersection-over-area (ioa) between two boxes box1 and box2 is defined as
                 their intersection area over box2's area. Note that ioa is not symmetric,
                 that is, IOA(box1, box2) != IOA(box2, box1).
-                
+            min: Compute the ratio as the area of intersection between box1 and box2, 
+                divided by the minimum area of the two bounding boxes.
     Returns:
         a numpy array with shape [N, M] representing pairwise overlap ratio.
         
     References:
         `utils.np_box_ops.iou` in Tensorflow object detection API
         `utils.np_box_ops.ioa` in Tensorflow object detection API
-        `core.evaluation.bbox_overlaps.bbox_overlaps` in mmdetection
+        `mmdet.core.bbox.bbox_overlaps`, see https://mmdetection.readthedocs.io/en/v2.17.0/api.html#mmdet.core.bbox.bbox_overlaps
+        `torchvision.ops.box_iou`, see https://pytorch.org/vision/stable/ops.html#torchvision.ops.box_iou
+        `torchvision.ops.generalized_box_iou`, see https://pytorch.org/vision/stable/ops.html#torchvision.ops.generalized_box_iou
         http://ww2.mathworks.cn/help/vision/ref/bboxoverlapratio.html
     """
     intersect_area = pairwise_intersection(boxes1, boxes2)
