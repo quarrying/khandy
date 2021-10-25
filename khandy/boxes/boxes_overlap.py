@@ -92,7 +92,7 @@ def paired_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
     areas1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
     areas2 = (boxes2[:, 2] - boxes2[:, 0]) * (boxes2[:, 3] - boxes2[:, 1])
     
-    if ratio_type in ['union', 'iou']:
+    if ratio_type in ['union', 'iou', 'giou']:
         union_areas = areas1 - intersect_areas
         union_areas += areas2
         intersect_areas /= union_areas
@@ -103,6 +103,16 @@ def paired_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
         intersect_areas /= areas2
     else:
         raise ValueError('Unsupported ratio_type. Got {}'.format(ratio_type))
+        
+    if ratio_type == 'giou':
+        # mebb = minimum enclosing bounding boxes
+        mebb_xy_mins = np.minimum(boxes1[:, :2], boxes2[:, :2])
+        mebb_xy_maxs = np.maximum(boxes1[:, 2:], boxes2[:, 2:])
+        mebb_whs = np.maximum(0.0, mebb_xy_maxs - mebb_xy_mins)
+        mebb_areas = mebb_whs[:, 0] * mebb_whs[:, 1]
+        union_areas -= mebb_areas
+        union_areas /= mebb_areas
+        intersect_areas += union_areas
     return intersect_areas
 
 
@@ -135,7 +145,7 @@ def pairwise_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
     areas1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
     areas2 = (boxes2[:, 2] - boxes2[:, 0]) * (boxes2[:, 3] - boxes2[:, 1])
     
-    if ratio_type in ['union', 'iou']:
+    if ratio_type in ['union', 'iou', 'giou']:
         union_areas = np.expand_dims(areas1, axis=1) - intersect_areas
         union_areas += np.expand_dims(areas2, axis=0)
         intersect_areas /= union_areas
@@ -146,5 +156,15 @@ def pairwise_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
         intersect_areas /= np.expand_dims(areas2, axis=0)
     else:
         raise ValueError('Unsupported ratio_type. Got {}'.format(ratio_type))
+        
+    if ratio_type == 'giou':
+        # mebb = minimum enclosing bounding boxes
+        mebb_xy_mins = np.minimum(boxes1[:, None, :2], boxes2[:, :2])
+        mebb_xy_maxs = np.maximum(boxes1[:, None, 2:], boxes2[:, 2:])
+        mebb_whs = np.maximum(0.0, mebb_xy_maxs - mebb_xy_mins)
+        mebb_areas = mebb_whs[:, :, 0] * mebb_whs[:, :, 1]
+        union_areas -= mebb_areas
+        union_areas /= mebb_areas
+        intersect_areas += union_areas
     return intersect_areas
     
