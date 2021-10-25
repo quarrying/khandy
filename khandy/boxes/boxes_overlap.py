@@ -88,22 +88,22 @@ def paired_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
         `structures.boxes.matched_boxlist_iou` in detectron2
         `mmdet.core.bbox.bbox_overlaps`, see https://mmdetection.readthedocs.io/en/v2.17.0/api.html#mmdet.core.bbox.bbox_overlaps
     """
-    intersect_area = paired_intersection(boxes1, boxes2)
-    area1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
-    area2 = (boxes2[:, 2] - boxes2[:, 0]) * (boxes2[:, 3] - boxes2[:, 1])
+    intersect_areas = paired_intersection(boxes1, boxes2)
+    areas1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
+    areas2 = (boxes2[:, 2] - boxes2[:, 0]) * (boxes2[:, 3] - boxes2[:, 1])
     
     if ratio_type in ['union', 'iou']:
-        union_area = area1 - intersect_area
-        union_area += area2
-        intersect_area /= union_area
+        union_areas = areas1 - intersect_areas
+        union_areas += areas2
+        intersect_areas /= union_areas
     elif ratio_type == 'min':
-        min_area = np.minimum(area1, area2)
-        intersect_area /= min_area
+        min_areas = np.minimum(areas1, areas2)
+        intersect_areas /= min_areas
     elif ratio_type == 'ioa':
-        intersect_area /= area2
+        intersect_areas /= areas2
     else:
         raise ValueError('Unsupported ratio_type. Got {}'.format(ratio_type))
-    return intersect_area
+    return intersect_areas
 
 
 def pairwise_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
@@ -125,26 +125,26 @@ def pairwise_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
     References:
         `utils.np_box_ops.iou` in Tensorflow object detection API
         `utils.np_box_ops.ioa` in Tensorflow object detection API
+        `utils.np_box_ops.giou` in Tensorflow object detection API
         `mmdet.core.bbox.bbox_overlaps`, see https://mmdetection.readthedocs.io/en/v2.17.0/api.html#mmdet.core.bbox.bbox_overlaps
         `torchvision.ops.box_iou`, see https://pytorch.org/vision/stable/ops.html#torchvision.ops.box_iou
         `torchvision.ops.generalized_box_iou`, see https://pytorch.org/vision/stable/ops.html#torchvision.ops.generalized_box_iou
         http://ww2.mathworks.cn/help/vision/ref/bboxoverlapratio.html
     """
-    intersect_area = pairwise_intersection(boxes1, boxes2)
-    area1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
-    area2 = (boxes2[:, 2] - boxes2[:, 0]) * (boxes2[:, 3] - boxes2[:, 1])
+    intersect_areas = pairwise_intersection(boxes1, boxes2)
+    areas1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
+    areas2 = (boxes2[:, 2] - boxes2[:, 0]) * (boxes2[:, 3] - boxes2[:, 1])
     
     if ratio_type in ['union', 'iou']:
-        union_area = np.expand_dims(area1, axis=1) - intersect_area
-        union_area += np.expand_dims(area2, axis=0)
-        intersect_area /= union_area
+        union_areas = np.expand_dims(areas1, axis=1) - intersect_areas
+        union_areas += np.expand_dims(areas2, axis=0)
+        intersect_areas /= union_areas
     elif ratio_type == 'min':
-        min_area = np.minimum(np.expand_dims(area1, axis=1), np.expand_dims(area2, axis=0))
-        intersect_area /= min_area
+        min_areas = np.minimum(np.expand_dims(areas1, axis=1), np.expand_dims(areas2, axis=0))
+        intersect_areas /= min_areas
     elif ratio_type == 'ioa':
-        intersect_area /= np.expand_dims(area2, axis=0)
+        intersect_areas /= np.expand_dims(areas2, axis=0)
     else:
         raise ValueError('Unsupported ratio_type. Got {}'.format(ratio_type))
-    return intersect_area
-    
+    return intersect_areas
     
