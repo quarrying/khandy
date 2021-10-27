@@ -20,8 +20,8 @@ def paired_intersection(boxes1, boxes2):
     max_y_mins = np.maximum(boxes1[:, 1], boxes2[:, 1])
     min_x_maxs = np.minimum(boxes1[:, 2], boxes2[:, 2])
     min_y_maxs = np.minimum(boxes1[:, 3], boxes2[:, 3])
-    intersect_widths = np.maximum(0., min_x_maxs - max_x_mins)
-    intersect_heights = np.maximum(0., min_y_maxs - max_y_mins)
+    intersect_widths = np.maximum(0, min_x_maxs - max_x_mins)
+    intersect_heights = np.maximum(0, min_y_maxs - max_y_mins)
     return intersect_widths * intersect_heights
     
     
@@ -55,13 +55,9 @@ def pairwise_intersection(boxes1, boxes2):
         max_y_mins = np.maximum(boxes1[i, 1], boxes2[:, 1])
         min_x_maxs = np.minimum(boxes1[i, 2], boxes2[:, 2])
         min_y_maxs = np.minimum(boxes1[i, 3], boxes2[:, 3])
-
-        min_x_maxs -= max_x_mins
-        min_y_maxs -= max_y_mins
-        np.maximum(min_x_maxs, 0, min_x_maxs)
-        np.maximum(min_y_maxs, 0, min_y_maxs)
-        min_x_maxs *= min_y_maxs
-        intersect_areas[i, :] = min_x_maxs
+        intersect_widths = np.maximum(0, min_x_maxs - max_x_mins)
+        intersect_heights = np.maximum(0, min_y_maxs - max_y_mins)
+        intersect_areas[i, :] = intersect_widths * intersect_heights
     if swap:
         intersect_areas = intersect_areas.T
     return intersect_areas
@@ -106,10 +102,10 @@ def paired_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
         raise ValueError('Unsupported ratio_type. Got {}'.format(ratio_type))
         
     if ratio_type == 'giou':
+        min_xy_mins = np.minimum(boxes1[:, 0:2], boxes2[:, 0:2])
+        max_xy_mins = np.maximum(boxes1[:, 2:4], boxes2[:, 2:4])
         # mebb = minimum enclosing bounding boxes
-        mebb_xy_mins = np.minimum(boxes1[:, :2], boxes2[:, :2])
-        mebb_xy_maxs = np.maximum(boxes1[:, 2:], boxes2[:, 2:])
-        mebb_whs = np.maximum(0.0, mebb_xy_maxs - mebb_xy_mins)
+        mebb_whs = np.maximum(0, max_xy_mins - min_xy_mins)
         mebb_areas = mebb_whs[:, 0] * mebb_whs[:, 1]
         union_areas -= mebb_areas
         union_areas /= mebb_areas
@@ -159,10 +155,10 @@ def pairwise_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
         raise ValueError('Unsupported ratio_type. Got {}'.format(ratio_type))
         
     if ratio_type == 'giou':
+        min_xy_mins = np.minimum(boxes1[:, None, 0:2], boxes2[:, 0:2])
+        max_xy_mins = np.maximum(boxes1[:, None, 2:4], boxes2[:, 2:4])
         # mebb = minimum enclosing bounding boxes
-        mebb_xy_mins = np.minimum(boxes1[:, None, :2], boxes2[:, :2])
-        mebb_xy_maxs = np.maximum(boxes1[:, None, 2:], boxes2[:, 2:])
-        mebb_whs = np.maximum(0.0, mebb_xy_maxs - mebb_xy_mins)
+        mebb_whs = np.maximum(0, max_xy_mins - min_xy_mins)
         mebb_areas = mebb_whs[:, :, 0] * mebb_whs[:, :, 1]
         union_areas -= mebb_areas
         union_areas /= mebb_areas
