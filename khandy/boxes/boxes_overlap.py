@@ -51,16 +51,17 @@ def pairwise_intersection(boxes1, boxes2):
         swap = True
 
     for i in range(boxes1.shape[0]):
-        x_begin = np.maximum(boxes1[i, 0], boxes2[:, 0])
-        y_begin = np.maximum(boxes1[i, 1], boxes2[:, 1])
-        x_end = np.minimum(boxes1[i, 2], boxes2[:, 2])
-        y_end = np.minimum(boxes1[i, 3], boxes2[:, 3])
-        x_end -= x_begin
-        y_end -= y_begin
-        np.maximum(x_end, 0, x_end)
-        np.maximum(y_end, 0, y_end)
-        x_end *= y_end
-        intersect_areas[i, :] = x_end
+        max_x_mins = np.maximum(boxes1[i, 0], boxes2[:, 0])
+        max_y_mins = np.maximum(boxes1[i, 1], boxes2[:, 1])
+        min_x_maxs = np.minimum(boxes1[i, 2], boxes2[:, 2])
+        min_y_maxs = np.minimum(boxes1[i, 3], boxes2[:, 3])
+
+        min_x_maxs -= max_x_mins
+        min_y_maxs -= max_y_mins
+        np.maximum(min_x_maxs, 0, min_x_maxs)
+        np.maximum(min_y_maxs, 0, min_y_maxs)
+        min_x_maxs *= min_y_maxs
+        intersect_areas[i, :] = min_x_maxs
     if swap:
         intersect_areas = intersect_areas.T
     return intersect_areas
