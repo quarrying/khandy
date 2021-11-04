@@ -51,7 +51,7 @@ def l2_normalize(x, axis=0, epsilon=1e-12, copy=True):
         epsilon: float, optional
             A small value such as to avoid division by zero.
         copy : bool, optional
-            Copy X or not.
+            Copy x or not.
     """
     if copy:
         x = np.copy(x)
@@ -59,7 +59,7 @@ def l2_normalize(x, axis=0, epsilon=1e-12, copy=True):
     return x
     
     
-def minmax_normalize(x, axis=0, copy=True):
+def minmax_normalize(x, axis=0, epsilon=1e-12, copy=True):
     """minmax normalize an array along a given axis.
     
     Args:
@@ -68,7 +68,7 @@ def minmax_normalize(x, axis=0, copy=True):
         axis : None or int or tuple of ints, optional
             Axis or axes along which to operate.
         copy : bool, optional
-            Copy X or not.
+            Copy x or not.
     """
     if copy:
         x = np.copy(x)
@@ -76,7 +76,7 @@ def minmax_normalize(x, axis=0, copy=True):
     minval = np.min(x, axis=axis, keepdims=True)
     maxval = np.max(x, axis=axis, keepdims=True)
     maxval -= minval
-    maxval = np.maximum(maxval, 1e-5)
+    maxval = np.maximum(maxval, epsilon)
     
     x -= minval
     x /= maxval
