@@ -41,13 +41,14 @@ def pairwise_intersection(boxes1, boxes2):
     """
     rows = boxes1.shape[0]
     cols = boxes2.shape[0]
-    intersect_areas = np.zeros((rows, cols), dtype=boxes1.dtype)
     if rows * cols == 0:
-        return intersect_areas
+        return np.zeros((rows, cols), dtype=boxes1.dtype)
+
+    intersect_areas = np.empty((rows, cols), dtype=boxes1.dtype)
     swap = False
     if boxes1.shape[0] > boxes2.shape[0]:
         boxes1, boxes2 = boxes2, boxes1
-        intersect_areas = np.zeros((cols, rows), dtype=boxes1.dtype)
+        intersect_areas = np.empty((cols, rows), dtype=boxes1.dtype)
         swap = True
 
     for i in range(boxes1.shape[0]):
