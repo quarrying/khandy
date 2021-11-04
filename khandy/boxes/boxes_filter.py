@@ -49,3 +49,49 @@ def filter_boxes_completely_outside(boxes, reference_box):
             (boxes[:, 2] > x_min) & (boxes[:, 3] > y_min))
     return np.nonzero(keep)[0]
     
+
+def non_max_suppression(boxes, scores, thresh, ratio_type="iou"):
+    """Greedily select boxes with high confidence
+    Args:
+        boxes: [[x_min, y_min, x_max, y_max], ...]
+        scores: object confidence
+        thresh: retain overlap_ratio <= thresh
+        
+    Returns:
+        indexes to keep
+        
+    References:
+        `py_cpu_nms` in py-faster-rcnn
+    """
+    x_mins = boxes[:, 0]
+    y_mins = boxes[:, 1]
+    x_maxs = boxes[:, 2]
+    y_maxs = boxes[:, 3]
+    areas = (x_maxs - x_mins) * (y_maxs - y_mins)
+    order = scores.argsort()[::-1]
+
+    keep = []
+    while order.size > 0:
+        i = order[0]
+        keep.append(i)
+        
+        max_x_mins = np.maximum(x_mins[i], x_mins[order[1:]])
+        max_y_mins = np.maximum(y_mins[i], y_mins[order[1:]])
+        min_x_maxs = np.minimum(x_maxs[i], x_maxs[order[1:]])
+        min_y_maxs = np.minimum(y_maxs[i], y_maxs[order[1:]])
+        widths = np.maximum(0, min_x_maxs - max_x_mins)
+        heights = np.maximum(0, min_y_maxs - max_y_mins)
+        intersect_area = widths * heights
+        
+        if ratio_type in ["union", 'iou']:
+            ratio = intersect_area / (areas[i] + areas[order[1:]] - intersect_area)
+        elif ratio_type == "min":
+            ratio = intersect_area / np.minimum(areas[i], areas[order[1:]])
+        else:
+            raise ValueError('Unsupported ratio_type. Got {}'.format(ratio_type))
+            
+        inds = np.nonzero(ratio <= thresh)[0]
+        order = order[inds + 1]
+
+    return keep
+    
