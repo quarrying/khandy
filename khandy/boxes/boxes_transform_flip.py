@@ -116,6 +116,7 @@ def rot90_boxes_in_image(boxes, image_width, image_height, n=1):
     
     References:
         np.rot90
+        cv2.rotate
         tf.image.rot90
     """
     n = n % 4

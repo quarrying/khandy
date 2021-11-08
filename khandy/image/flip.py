@@ -44,6 +44,7 @@ def rot90_image(image, n=1, copy=True):
     
     References:
         np.rot90
+        cv2.rotate
         tf.image.rot90
     """
     if copy:
@@ -55,7 +56,7 @@ def rot90_image(image, n=1, copy=True):
         
     n = n % 4
     if n == 0:
-        return image
+        return image[:]
     elif n == 1:
         image = np.transpose(image, transpose_axes)
         image = np.flipud(image)
