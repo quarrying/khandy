@@ -106,3 +106,31 @@ def center_crop(image, dst_width, dst_height, strict=True):
     cropped = image[crop_top: dst_height + crop_top, 
                     crop_left: dst_width + crop_left, ...]
     return cropped
+
+
+def center_pad(image, dst_width, dst_height, strict=True):
+    """
+    strict: 
+        when True, raise error if src size is greater than dst size. 
+        when False, remain unchanged if src size is greater than dst size, otherwise center pad.
+    """
+    assert image.ndim in [2, 3]
+    assert isinstance(dst_width, numbers.Integral) and isinstance(dst_height, numbers.Integral)
+    
+    src_height, src_width = image.shape[:2]
+    if strict:
+        assert (src_height <= dst_height) and (src_width <= dst_width)
+    
+    padding_x = max(dst_width - src_width, 0)
+    padding_y = max(dst_height - src_height, 0)
+    padding_top = padding_y // 2
+    padding_left = padding_x // 2
+    if image.ndim == 2:
+        padding = ((padding_top, padding_y - padding_top), 
+                   (padding_left, padding_x - padding_left))
+    else:
+        padding = ((padding_top, padding_y - padding_top), 
+                   (padding_left, padding_x - padding_left), (0, 0))
+    return np.pad(image, padding, 'constant')
+
+    
