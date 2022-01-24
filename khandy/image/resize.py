@@ -1,4 +1,5 @@
 import cv2
+import khandy
 import numpy as np
 
 
@@ -17,6 +18,7 @@ def scale_image(image, x_scale, y_scale, interpolation='bilinear'):
     Reference:
         mmcv.imrescale
     """
+    assert khandy.is_numpy_image(image)
     src_height, src_width = image.shape[:2]
     dst_width = int(round(x_scale * src_width))
     dst_height = int(round(y_scale * src_height))
@@ -43,6 +45,7 @@ def resize_image(image, dst_width, dst_height, return_scale=False, interpolation
     Reference:
         mmcv.imresize
     """
+    assert khandy.is_numpy_image(image)
     resized_image = cv2.resize(image, (dst_width, dst_height), 
                                interpolation=interp_codes[interpolation])
     if not return_scale:
@@ -61,6 +64,7 @@ def resize_image_short(image, dst_size, return_scale=False, interpolation='bilin
     References:
         `resize_min` in `https://github.com/pjreddie/darknet/blob/master/src/image.c`
     """
+    assert khandy.is_numpy_image(image)
     src_height, src_width = image.shape[:2]
     scale = max(dst_size / src_width, dst_size / src_height)
     dst_width = int(round(scale * src_width))
@@ -81,6 +85,7 @@ def resize_image_long(image, dst_size, return_scale=False, interpolation='biline
     References:
         `resize_max` in `https://github.com/pjreddie/darknet/blob/master/src/image.c`
     """
+    assert khandy.is_numpy_image(image)
     src_height, src_width = image.shape[:2]
     scale = min(dst_size / src_width, dst_size / src_height)
     dst_width = int(round(scale * src_width))
@@ -101,6 +106,7 @@ def letterbox_resize_image(image, dst_width, dst_height, border_value=0,
     References:
         `letterbox_image` in `https://github.com/pjreddie/darknet/blob/master/src/image.c`
     """
+    assert khandy.is_numpy_image(image)
     src_height, src_width = image.shape[:2]
     scale = min(dst_width / src_width, dst_height / src_height)
     resize_w = int(round(scale * src_width))
@@ -145,6 +151,7 @@ def resize_image_to_range(image, min_length, max_length, return_scale=False, int
         `prep_im_for_blob` in `py-faster-rcnn-master/lib/utils/blob.py`
         mmcv.imrescale
     """
+    assert khandy.is_numpy_image(image)
     assert min_length < max_length
     src_height, src_width = image.shape[:2]
     

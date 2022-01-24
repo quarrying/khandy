@@ -1,5 +1,6 @@
 import numbers
 
+import khandy
 import numpy as np
 
 
@@ -21,7 +22,7 @@ def translate_image(image, x_shift, y_shift, border_value=0):
     See Also:
         crop_or_pad
     """
-    assert image.ndim in [2, 3]
+    assert khandy.is_numpy_image(image)
     assert isinstance(x_shift, numbers.Integral)
     assert isinstance(y_shift, numbers.Integral)
     image_height, image_width = image.shape[:2]

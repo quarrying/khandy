@@ -1,5 +1,6 @@
 import numbers
 
+import khandy
 import numpy as np
 
 
@@ -11,7 +12,7 @@ def crop_or_pad(image, x_min, y_min, x_max, y_max, border_value=0):
     References:
         tf.image.resize_image_with_crop_or_pad
     """
-    assert image.ndim in [2, 3]
+    assert khandy.is_numpy_image(image)
     assert isinstance(x_min, numbers.Integral) and isinstance(y_min, numbers.Integral)
     assert isinstance(x_max, numbers.Integral) and isinstance(y_max, numbers.Integral)
     assert (x_min <= x_max) and (y_min <= y_max)
@@ -95,7 +96,7 @@ def center_crop(image, dst_width, dst_height, strict=True):
         when True, raise error if src size is less than dst size. 
         when False, remain unchanged if src size is less than dst size, otherwise center crop.
     """
-    assert image.ndim in [2, 3]
+    assert khandy.is_numpy_image(image)
     assert isinstance(dst_width, numbers.Integral) and isinstance(dst_height, numbers.Integral)
     src_height, src_width = image.shape[:2]
     if strict:
@@ -114,7 +115,7 @@ def center_pad(image, dst_width, dst_height, strict=True):
         when True, raise error if src size is greater than dst size. 
         when False, remain unchanged if src size is greater than dst size, otherwise center pad.
     """
-    assert image.ndim in [2, 3]
+    assert khandy.is_numpy_image(image)
     assert isinstance(dst_width, numbers.Integral) and isinstance(dst_height, numbers.Integral)
     
     src_height, src_width = image.shape[:2]

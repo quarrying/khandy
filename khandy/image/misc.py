@@ -61,8 +61,13 @@ def stack_image_list(image_list, dtype=np.float32):
         blob = np.squeeze(blob, axis=-1)
     return blob
     
-    
+
+def is_numpy_image(image):
+    return isinstance(image, np.ndarray) and image.ndim in {2, 3}
+
+
 def is_gray_image(image, tol=3):
+    assert is_numpy_image(image)
     if image.ndim == 2:
         return True
     elif image.ndim == 3:

@@ -1,3 +1,4 @@
+import khandy
 import numpy as np
 
 
@@ -9,6 +10,7 @@ def flip_image(image, direction='h', copy=True):
         tf.image.flip_up_down
         tf.image.flip_left_right
     """
+    assert khandy.is_numpy_image(image)
     assert direction in ['x', 'h', 'horizontal',
                          'y', 'v', 'vertical', 
                          'o', 'b', 'both']
@@ -29,6 +31,7 @@ def transpose_image(image, copy=True):
         cv2.transpose
         tf.image.transpose
     """
+    assert khandy.is_numpy_image(image)
     if copy:
         image = image.copy()
     if image.ndim == 2:
@@ -47,6 +50,7 @@ def rot90_image(image, n=1, copy=True):
         cv2.rotate
         tf.image.rot90
     """
+    assert khandy.is_numpy_image(image)
     if copy:
         image = image.copy()
     if image.ndim == 2:

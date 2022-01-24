@@ -1,4 +1,5 @@
 import cv2
+import khandy
 import numpy as np
 
 
@@ -46,6 +47,7 @@ def rotate_image(image, angle, scale=1.0, center=None,
     References:
         mmcv.imrotate
     """
+    assert khandy.is_numpy_image(image)
     image_height, image_width = image.shape[:2]
     if auto_bound:
         center = None

@@ -1,8 +1,10 @@
 import cv2
+import khandy
 import numpy as np
 
 
 def calc_image_ahash(image):
+    assert khandy.is_numpy_image(image)
     if image.ndim == 3:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     resized = cv2.resize(image, (8, 8))
@@ -17,6 +19,7 @@ def calc_image_ahash(image):
 
     
 def calc_image_phash(image):
+    assert khandy.is_numpy_image(image)
     if image.ndim == 3:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     resized = cv2.resize(image, (32, 32))
@@ -32,6 +35,7 @@ def calc_image_phash(image):
 
     
 def calc_image_dhash(image):
+    assert khandy.is_numpy_image(image)
     if image.ndim == 3:
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     resized = cv2.resize(image, (9, 8))
