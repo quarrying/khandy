@@ -11,7 +11,7 @@ pip install -e .
 
 
 ## Dependencies
-- Python 3.5 +
-- NumPy 1.11 +
+- Python 3.5+
+- NumPy 1.11+
 - OpenCV 2.0+
 

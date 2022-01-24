@@ -1,7 +1,6 @@
 import cv2
+import khandy
 import numpy as np
-
-from ..utils_numpy import minmax_normalize as _minmax_normalize
 
 
 def normalize_image_dtype(image, keep_num_channels=False):
@@ -22,7 +21,7 @@ def normalize_image_dtype(image, keep_num_channels=False):
     assert (image.ndim == 3 and image.shape[-1] in [1, 3]) or (image.ndim == 2)
 
     image = image.astype(np.float32)
-    image = _minmax_normalize(image, axis=None, copy=False)
+    image = khandy.minmax_normalize(image, axis=None, copy=False)
     image = np.array(image * 255, dtype=np.uint8)
     
     if not keep_num_channels:

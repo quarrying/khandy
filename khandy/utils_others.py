@@ -1,7 +1,6 @@
 import time
 import socket
 import logging
-from collections import OrderedDict
 
 
 def print_with_no(obj):

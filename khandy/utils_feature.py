@@ -1,12 +1,11 @@
 from collections import OrderedDict
 
+import khandy
 import numpy as np
-
-from .utils_dict import get_dict_first_item as _get_dict_first_item
 
 
 def convert_feature_dict_to_array(feature_dict):
-    one_feature = _get_dict_first_item(feature_dict)[1]
+    one_feature = khandy.get_dict_first_item(feature_dict)[1]
     num_features = sum([len(item) for item in feature_dict.values()])
     
     key_list = []
