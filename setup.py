@@ -1,11 +1,11 @@
 import sys
 from setuptools import find_packages, setup
 
-install_requires = ['numpy>=1.11.1', 'opencv-python']
+install_requires = ['numpy>=1.11.1', 'opencv-python', 'pillow']
 
 setup(
     name='KHandy',
-    version='0.1.2',
+    version='0.1.3',
     description='Handy Utilities for Computer Vision',
     long_description='Handy Utilities for Computer Vision',
     keywords='computer vision',

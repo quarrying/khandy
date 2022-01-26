@@ -5,6 +5,7 @@ from .utils_fs import *
 from .utils_hash import *
 from .utils_list import *
 from .utils_numpy import *
+from .utils_draw import *
 from .utils_others import *
 
 from .boxes import *
