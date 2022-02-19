@@ -77,3 +77,29 @@ class ContextTimer(object):
         """Manually trigger enter"""
         self.__enter__()
         
+
+def set_logger(filename, level=logging.INFO, logger_name=None):
+    logger = logging.getLogger(logger_name) 
+    logger.setLevel(level)
+    
+    # Never mutate (insert/remove elements) the list you're currently iterating on. 
+    # If you need, make a copy.
+    for handler in logger.handlers[:]:
+        if isinstance(handler, logging.FileHandler):
+            logger.removeHandler(handler)
+        # FileHandler is subclass of StreamHandler, so isinstance(handler,
+        # logging.StreamHandler) is True even if handler is FileHandler.
+        # if (type(handler) == logging.StreamHandler) and (handler.stream == sys.stderr):
+        elif type(handler) == logging.StreamHandler:
+            logger.removeHandler(handler)
+            
+    file_handler = logging.FileHandler(filename)
+    file_handler.setFormatter(logging.Formatter('%(message)s'))
+    logger.addHandler(file_handler)
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter('%(message)s'))
+    logger.addHandler(console_handler)
+    return logger
+
+    
