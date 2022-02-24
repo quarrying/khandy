@@ -1,6 +1,8 @@
 import time
+import json
 import socket
 import logging
+import argparse
 
 
 def print_with_no(obj):
@@ -102,4 +104,16 @@ def set_logger(filename, level=logging.INFO, logger_name=None):
     logger.addHandler(console_handler)
     return logger
 
-    
+
+def print_arguments(args):
+    assert isinstance(args, argparse.Namespace)
+    arg_list = sorted(vars(args).items())
+    for key, value in arg_list:
+        print('{}: {}'.format(key, value))
+
+
+def save_arguments(filename, args, sort=True):
+    assert isinstance(args, argparse.Namespace)
+    args = vars(args)
+    with open(filename, 'w') as f:
+        json.dump(args, f, indent=4, sort_keys=sort)

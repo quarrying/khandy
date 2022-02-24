@@ -5,7 +5,7 @@ install_requires = ['numpy>=1.11.1', 'opencv-python', 'pillow']
 
 setup(
     name='KHandy',
-    version='0.1.4',
+    version='0.1.5',
     description='Handy Utilities for Computer Vision',
     long_description='Handy Utilities for Computer Vision',
     keywords='computer vision',
