@@ -4,8 +4,8 @@ Handy Utilities for Computer Vision
 
 ## Installation
 ```
-git clone https://github.com/quarrying/KHandy.git
-cd KHandy
+git clone https://github.com/quarrying/khandy.git
+cd khandy
 pip install -e .
 ```
 

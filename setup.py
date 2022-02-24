@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 install_requires = ['numpy>=1.11.1', 'opencv-python', 'pillow']
 
 setup(
-    name='KHandy',
+    name='khandy',
     version='0.1.5',
     description='Handy Utilities for Computer Vision',
     long_description='Handy Utilities for Computer Vision',
