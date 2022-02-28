@@ -1,8 +1,35 @@
+import os
+
 import cv2
 import khandy
 import numpy as np
+from PIL import Image
 
 
+def imread_pil(filename, to_mode='RGB'):
+    with open(filename, 'rb') as f:
+        img = Image.open(f)
+        if to_mode is None:
+            return img
+        else:
+            return img.convert(to_mode)
+            
+            
+def imread_cv(filename, flags=-1):
+    """Improvement on cv2.imread, make it support filename including chinese character.
+    """
+    try:
+        return cv2.imdecode(np.fromfile(filename, dtype=np.uint8), flags)
+    except Exception as e:
+        return None
+    
+    
+def imwrite_cv(filename, image):
+    """Improvement on cv2.imwrite, make it support filename including chinese character.
+    """
+    cv2.imencode(os.path.splitext(filename)[-1], image)[1].tofile(filename)
+    
+    
 def normalize_image_dtype(image, keep_num_channels=False):
     """Normalize image dtype to uint8 (usually for visualization).
     
