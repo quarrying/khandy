@@ -79,17 +79,12 @@ def listdirs(paths, path_sep=None, full_path=True):
     return all_filenames
 
 
-def _normalize_extensions(extensions):
-    if extensions is None:
-        return None
-    new_extensions = []
-    
-    for extension in extensions:
-        if extension.startswith('.'):
-            new_extensions.append(extension.lower())
-        else:
-            new_extensions.append('.' + extension.lower())
-    return new_extensions
+def normalize_extension(extension):
+    if extension.startswith('.'):
+        new_extension = extension.lower()
+    else:
+        new_extension =  '.' + extension.lower()
+    return new_extension
 
 
 def get_all_filenames(path, extensions=None, is_valid_file=None):
@@ -100,7 +95,8 @@ def get_all_filenames(path, extensions=None, is_valid_file=None):
         if extensions is not None:
             if isinstance(extensions, str):
                 extensions = [extensions]
-            extensions = tuple(_normalize_extensions(extensions))
+            if extensions is not None:
+                extensions = tuple([normalize_extension(item) for item in extensions])
             def is_valid_file(filename):
                 return filename.lower().endswith(extensions)
         else:
