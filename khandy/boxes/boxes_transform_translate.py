@@ -93,8 +93,6 @@ def inflate_boxes_to_square(boxes, copy=True):
     """Inflate boxes to square
     Args:
         boxes: (N, 4+K)
-        width_delta: array-like whose shape is (), (1,), (N,), (1, 1) or (N, 1)
-        height_delta: array-like whose shape is (), (1,), (N,), (1, 1) or (N, 1)
         copy: bool
     """
     boxes = np.array(boxes, dtype=np.float32, copy=copy)
@@ -118,8 +116,6 @@ def deflate_boxes_to_square(boxes, copy=True):
     """Deflate boxes to square
     Args:
         boxes: (N, 4+K)
-        width_delta: array-like whose shape is (), (1,), (N,), (1, 1) or (N, 1)
-        height_delta: array-like whose shape is (), (1,), (N,), (1, 1) or (N, 1)
         copy: bool
     """
     boxes = np.array(boxes, dtype=np.float32, copy=copy)
