@@ -15,11 +15,14 @@ def imread_pil(filename, to_mode='RGB'):
             return img.convert(to_mode)
             
             
-def imread_cv(filename, flags=-1):
+def imread_cv(filename_or_buffer, flags=-1):
     """Improvement on cv2.imread, make it support filename including chinese character.
     """
     try:
-        return cv2.imdecode(np.fromfile(filename, dtype=np.uint8), flags)
+        if isinstance(filename_or_buffer, bytes):
+            return cv2.imdecode(np.frombuffer(filename_or_buffer, dtype=np.uint8), flags)
+        else:
+            return cv2.imdecode(np.fromfile(filename_or_buffer, dtype=np.uint8), flags)
     except Exception as e:
         return None
     
