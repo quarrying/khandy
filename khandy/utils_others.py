@@ -1,3 +1,5 @@
+
+import re
 import time
 import json
 import socket
@@ -117,3 +119,12 @@ def save_arguments(filename, args, sort=True):
     args = vars(args)
     with open(filename, 'w') as f:
         json.dump(args, f, indent=4, sort_keys=sort)
+
+
+def strip_content_in_paren(string):
+    """
+    Notes:
+        strip_content_in_paren cannot process nested paren correctly
+    """
+    return re.sub(r"\([^)]*\)|（[^）]*）", "", string)
+

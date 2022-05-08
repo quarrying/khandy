@@ -5,7 +5,7 @@ install_requires = ['numpy>=1.11.1', 'opencv-python', 'pillow']
 
 setup(
     name='khandy',
-    version='0.1.7',
+    version='0.1.8',
     description='Handy Utilities for Computer Vision',
     long_description='Handy Utilities for Computer Vision',
     keywords='computer vision',
