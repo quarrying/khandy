@@ -139,6 +139,16 @@ def get_top_level_files(path, full_path=True):
                 if os.path.isfile(os.path.join(path_ex, item))]
                 
 
+def get_folder_size(dirname):
+    if not os.path.exists(dirname):
+        raise ValueError("Incorrect path: {}".format(dirname))
+    total_size = 0
+    for root, _, filenames in os.walk(dirname):
+        for name in filenames:
+            total_size += os.path.getsize(os.path.join(root, name))
+    return total_size
+
+    
 def replace_invalid_filename_char(filename, new_char='_'):
     assert isinstance(new_char, str)
     control_chars = ''.join((map(chr, range(0x00, 0x20))))

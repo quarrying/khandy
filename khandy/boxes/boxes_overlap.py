@@ -124,6 +124,7 @@ def pairwise_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
                 that is, IOA(box1, box2) != IOA(box2, box1).
             min: Compute the ratio as the area of intersection between box1 and box2, 
                 divided by the minimum area of the two bounding boxes.
+                
     Returns:
         a numpy array with shape [N, M] representing pairwise overlap ratio.
         
