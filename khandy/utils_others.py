@@ -5,6 +5,8 @@ import json
 import socket
 import logging
 import argparse
+import numbers
+import datetime
 
 
 def print_with_no(obj):
@@ -127,4 +129,52 @@ def strip_content_in_paren(string):
         strip_content_in_paren cannot process nested paren correctly
     """
     return re.sub(r"\([^)]*\)|（[^）]*）", "", string)
+
+
+def _to_timestamp(val):
+    if val is None:
+        timestamp = time.time()
+    elif isinstance(val, numbers.Real):
+        timestamp = float(val)
+    elif isinstance(val, time.struct_time):
+        timestamp = time.mktime(val)
+    elif isinstance(val, datetime.datetime):
+        timestamp = val.timestamp()
+    elif isinstance(val, datetime.date):
+        dt = datetime.datetime.combine(val, datetime.time())
+        timestamp = dt.timestamp()
+    elif isinstance(val, str):
+        try:
+            # The full format looks like 'YYYY-MM-DD HH:MM:SS.mmmmmm'.
+            dt = datetime.datetime.fromisoformat(val)
+            timestamp = dt.timestamp()
+        except:
+            raise TypeError('when argument is str, it should conform to isoformat')
+    else:
+        raise TypeError('unsupported type!')
+    return timestamp
+
+
+def get_timestamp(time_val=None, rounded=True):
+    """timestamp in seconds
+    """
+    timestamp = _to_timestamp(time_val)
+    if rounded:
+        timestamp = round(timestamp)
+    return timestamp
+
+
+def get_timestamp_ms(time_val=None, rounded=True):
+    """timestamp in milliseconds
+    """
+    timestamp = _to_timestamp(time_val) * 1000
+    if rounded:
+        timestamp = round(timestamp)
+    return timestamp
+
+
+def get_utc8now():
+    tz = datetime.timezone(datetime.timedelta(hours=8))
+    utcnow = datetime.datetime.now(tz)
+    return utcnow
 
