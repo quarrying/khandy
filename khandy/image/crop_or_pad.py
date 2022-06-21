@@ -30,7 +30,7 @@ def crop_or_pad(image, x_min, y_min, x_max, y_max, border_value=0):
         dst_image = np.full(dst_image_shape, border_value, dtype=image.dtype)
     elif isinstance(border_value, tuple):
         assert len(border_value) == channels, \
-            'Expected the num of elements in tuple equals the channels' \
+            'Expected the num of elements in tuple equals the channels ' \
             'of input image. Found {} vs {}'.format(
                 len(border_value), channels)
         if channels == 1:

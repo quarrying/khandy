@@ -1,4 +1,5 @@
 import json
+import base64
 import numbers
 from collections import OrderedDict
 
@@ -41,3 +42,11 @@ def save_json(filename, data, encoding='utf-8', cls=None, sort_keys=False):
         json.dump(data, f, indent=4, separators=(',',': '),
                   ensure_ascii=False, cls=cls, sort_keys=sort_keys)
 
+
+def load_as_base64(filename: str) -> str:
+    with open(filename, 'rb') as f:
+        raw_bytes = f.read()
+    b64_bytes = base64.b64encode(raw_bytes)
+    b64_str = b64_bytes.decode()
+    return b64_str
+    
