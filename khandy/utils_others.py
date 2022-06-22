@@ -175,6 +175,6 @@ def get_timestamp_ms(time_val=None, rounded=True):
 
 def get_utc8now():
     tz = datetime.timezone(datetime.timedelta(hours=8))
-    utcnow = datetime.datetime.now(tz)
-    return utcnow
+    utc8now = datetime.datetime.now(tz)
+    return utc8now
 
