@@ -6,7 +6,7 @@ def convert_xyxy_to_xywh(boxes, copy=True):
     """
     if copy:
         boxes = boxes.copy()
-    boxes[:, 2:4] -= boxes[:, 0:2]
+    boxes[..., 2:4] -= boxes[..., 0:2]
     return boxes
 
 
@@ -15,7 +15,7 @@ def convert_xywh_to_xyxy(boxes, copy=True):
     """
     if copy:
         boxes = boxes.copy()
-    boxes[:, 2:4] += boxes[:, 0:2]
+    boxes[..., 2:4] += boxes[..., 0:2]
     return boxes
 
 
@@ -24,7 +24,7 @@ def convert_xywh_to_cxcywh(boxes, copy=True):
     """
     if copy:
         boxes = boxes.copy()
-    boxes[:, 0:2] += boxes[:, 2:4] * 0.5
+    boxes[..., 0:2] += boxes[..., 2:4] * 0.5
     return boxes
     
     
@@ -33,23 +33,27 @@ def convert_cxcywh_to_xywh(boxes, copy=True):
     """
     if copy:
         boxes = boxes.copy()
-    boxes[:, 0:2] -= boxes[:, 2:4] * 0.5
+    boxes[..., 0:2] -= boxes[..., 2:4] * 0.5
     return boxes
     
     
 def convert_xyxy_to_cxcywh(boxes, copy=True):
     """Convert [x_min, y_min, x_max, y_max] format to [cx, cy, width, height] format.
     """
-    boxes = convert_xyxy_to_xywh(boxes, copy)
-    boxes = convert_xywh_to_cxcywh(boxes, False)
+    if copy:
+        boxes = boxes.copy()
+    boxes[..., 2:4] -= boxes[..., 0:2]
+    boxes[..., 0:2] += boxes[..., 2:4] * 0.5
     return boxes
 
 
 def convert_cxcywh_to_xyxy(boxes, copy=True):
-    """Convert [x_min, y_min, x_max, y_max] format to [cx, cy, width, height] format.
+    """Convert [cx, cy, width, height] format to [x_min, y_min, x_max, y_max] format.
     """
-    boxes = convert_cxcywh_to_xywh(boxes, copy)
-    boxes = convert_xywh_to_xyxy(boxes, False)
+    if copy:
+        boxes = boxes.copy()
+    boxes[..., 0:2] -= boxes[..., 2:4] * 0.5
+    boxes[..., 2:4] += boxes[..., 0:2]
     return boxes
 
 
@@ -57,13 +61,10 @@ def convert_boxes_format(boxes, in_fmt, out_fmt, copy=True):
     """Converts boxes from given in_fmt to out_fmt.
 
     Supported in_fmt and out_fmt are:
-
-    'xyxy': boxes are represented via corners, x1, y1 being top left and x2, y2 being bottom right.
-
-    'xywh' : boxes are represented via corner, width and height, x1, y2 being top left, w, h being width and height.
-
-    'cxcywh' : boxes are represented via centre, width and height, cx, cy being center of box, w, h
-    being width and height.
+        'xyxy': boxes are represented via corners, x1, y1 being top left and x2, y2 being bottom right.
+        'xywh' : boxes are represented via corner, width and height, x1, y2 being top left, w, h being width and height.
+        'cxcywh' : boxes are represented via centre, width and height, cx, cy being center of box, w, h
+            being width and height.
 
     Args:
         boxes: boxes which will be converted.

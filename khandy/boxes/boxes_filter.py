@@ -96,12 +96,12 @@ def non_max_suppression(boxes, scores, thresh, classes=None, ratio_type="iou"):
         min_y_maxs = np.minimum(y_maxs[i], y_maxs[order[1:]])
         widths = np.maximum(0, min_x_maxs - max_x_mins)
         heights = np.maximum(0, min_y_maxs - max_y_mins)
-        intersect_area = widths * heights
+        intersect_areas = widths * heights
         
         if ratio_type in ["union", 'iou']:
-            ratio = intersect_area / (areas[i] + areas[order[1:]] - intersect_area)
+            ratio = intersect_areas / (areas[i] + areas[order[1:]] - intersect_areas)
         elif ratio_type == "min":
-            ratio = intersect_area / np.minimum(areas[i], areas[order[1:]])
+            ratio = intersect_areas / np.minimum(areas[i], areas[order[1:]])
         else:
             raise ValueError('Unsupported ratio_type. Got {}'.format(ratio_type))
             
