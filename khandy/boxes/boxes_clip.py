@@ -7,11 +7,12 @@ def clip_boxes(boxes, reference_box, copy=True):
     References:
         `clip_to_window` in TensorFlow object detection API.
     """
-    x_min, y_min, x_max, y_max = reference_box[:4]
-    boxes = np.array(boxes, dtype=np.float32, copy=copy)
-    lower = np.array([[x_min, y_min, x_min, y_min]])
-    upper = np.array([[x_max, y_max, x_max, y_max]])
-    np.clip(boxes[:, :4], lower, upper, boxes[:,:4])
+    if copy:
+        boxes = boxes.copy()
+    ref_x_min, ref_y_min, ref_x_max, ref_y_max = reference_box[:4]
+    lower = np.array([ref_x_min, ref_y_min, ref_x_min, ref_y_min])
+    upper = np.array([ref_x_max, ref_y_max, ref_x_max, ref_y_max])
+    np.clip(boxes[..., :4], lower, upper, boxes[..., :4])
     return boxes
     
     
@@ -26,12 +27,8 @@ def clip_boxes_to_image(boxes, image_width, image_height, subpixel=True, copy=Tr
     Notes:
         Equivalent to `clip_boxes(boxes, [0,0,image_width-1,image_height-1], copy)`
     """
-    boxes = np.array(boxes, dtype=np.float32, copy=copy)
     if not subpixel:
         image_width -= 1
         image_height -= 1
-    np.clip(boxes[:, 0], 0, image_width,  boxes[:, 0])
-    np.clip(boxes[:, 1], 0, image_height, boxes[:, 1])
-    np.clip(boxes[:, 2], 0, image_width,  boxes[:, 2])
-    np.clip(boxes[:, 3], 0, image_height, boxes[:, 3])
-    return boxes
+    reference_box = [0, 0, image_width, image_height]
+    return clip_boxes(boxes, reference_box, copy)
