@@ -1,3 +1,5 @@
+import warnings
+
 import cv2
 import khandy
 import numpy as np
@@ -99,36 +101,6 @@ def resize_image_long(image, dst_size, return_scale=False, interpolation='biline
         return resized_image, scale
         
         
-def letterbox_resize_image(image, dst_width, dst_height, border_value=0,
-                           return_scale=False, interpolation='bilinear'):
-    """Resize an image preserving the original aspect ratio using padding.
-    
-    References:
-        `letterbox_image` in `https://github.com/pjreddie/darknet/blob/master/src/image.c`
-    """
-    assert khandy.is_numpy_image(image)
-    src_height, src_width = image.shape[:2]
-    scale = min(dst_width / src_width, dst_height / src_height)
-    resize_w = int(round(scale * src_width))
-    resize_h = int(round(scale * src_height))
-
-    resized_image = cv2.resize(image, (resize_w, resize_h), 
-                               interpolation=interp_codes[interpolation])
-    padded_shape = list(resized_image.shape)
-    padded_shape[0] = dst_height
-    padded_shape[1] = dst_width
-    padded_image = np.full(padded_shape, border_value, image.dtype)
-
-    dw = (dst_width - resize_w) // 2
-    dh = (dst_height - resize_h) // 2
-    padded_image[dh: resize_h + dh, dw: resize_w + dw, ...] = resized_image
-    
-    if not return_scale:
-        return padded_image
-    else:
-        return padded_image, scale, dw, dh
-        
-        
 def resize_image_to_range(image, min_length, max_length, return_scale=False, interpolation='bilinear'):
     """Resizes an image so its dimensions are within the provided value.
     
@@ -171,3 +143,35 @@ def resize_image_to_range(image, min_length, max_length, return_scale=False, int
         return resized_image, scale
         
         
+def letterbox_image(image, dst_width, dst_height, border_value=0,
+                    return_scale=False, interpolation='bilinear'):
+    """Resize an image preserving the original aspect ratio using padding.
+    
+    References:
+        `letterbox_image` in `https://github.com/pjreddie/darknet/blob/master/src/image.c`
+    """
+    assert khandy.is_numpy_image(image)
+    src_height, src_width = image.shape[:2]
+    scale = min(dst_width / src_width, dst_height / src_height)
+    resize_w = int(round(scale * src_width))
+    resize_h = int(round(scale * src_height))
+
+    resized_image = cv2.resize(image, (resize_w, resize_h), 
+                               interpolation=interp_codes[interpolation])
+    pad_top = (dst_height - resize_h) // 2
+    pad_bottom = (dst_height - resize_h) - pad_top
+    pad_left = (dst_width - resize_w) // 2
+    pad_right = (dst_width - resize_w) - pad_left
+    padded_image = cv2.copyMakeBorder(resized_image, pad_top, pad_bottom, pad_left, pad_right, 
+                                      cv2.BORDER_CONSTANT, value=border_value)
+    if not return_scale:
+        return padded_image
+    else:
+        return padded_image, scale, pad_left, pad_top
+        
+
+def letterbox_resize_image(image, dst_width, dst_height, border_value=0,
+                           return_scale=False, interpolation='bilinear'):
+    warnings.warn('letterbox_resize_image will be deprecated, use letterbox_image instead!')
+    return letterbox_image(image, dst_width, dst_height, border_value,
+                           return_scale, interpolation)

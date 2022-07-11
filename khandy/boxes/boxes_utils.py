@@ -26,16 +26,3 @@ def assert_and_normalize_shape(x, length):
     else:
         raise ValueError('Incompatible ndim!')
         
-        
-def normalize_boxes(boxes, dtype=np.float32, copy=False, support_extra=True):
-    boxes = np.array(boxes, dtype=dtype, copy=copy)
-    assert boxes.ndim in [1, 2]
-    last_dimension = boxes.shape[-1]
-    if support_extra:
-        assert last_dimension >= 4
-    else:
-        assert last_dimension == 4
-        
-    if boxes.ndim == 1:
-        boxes = np.expand_dims(boxes, axis=0)
-    return boxes
