@@ -1,4 +1,5 @@
 import os
+import imghdr
 from io import BytesIO
 
 import cv2
@@ -7,7 +8,9 @@ import numpy as np
 from PIL import Image
 
 
-def imread_pil(file_or_buffer, to_mode='RGB', formats=None):
+def imread_pil(file_or_buffer, formats=None):
+    """Improvement on Image.open to avoid ResourceWarning.
+    """
     try:
         if isinstance(file_or_buffer, bytes):
             buffer = BytesIO()
@@ -45,7 +48,24 @@ def imwrite_cv(filename, image, params=None):
     """
     cv2.imencode(os.path.splitext(filename)[-1], image, params)[1].tofile(filename)
     
-    
+
+def imwrite_bytes(filename, image_bytes, update_extension=True):
+    extension = imghdr.what('', image_bytes)
+    if extension is None:
+        raise ValueError('image_bytes is not image')
+    extension = '.' + extension
+    file_extension = khandy.get_path_extension(filename)
+    if extension.lower() != file_extension.lower():
+        if update_extension:
+            filename = khandy.replace_path_extension(filename, extension)
+        else:
+            image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), -1)
+            image_bytes = cv2.imencode(file_extension, image)[1]
+    with open(filename, "wb") as f:
+        f.write(image_bytes)
+    return filename
+
+
 def normalize_image_dtype(image, keep_num_channels=False):
     """Normalize image dtype to uint8 (usually for visualization).
     
