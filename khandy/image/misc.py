@@ -1,4 +1,5 @@
 import os
+from io import BytesIO
 
 import cv2
 import khandy
@@ -6,31 +7,43 @@ import numpy as np
 from PIL import Image
 
 
-def imread_pil(filename, to_mode='RGB'):
-    with open(filename, 'rb') as f:
-        img = Image.open(f)
-        if to_mode is None:
-            return img
+def imread_pil(file_or_buffer, to_mode='RGB', formats=None):
+    try:
+        if isinstance(file_or_buffer, bytes):
+            buffer = BytesIO()
+            buffer.write(file_or_buffer)
+            buffer.seek(0)
+            image = Image.open(buffer)
+        elif hasattr(file_or_buffer, 'read'):
+            image = Image.open(file_or_buffer)
         else:
-            return img.convert(to_mode)
-            
-            
-def imread_cv(filename_or_buffer, flags=-1):
+            # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
+            with open(file_or_buffer, 'rb') as f:
+                image = Image.open(f)
+        return image
+    except Exception as e:
+        print(e)
+        return None
+        
+
+def imread_cv(file_or_buffer, flags=-1):
     """Improvement on cv2.imread, make it support filename including chinese character.
     """
     try:
-        if isinstance(filename_or_buffer, bytes):
-            return cv2.imdecode(np.frombuffer(filename_or_buffer, dtype=np.uint8), flags)
+        if isinstance(file_or_buffer, bytes):
+            return cv2.imdecode(np.frombuffer(file_or_buffer, dtype=np.uint8), flags)
         else:
-            return cv2.imdecode(np.fromfile(filename_or_buffer, dtype=np.uint8), flags)
+            # support type: file or str or Path
+            return cv2.imdecode(np.fromfile(file_or_buffer, dtype=np.uint8), flags)
     except Exception as e:
+        print(e)
         return None
     
     
-def imwrite_cv(filename, image):
+def imwrite_cv(filename, image, params=None):
     """Improvement on cv2.imwrite, make it support filename including chinese character.
     """
-    cv2.imencode(os.path.splitext(filename)[-1], image)[1].tofile(filename)
+    cv2.imencode(os.path.splitext(filename)[-1], image, params)[1].tofile(filename)
     
     
 def normalize_image_dtype(image, keep_num_channels=False):
