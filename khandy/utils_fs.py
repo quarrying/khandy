@@ -33,21 +33,21 @@ def get_path_extension(path):
     return os.path.splitext(os.path.basename(path))[1]
     
 
-def replace_path_extension(path, new_extname=None):
-    """Replaces the extension with new_extname or removes it when the default value is used.
+def replace_path_extension(path, new_extension=None):
+    """Replaces the extension with new_extension or removes it when the default value is used.
     Firstly, if this path has an extension, it is removed. Then, a dot character is appended 
-    to the pathname, if new_extname is not empty or does not begin with a dot character.
+    to the pathname, if new_extension is not empty or does not begin with a dot character.
 
     References:
         `std::filesystem::path::replace_extension` since C++17
     """
     filename_wo_ext = os.path.splitext(path)[0]
-    if new_extname == '' or new_extname is None:
+    if new_extension == '' or new_extension is None:
         return filename_wo_ext
-    elif new_extname.startswith('.'):
-        return ''.join([filename_wo_ext, new_extname]) 
+    elif new_extension.startswith('.'):
+        return ''.join([filename_wo_ext, new_extension]) 
     else:
-        return '.'.join([filename_wo_ext, new_extname])
+        return '.'.join([filename_wo_ext, new_extension])
 
 
 def makedirs(name, mode=0o755):
