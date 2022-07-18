@@ -13,11 +13,11 @@ def get_path_stem(path):
 
 def replace_path_stem(path, new_stem):
     dirname, basename = os.path.split(path)
-    stem, extname = os.path.splitext(basename)
+    stem, extension = os.path.splitext(basename)
     if isinstance(new_stem, str):
-        return os.path.join(dirname, new_stem + extname)
+        return os.path.join(dirname, new_stem + extension)
     elif hasattr(new_stem, '__call__'):
-        return os.path.join(dirname, new_stem(stem) + extname)
+        return os.path.join(dirname, new_stem(stem) + extension)
     else:
         raise ValueError('Unsupported Type!')
         
@@ -169,7 +169,7 @@ def copy_file(src, dst_dir, action_if_exist='rename'):
         dest filename
     """
     src_basename = os.path.basename(src)
-    src_stem, src_extname = os.path.splitext(src_basename)
+    src_stem, src_extension = os.path.splitext(src_basename)
     dst = os.path.join(dst_dir, src_basename)
     
     if action_if_exist is None:
@@ -178,7 +178,7 @@ def copy_file(src, dst_dir, action_if_exist='rename'):
     elif action_if_exist.lower() == 'rename':
         suffix = 2
         while os.path.exists(dst):
-            dst_basename = '{} ({}){}'.format(src_stem, suffix, src_extname)
+            dst_basename = '{} ({}){}'.format(src_stem, suffix, src_extension)
             dst = os.path.join(dst_dir, dst_basename)
             suffix += 1
         else:
@@ -203,7 +203,7 @@ def move_file(src, dst_dir, action_if_exist='rename'):
         dest filename
     """
     src_basename = os.path.basename(src)
-    src_stem, src_extname = os.path.splitext(src_basename)
+    src_stem, src_extension = os.path.splitext(src_basename)
     dst = os.path.join(dst_dir, src_basename)
     
     if action_if_exist is None:
@@ -212,7 +212,7 @@ def move_file(src, dst_dir, action_if_exist='rename'):
     elif action_if_exist.lower() == 'rename':
         suffix = 2
         while os.path.exists(dst):
-            dst_basename = '{} ({}){}'.format(src_stem, suffix, src_extname)
+            dst_basename = '{} ({}){}'.format(src_stem, suffix, src_extension)
             dst = os.path.join(dst_dir, dst_basename)
             suffix += 1
         else:
@@ -243,10 +243,10 @@ def rename_file(src, dst, action_if_exist='rename'):
         os.rename(src, dst)
     elif action_if_exist.lower() == 'rename':
         dirname, basename = os.path.split(dst)
-        stem, extname = os.path.splitext(basename)
+        stem, extension = os.path.splitext(basename)
         suffix = 2
         while os.path.exists(dst):
-            new_basename = '{} ({}){}'.format(stem, suffix, extname)
+            new_basename = '{} ({}){}'.format(stem, suffix, extension)
             dst = os.path.join(dirname, new_basename)
             suffix += 1
         os.makedirs(dirname, exist_ok=True)
