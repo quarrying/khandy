@@ -26,7 +26,7 @@ def calc_image_ahash(image):
     mean_val = np.mean(resized)
     hash_mat = resized >= mean_val
     hash_val = _convert_bool_matrix_to_int(hash_mat)
-    return hash_val
+    return f'{hash_val:016x}'
     
     
 def calc_image_dhash(image):
@@ -42,7 +42,7 @@ def calc_image_dhash(image):
     
     hash_mat = resized[:,:-1] >= resized[:,1:]
     hash_val = _convert_bool_matrix_to_int(hash_mat)
-    return hash_val
+    return f'{hash_val:016x}'
     
     
 def calc_image_phash(image):
@@ -66,5 +66,5 @@ def calc_image_phash(image):
 
     hash_mat = reduced_dct_coeff >= median_val
     hash_val = _convert_bool_matrix_to_int(hash_mat)
-    return hash_val
+    return f'{hash_val:016x}'
     
