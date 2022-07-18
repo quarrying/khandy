@@ -58,10 +58,11 @@ def calc_image_phash(image):
 
     dct_coeff = cv2.dct(resized.astype(np.float32))
     reduced_dct_coeff = dct_coeff[:8, :8]
-    
-    # median of coefficients excluding the DC term (0th term)
+
+    # # mean of coefficients excluding the DC term (0th term)
     # mean_val = np.mean(reduced_dct_coeff.flatten()[1:])
-    median_val = np.median(reduced_dct_coeff.flatten()[1:])
+    # median of coefficients
+    median_val = np.median(reduced_dct_coeff)
 
     hash_mat = reduced_dct_coeff >= median_val
     hash_val = _convert_bool_matrix_to_int(hash_mat)
