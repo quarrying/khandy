@@ -35,11 +35,11 @@ def load_json(filename, encoding='utf-8'):
     return data
 
 
-def save_json(filename, data, encoding='utf-8', cls=None, sort_keys=False):
+def save_json(filename, data, encoding='utf-8', indent=4, cls=None, sort_keys=False):
     if not filename.endswith('.json'):
         filename = filename + '.json'
     with open(filename, 'w', encoding=encoding) as f:
-        json.dump(data, f, indent=4, separators=(',',': '),
+        json.dump(data, f, indent=indent, separators=(',',': '),
                   ensure_ascii=False, cls=cls, sort_keys=sort_keys)
 
 
