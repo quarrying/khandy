@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 
 
-def imread_pil(file_or_buffer, formats=None):
+def imread_pil(file_or_buffer, to_mode=None):
     """Improvement on Image.open to avoid ResourceWarning.
     """
     try:
@@ -16,13 +16,20 @@ def imread_pil(file_or_buffer, formats=None):
             buffer = BytesIO()
             buffer.write(file_or_buffer)
             buffer.seek(0)
-            image = Image.open(buffer)
-        elif hasattr(file_or_buffer, 'read'):
+            file_or_buffer = buffer
+
+        if hasattr(file_or_buffer, 'read'):
             image = Image.open(file_or_buffer)
+            if to_mode is not None:
+                image = image.convert(to_mode)
         else:
             # open path as file to avoid ResourceWarning (https://github.com/python-pillow/Pillow/issues/835)
             with open(file_or_buffer, 'rb') as f:
                 image = Image.open(f)
+                # If convert outside with statement, will raise "seek of closed file" as
+                # https://github.com/microsoft/Swin-Transformer/issues/66
+                if to_mode is not None:
+                    image = image.convert(to_mode)
         return image
     except Exception as e:
         print(e)
