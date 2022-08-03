@@ -40,7 +40,7 @@ def log_sum_exp(x, axis=-1, keepdims=False):
     return max_val + lse
     
     
-def l2_normalize(x, axis=0, epsilon=1e-12, copy=True):
+def l2_normalize(x, axis=None, epsilon=1e-12, copy=True):
     """L2 normalize an array along an axis.
     
     Args:
@@ -59,7 +59,7 @@ def l2_normalize(x, axis=0, epsilon=1e-12, copy=True):
     return x
     
     
-def minmax_normalize(x, axis=0, epsilon=1e-12, copy=True):
+def minmax_normalize(x, axis=None, epsilon=1e-12, copy=True):
     """minmax normalize an array along a given axis.
     
     Args:
@@ -67,6 +67,8 @@ def minmax_normalize(x, axis=0, epsilon=1e-12, copy=True):
             Input data.
         axis : None or int or tuple of ints, optional
             Axis or axes along which to operate.
+        epsilon: float, optional
+            A small value such as to avoid division by zero.
         copy : bool, optional
             Copy x or not.
     """
@@ -82,7 +84,39 @@ def minmax_normalize(x, axis=0, epsilon=1e-12, copy=True):
     x /= maxval
     return x
 
+
+def zscore_normalize(x, mean=None, std=None, axis=None, epsilon=1e-12, copy=True):
+    """z-score normalize an array along a given axis.
     
+    Args:
+        x : array_like of floats
+            Input data.
+        mean:  array_like of floats, optional
+            mean for z-score
+        std: array_like of floats, optional
+            std for z-score
+        axis : None or int or tuple of ints, optional
+            Axis or axes along which to operate.
+        epsilon: float, optional
+            A small value such as to avoid division by zero.
+        copy : bool, optional
+            Copy x or not.
+    """
+    if copy:
+        x = np.copy(x)
+    if mean is None:
+        mean = np.mean(x, axis=axis, keepdims=True)
+    if std is None:
+        std = np.std(x, axis=axis, keepdims=True)
+    mean = np.asarray(mean, dtype=x.dtype)
+    std = np.asarray(std, dtype=x.dtype)
+    std = np.maximum(std, epsilon)
+    
+    x -= mean
+    x /= std
+    return x
+
+
 def get_order_of_magnitude(number):
     number = np.where(number == 0, 1, number)
     oom = np.floor(np.log10(np.abs(number)))
