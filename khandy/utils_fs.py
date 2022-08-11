@@ -66,6 +66,27 @@ def is_path_in_extensions(path, extensions):
     return extension.lower() in extensions
 
 
+def normalize_path(path, norm_case=True):
+    """
+    References:
+        https://en.cppreference.com/w/cpp/filesystem/canonical
+    """
+    # On Unix and Windows, return the argument with an initial 
+    # component of ~ or ~user replaced by that user's home directory.
+    path = os.path.expanduser(path)
+    # Return a normalized absolutized version of the pathname path. 
+    # On most platforms, this is equivalent to calling the function 
+    # normpath() as follows: normpath(join(os.getcwd(), path)).
+    path = os.path.abspath(path)
+    if norm_case:
+        # Normalize the case of a pathname. On Windows, 
+        # convert all characters in the pathname to lowercase, 
+        # and also convert forward slashes to backward slashes. 
+        # On other operating systems, return the path unchanged.
+        path = os.path.normcase(path)
+    return path
+    
+
 def makedirs(name, mode=0o755):
     """
     References:
