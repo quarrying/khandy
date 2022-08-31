@@ -11,5 +11,7 @@ from .utils_others import *
 from .boxes import *
 from .image import *
 from .points import *
+from . import label
 
 from .version import *
+
