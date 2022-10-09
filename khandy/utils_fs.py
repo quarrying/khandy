@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import warnings
 
 
 def get_path_stem(path):
@@ -174,11 +175,16 @@ def get_folder_size(dirname):
     return total_size
 
     
-def replace_invalid_filename_char(filename, new_char='_'):
+def escape_filename(filename, new_char='_'):
     assert isinstance(new_char, str)
     control_chars = ''.join((map(chr, range(0x00, 0x20))))
     pattern = r'[\\/*?:"<>|{}]'.format(control_chars)
     return re.sub(pattern, new_char, filename)
+
+
+def replace_invalid_filename_char(filename, new_char='_'):
+    warnings.warn('replace_invalid_filename_char will be deprecated, use escape_filename instead!')
+    return escape_filename(filename, new_char)
 
 
 def copy_file(src, dst_dir, action_if_exist='rename'):
