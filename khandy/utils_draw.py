@@ -122,9 +122,12 @@ def draw_bounding_boxes(image, boxes, labels=None, colors=None,
                 fill_color = ImageColor.getrgb(color) + (100,)
             elif isinstance(color, tuple):
                 fill_color = color + (100,)
-            draw.rectangle(bbox, width=width, outline=color, fill=fill_color)
+            # the first argument of ImageDraw.rectangle:
+            # in old version only supports [(x0, y0), (x1, y1)]
+            # in new version supports either [(x0, y0), (x1, y1)] or [x0, y0, x1, y1]
+            draw.rectangle([(bbox[0], bbox[1]), (bbox[2], bbox[3])], width=width, outline=color, fill=fill_color)
         else:
-            draw.rectangle(bbox, width=width, outline=color)
+            draw.rectangle([(bbox[0], bbox[1]), (bbox[2], bbox[3])], width=width, outline=color)
 
         if labels is not None:
             margin = width + 1
