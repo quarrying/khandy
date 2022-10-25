@@ -1,15 +1,17 @@
 import numbers
+import warnings
 
 import khandy
 import numpy as np
 
 
-def crop_or_pad(image, x_min, y_min, x_max, y_max, border_value=0):
+def crop(image, x_min, y_min, x_max, y_max, border_value=0):
     """
     See Also:
         translate_image
         
     References:
+        PIL.Image.crop
         tf.image.resize_image_with_crop_or_pad
     """
     assert khandy.is_numpy_image(image)
@@ -59,8 +61,13 @@ def crop_or_pad(image, x_min, y_min, x_max, y_max, border_value=0):
         image[src_y_begin: src_y_end, src_x_begin: src_x_end, ...]
     return dst_image
     
-    
-def crop_or_pad_coords(boxes, image_width, image_height):
+
+def crop_or_pad(image, x_min, y_min, x_max, y_max, border_value=0):
+    warnings.warn('crop_or_pad will be deprecated, use crop instead!')
+    return crop(image, x_min, y_min, x_max, y_max, border_value)
+
+
+def crop_coords(boxes, image_width, image_height):
     """
     References:
         `mmcv.impad`
@@ -89,7 +96,12 @@ def crop_or_pad_coords(boxes, image_width, image_height):
                        dst_heights, dst_widths], axis=0)
     return coords
     
-    
+
+def crop_or_pad_coords(boxes, image_width, image_height):
+    warnings.warn('crop_or_pad_coords will be deprecated, use crop_coords instead!')
+    return crop_coords(boxes, image_width, image_height)
+
+
 def center_crop(image, dst_width, dst_height, strict=True):
     """
     strict: 
