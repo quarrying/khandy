@@ -53,8 +53,12 @@ def imread_cv(file_or_buffer, flags=-1):
 def imwrite_cv(filename, image, params=None):
     """Improvement on cv2.imwrite, make it support filename including chinese character.
     """
-    cv2.imencode(os.path.splitext(filename)[-1], image, params)[1].tofile(filename)
-    
+    try:
+        cv2.imencode(os.path.splitext(filename)[-1], image, params)[1].tofile(filename)
+        return True
+    except:
+        return False
+
 
 def imwrite_bytes(filename, image_bytes, update_extension=True):
     extension = imghdr.what('', image_bytes)
