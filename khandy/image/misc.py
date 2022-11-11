@@ -1,11 +1,42 @@
 import os
 import imghdr
+import warnings
 from io import BytesIO
 
 import cv2
 import khandy
 import numpy as np
 from PIL import Image
+
+
+def imread(file_or_buffer, flags=-1):
+    """Improvement on cv2.imread, make it support filename including chinese character.
+    """
+    try:
+        if isinstance(file_or_buffer, bytes):
+            return cv2.imdecode(np.frombuffer(file_or_buffer, dtype=np.uint8), flags)
+        else:
+            # support type: file or str or Path
+            return cv2.imdecode(np.fromfile(file_or_buffer, dtype=np.uint8), flags)
+    except Exception as e:
+        print(e)
+        return None
+    
+
+def imread_cv(file_or_buffer, flags=-1):
+    warnings.warn('khandy.imread_cv will be deprecated, use khandy.imread instead!')
+    return imread(file_or_buffer, flags)
+
+
+def imwrite(filename, image, params=None):
+    """Improvement on cv2.imwrite, make it support filename including chinese character.
+    """
+    cv2.imencode(os.path.splitext(filename)[-1], image, params)[1].tofile(filename)
+
+
+def imwrite_cv(filename, image, params=None):
+    warnings.warn('khandy.imwrite_cv will be deprecated, use khandy.imwrite instead!')
+    return imwrite(filename, image, params)
 
 
 def imread_pil(file_or_buffer, to_mode=None):
@@ -35,31 +66,7 @@ def imread_pil(file_or_buffer, to_mode=None):
         print(e)
         return None
         
-
-def imread_cv(file_or_buffer, flags=-1):
-    """Improvement on cv2.imread, make it support filename including chinese character.
-    """
-    try:
-        if isinstance(file_or_buffer, bytes):
-            return cv2.imdecode(np.frombuffer(file_or_buffer, dtype=np.uint8), flags)
-        else:
-            # support type: file or str or Path
-            return cv2.imdecode(np.fromfile(file_or_buffer, dtype=np.uint8), flags)
-    except Exception as e:
-        print(e)
-        return None
-    
-    
-def imwrite_cv(filename, image, params=None):
-    """Improvement on cv2.imwrite, make it support filename including chinese character.
-    """
-    try:
-        cv2.imencode(os.path.splitext(filename)[-1], image, params)[1].tofile(filename)
-        return True
-    except:
-        return False
-
-
+        
 def imwrite_bytes(filename, image_bytes, update_extension=True):
     extension = imghdr.what('', image_bytes)
     if extension is None:
