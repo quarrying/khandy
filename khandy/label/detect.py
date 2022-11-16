@@ -17,7 +17,8 @@ __all__ = ['DetectIrObject', 'DetectIrRecord',
            'PascalVocObject', 'PascalVocRecord', 'PascalVocHandler',
            'LabelmeShape', 'LabelmeRecord', 'LabelmeHandler',
            'YoloObject', 'YoloRecord', 'YoloHandler',
-           'CocoObject', 'CocoRecord', 'CocoDetectHandler']
+           'CocoObject', 'CocoRecord', 'CocoDetectHandler',
+           'load', 'save', 'convert']
 
 
 @dataclass
