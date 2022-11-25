@@ -1,6 +1,7 @@
 import json
 import base64
 import numbers
+import warnings
 from collections import OrderedDict
 
 
@@ -43,9 +44,33 @@ def save_json(filename, data, encoding='utf-8', indent=4, cls=None, sort_keys=Fa
                   ensure_ascii=False, cls=cls, sort_keys=sort_keys)
 
 
-def load_as_base64(filename: str) -> bytes:
-    with open(filename, 'rb') as f:
-        raw_bytes = f.read()
-    b64_bytes = base64.b64encode(raw_bytes)
-    return b64_bytes
+def load_bytes(filename: str, use_base64: bool = False) -> bytes:
+    """Open the file in bytes mode, read it, and close the file.
     
+    References:
+        pathlib.Path.read_bytes
+    """
+    with open(filename, 'rb') as f:
+        data = f.read()
+    if use_base64:
+        data = base64.b64encode(data)
+    return data
+
+
+def save_bytes(filename: str, data: bytes, use_base64: bool = False) -> int:
+    """Open the file in bytes mode, write to it, and close the file.
+    
+    References:
+        pathlib.Path.write_bytes
+    """
+    if use_base64:
+        data = base64.b64decode(data)
+    with open(filename, 'wb') as f:
+        ret = f.write(data)
+    return ret
+
+
+def load_as_base64(filename: str) -> bytes:
+    warnings.warn('khandy.load_as_base64 will be deprecated, use khandy.load_bytes instead!')
+    return load_bytes(filename, True)
+
