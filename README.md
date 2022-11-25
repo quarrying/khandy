@@ -15,3 +15,6 @@ pip install -e .
 - NumPy 1.11+
 - OpenCV 2.0+
 - Pillow
+- lxml
+- requests
+

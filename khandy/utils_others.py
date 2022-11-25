@@ -3,10 +3,15 @@ import re
 import time
 import json
 import socket
+import imghdr
 import logging
 import argparse
 import numbers
 import datetime
+import warnings
+from enum import Enum
+
+import requests
 
 
 def print_with_no(obj):
@@ -178,3 +183,90 @@ def get_utc8now():
     utc8now = datetime.datetime.now(tz)
     return utc8now
 
+
+class DownloadStatusCode(Enum):
+    FILE_SIZE_TOO_LARGE = (-100, 'the size of file from url is too large')
+    FILE_SIZE_TOO_SMALL = (-101, 'the size of file from url is too small')
+    FILE_SIZE_IS_ZERO = (-102, 'the size of file from url is zero')
+    URL_IS_NOT_IMAGE = (-103, 'URL is not an image')
+    
+    @property
+    def code(self):
+        return self.value[0]
+
+    @property
+    def message(self):
+        return self.value[1]
+
+
+class DownloadError(Exception):
+    def __init__(self, status_code: DownloadStatusCode, extra_str: str=None):
+        self.name = status_code.name
+        self.code = status_code.code
+        if extra_str is None:
+            self.message = status_code.message
+        else:
+            self.message = f'{status_code.message}: {extra_str}'
+        Exception.__init__(self)
+
+    def __repr__(self):
+        return f'[{self.__class__.__name__} {self.code}] {self.message}'
+    
+    __str__ = __repr__
+
+    
+def download_image(image_url, min_filesize=None, max_filesize=None, 
+                   imghdr_check=False, params=None, **kwargs) -> bytes:
+    """
+    References:
+        https://httpwg.org/specs/rfc9110.html#field.content-length
+        https://requests.readthedocs.io/en/latest/user/advanced/#body-content-workflow
+    """
+    stream = kwargs.pop('stream', True)
+    min_filesize = min_filesize or 0
+    max_filesize = max_filesize or 100 * 1024 * 1024
+    
+    with requests.get(image_url, stream=stream, params=params, **kwargs) as response:
+        response.raise_for_status()
+
+        content_type = response.headers.get('content-type')
+        if content_type is None:
+            warnings.warn('No Content-Type!')
+        else:
+            if not content_type.startswith(('image/', 'application/octet-stream')):
+                raise DownloadError(DownloadStatusCode.URL_IS_NOT_IMAGE)
+        
+        # when Transfer-Encoding == chunked, Content-Length does not exist.
+        content_length = response.headers.get('content-length')
+        if content_length is None:
+            warnings.warn('No Content-Length!')
+        else:
+            content_length = int(content_length)
+            if content_length > max_filesize:
+                raise DownloadError(DownloadStatusCode.FILE_SIZE_TOO_LARGE)
+            if content_length < min_filesize:
+                raise DownloadError(DownloadStatusCode.FILE_SIZE_TOO_SMALL)
+        
+        filesize = 0
+        first_chunk = True
+        chunks = []
+        for chunk in response.iter_content(chunk_size=10*1024):
+            if imghdr_check and first_chunk:
+                # imghdr.what fails to determine image format sometimes!
+                extension = imghdr.what('', chunk[:64])
+                if extension is None:
+                    raise DownloadError(DownloadStatusCode.URL_IS_NOT_IMAGE)
+                chunks.append(chunk)
+                first_chunk = False
+            else:
+                chunks.append(chunk)
+            
+            filesize += len(chunk)
+            if filesize > max_filesize:
+                raise DownloadError(DownloadStatusCode.FILE_SIZE_TOO_LARGE)
+        if filesize < min_filesize:
+            raise DownloadError(DownloadStatusCode.FILE_SIZE_TOO_SMALL)
+        image_bytes = b''.join(chunks)
+
+    return image_bytes
+    

@@ -2,3 +2,4 @@ numpy>=1.11.1
 opencv-python
 pillow
 lxml
+requests
