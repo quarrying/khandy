@@ -218,3 +218,10 @@ def is_gray_image(image, tol=3):
     else:
         return False
         
+
+def is_solid_color_image(image, tol=4):
+    assert is_numpy_image(image)
+    mean = np.array(cv2.mean(image)[:-1], dtype=np.float32)
+    mae = np.mean(np.abs(image - mean))
+    return mae <= tol
+
