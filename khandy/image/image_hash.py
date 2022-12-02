@@ -6,9 +6,8 @@ import numpy as np
 def _convert_bool_matrix_to_int(bool_mat):
     hash_val = int(0)
     for item in bool_mat.flatten():
-        hash_val |= int(item)
         hash_val <<= 1
-    hash_val >>= 1
+        hash_val |= int(item)
     return hash_val
     
     
