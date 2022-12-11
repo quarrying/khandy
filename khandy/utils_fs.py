@@ -194,27 +194,31 @@ def copy_file(src, dst_dir, action_if_exist='rename'):
         dst_dir: dest dir
         action_if_exist: 
             None: same as shutil.copy
-            rename: when dest file exists, rename it
+            ignore: when dest file exists, don't copy and return None
+            rename: when dest file exists, copy after rename
             
     Returns:
         dest filename
     """
-    src_basename = os.path.basename(src)
-    src_stem, src_extension = os.path.splitext(src_basename)
-    dst = os.path.join(dst_dir, src_basename)
-    
+    dst = os.path.join(dst_dir, os.path.basename(src))
+
     if action_if_exist is None:
         os.makedirs(dst_dir, exist_ok=True)
-        shutil.copy(src, dst_dir)
+        shutil.copy(src, dst)
+    elif action_if_exist.lower() == 'ignore':
+        if os.path.exists(dst):
+            warnings.warn(f'{dst} already exists, do not copy!')
+            return dst
+        os.makedirs(dst_dir, exist_ok=True)
+        shutil.copy(src, dst)
     elif action_if_exist.lower() == 'rename':
         suffix = 2
+        stem, extension = os.path.splitext(os.path.basename(src))
         while os.path.exists(dst):
-            dst_basename = '{} ({}){}'.format(src_stem, suffix, src_extension)
-            dst = os.path.join(dst_dir, dst_basename)
+            dst = os.path.join(dst_dir, f'{stem} ({suffix}){extension}')
             suffix += 1
-        else:
-            os.makedirs(dst_dir, exist_ok=True)
-            shutil.copy(src, dst)
+        os.makedirs(dst_dir, exist_ok=True)
+        shutil.copy(src, dst)
     else:
         raise ValueError('Invalid action_if_exist, got {}.'.format(action_if_exist))
         
@@ -228,27 +232,31 @@ def move_file(src, dst_dir, action_if_exist='rename'):
         dst_dir: dest dir
         action_if_exist: 
             None: same as shutil.move
-            rename: when dest file exists, rename it
+            ignore: when dest file exists, don't move and return None
+            rename: when dest file exists, move after rename
             
     Returns:
         dest filename
     """
-    src_basename = os.path.basename(src)
-    src_stem, src_extension = os.path.splitext(src_basename)
-    dst = os.path.join(dst_dir, src_basename)
-    
+    dst = os.path.join(dst_dir, os.path.basename(src))
+
     if action_if_exist is None:
         os.makedirs(dst_dir, exist_ok=True)
-        shutil.move(src, dst_dir)
+        shutil.move(src, dst)
+    elif action_if_exist.lower() == 'ignore':
+        if os.path.exists(dst):
+            warnings.warn(f'{dst} already exists, do not move!')
+            return dst
+        os.makedirs(dst_dir, exist_ok=True)
+        shutil.move(src, dst)
     elif action_if_exist.lower() == 'rename':
         suffix = 2
+        stem, extension = os.path.splitext(os.path.basename(src))
         while os.path.exists(dst):
-            dst_basename = '{} ({}){}'.format(src_stem, suffix, src_extension)
-            dst = os.path.join(dst_dir, dst_basename)
+            dst = os.path.join(dst_dir, f'{stem} ({suffix}){extension}')
             suffix += 1
-        else:
-            os.makedirs(dst_dir, exist_ok=True)
-            shutil.move(src, dst)
+        os.makedirs(dst_dir, exist_ok=True)
+        shutil.move(src, dst)
     else:
         raise ValueError('Invalid action_if_exist, got {}.'.format(action_if_exist))
         
@@ -262,6 +270,7 @@ def rename_file(src, dst, action_if_exist='rename'):
         dst: dest file path
         action_if_exist: 
             None: same as os.rename
+            ignore: when dest file exists, don't rename and return None
             rename: when dest file exists, rename it
             
     Returns:
@@ -269,18 +278,24 @@ def rename_file(src, dst, action_if_exist='rename'):
     """
     if dst == src:
         return dst
-        
+    dst_dir = os.path.dirname(os.path.abspath(dst))
+    
     if action_if_exist is None:
+        os.makedirs(dst_dir, exist_ok=True)
+        os.rename(src, dst)
+    elif action_if_exist.lower() == 'ignore':
+        if os.path.exists(dst):
+            warnings.warn(f'{dst} already exists, do not rename!')
+            return dst
+        os.makedirs(dst_dir, exist_ok=True)
         os.rename(src, dst)
     elif action_if_exist.lower() == 'rename':
-        dirname, basename = os.path.split(dst)
-        stem, extension = os.path.splitext(basename)
         suffix = 2
+        stem, extension = os.path.splitext(os.path.basename(dst))
         while os.path.exists(dst):
-            new_basename = '{} ({}){}'.format(stem, suffix, extension)
-            dst = os.path.join(dirname, new_basename)
+            dst = os.path.join(dst_dir, f'{stem} ({suffix}){extension}')
             suffix += 1
-        os.makedirs(dirname, exist_ok=True)
+        os.makedirs(dst_dir, exist_ok=True)
         os.rename(src, dst)
     else:
         raise ValueError('Invalid action_if_exist, got {}.'.format(action_if_exist))
