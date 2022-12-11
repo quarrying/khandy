@@ -6,7 +6,8 @@ import numpy as np
 
 
 def crop(image, x_min, y_min, x_max, y_max, border_value=0):
-    """
+    """Crop the given image at specified rectangular area.
+    
     See Also:
         translate_image
         
