@@ -1,4 +1,5 @@
 import random
+import itertools
 
 
 def to_list(obj):
@@ -50,3 +51,18 @@ def transpose_table(table):
     m, n = len(table), len(table[0])
     return [[table[i][j] for i in range(m)] for j in range(n)]
 
+
+def concat_list(in_list):
+    """Concatenate a list of list into a single list.
+
+    Args:
+        in_list (list): The list of list to be merged.
+
+    Returns:
+        list: The concatenated flat list.
+    
+    References:
+        mmcv.concat_list
+    """
+    return list(itertools.chain(*in_list))
+    
