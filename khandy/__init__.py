@@ -8,6 +8,7 @@ from .utils_numpy import *
 from .utils_draw import *
 from .utils_others import *
 from .utils_split import *
+from .utils_time import *
 
 from .boxes import *
 from .image import *
