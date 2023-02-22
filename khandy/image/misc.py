@@ -1,5 +1,6 @@
 import os
 import imghdr
+import numbers
 import warnings
 from io import BytesIO
 
@@ -225,3 +226,19 @@ def is_solid_color_image(image, tol=4):
     mae = np.mean(np.abs(image - mean))
     return mae <= tol
 
+
+def create_solid_color_image(image_width, image_height, color, dtype=None):
+    if isinstance(color, numbers.Real):
+        image = np.full((image_height, image_width), color, dtype=dtype)
+    elif isinstance(color, (tuple, list)):
+        if len(color) == 1:
+            image = np.full((image_height, image_width), color[0], dtype=dtype)
+        elif len(color) == 3:
+            image = np.full((1, 1, 3), color, dtype=dtype)
+            image = cv2.copyMakeBorder(image, 0, image_height-1, 0, image_width-1, 
+                                       cv2.BORDER_CONSTANT, value=color)
+        else:
+            raise ValueError(f'Unsupported `color`, its size only support 1 or 3, got {len(color)}.')
+    else:
+        raise ValueError(f'Invalid type {type(color)} for `color`.')
+    return image
