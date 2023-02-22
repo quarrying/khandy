@@ -21,10 +21,10 @@ def print_with_no(obj):
         print('[1] {}'.format(obj))
         
       
-def get_file_line_count(filename):
+def get_file_line_count(filename, encoding='utf-8'):
     line_count = 0
     buffer_size = 1024 * 1024 * 8
-    with open(filename, 'r') as f:
+    with open(filename, 'r', encoding=encoding) as f:
         while True:
             data = f.read(buffer_size)
             if not data:
@@ -32,7 +32,7 @@ def get_file_line_count(filename):
             line_count += data.count('\n')
     return line_count
 
-    
+
 def get_host_ip():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
