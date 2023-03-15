@@ -1,7 +1,6 @@
 import re
 import json
 import socket
-import imghdr
 import logging
 import argparse
 import warnings
@@ -43,10 +42,13 @@ def get_host_ip():
     return ip
     
 
-def set_logger(filename, level=logging.INFO, logger_name=None):
+def set_logger(filename, level=logging.INFO, logger_name=None, formatter=None, with_print=False):
     logger = logging.getLogger(logger_name) 
     logger.setLevel(level)
     
+    if formatter is None:
+        formatter = logging.Formatter('%(message)s')
+
     # Never mutate (insert/remove elements) the list you're currently iterating on. 
     # If you need, make a copy.
     for handler in logger.handlers[:]:
@@ -59,12 +61,12 @@ def set_logger(filename, level=logging.INFO, logger_name=None):
             logger.removeHandler(handler)
             
     file_handler = logging.FileHandler(filename)
-    file_handler.setFormatter(logging.Formatter('%(message)s'))
+    file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(logging.Formatter('%(message)s'))
-    logger.addHandler(console_handler)
+    if with_print:
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
     return logger
 
 
