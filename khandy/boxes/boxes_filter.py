@@ -20,10 +20,12 @@ def filter_small_boxes(boxes, min_width, min_height):
         `ops.boxes.remove_small_boxes` in torchvision
     """
     widths = boxes[:, 2] - boxes[:, 0]
-    heights = boxes[:, 3] - boxes[:, 1] 
-    keep = (widths >= min_width)
-    keep &= (heights >= min_height)
-    return np.nonzero(keep)[0]
+    heights = boxes[:, 3] - boxes[:, 1]
+    # keep represents indices to keep, 
+    # mask represents bool ndarray, so use mask here.
+    mask = (widths >= min_width)
+    mask &= (heights >= min_height)
+    return np.nonzero(mask)[0]
     
 
 def filter_boxes_outside(boxes, reference_box):
@@ -33,9 +35,9 @@ def filter_boxes_outside(boxes, reference_box):
         `prune_outside_window` in TensorFlow object detection API.
     """
     x_min, y_min, x_max, y_max = reference_box[:4]
-    keep = ((boxes[:, 0] >= x_min) & (boxes[:, 1] >= y_min) &
+    mask = ((boxes[:, 0] >= x_min) & (boxes[:, 1] >= y_min) &
             (boxes[:, 2] <= x_max) & (boxes[:, 3] <= y_max))
-    return np.nonzero(keep)[0]
+    return np.nonzero(mask)[0]
 
 
 def filter_boxes_completely_outside(boxes, reference_box):
@@ -45,9 +47,9 @@ def filter_boxes_completely_outside(boxes, reference_box):
         `prune_completely_outside_window` in TensorFlow object detection API.
     """
     x_min, y_min, x_max, y_max = reference_box[:4]
-    keep = ((boxes[:, 0] < x_max) & (boxes[:, 1] < y_max) &
+    mask = ((boxes[:, 0] < x_max) & (boxes[:, 1] < y_max) &
             (boxes[:, 2] > x_min) & (boxes[:, 3] > y_min))
-    return np.nonzero(keep)[0]
+    return np.nonzero(mask)[0]
     
 
 def non_max_suppression(boxes, scores, thresh, classes=None, ratio_type="iou"):
@@ -59,7 +61,7 @@ def non_max_suppression(boxes, scores, thresh, classes=None, ratio_type="iou"):
         classes: class labels
         
     Returns:
-        indexes to keep
+        indices to keep
         
     References:
         `py_cpu_nms` in py-faster-rcnn
