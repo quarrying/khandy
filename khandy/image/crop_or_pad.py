@@ -24,27 +24,13 @@ def crop(image, x_min, y_min, x_max, y_max, border_value=0):
     dst_height, dst_width = y_max - y_min + 1, x_max - x_min + 1
     channels = 1 if image.ndim == 2 else image.shape[2]
     
-    if image.ndim == 2: 
-        dst_image_shape = (dst_height, dst_width)
-    else:
-        dst_image_shape = (dst_height, dst_width, channels)
-
-    if isinstance(border_value, numbers.Real):
-        dst_image = np.full(dst_image_shape, border_value, dtype=image.dtype)
-    elif isinstance(border_value, tuple):
+    if isinstance(border_value, (tuple, list)):
         assert len(border_value) == channels, \
             'Expected the num of elements in tuple equals the channels ' \
             'of input image. Found {} vs {}'.format(
                 len(border_value), channels)
-        if channels == 1:
-            dst_image = np.full(dst_image_shape, border_value[0], dtype=image.dtype)
-        else:
-            border_value = np.asarray(border_value, dtype=image.dtype)
-            dst_image = np.empty(dst_image_shape, dtype=image.dtype)
-            dst_image[:] = border_value
-    else:
-        raise ValueError(
-            'Invalid type {} for `border_value`.'.format(type(border_value)))
+    dst_image = khandy.create_solid_color_image(
+        dst_width, dst_height, border_value, dtype=image.dtype)
 
     src_x_begin = max(x_min, 0)
     src_x_end   = min(x_max + 1, src_width)

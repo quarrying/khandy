@@ -1,7 +1,6 @@
 import numbers
 
 import khandy
-import numpy as np
 
 
 def translate_image(image, x_shift, y_shift, border_value=0):
@@ -28,23 +27,14 @@ def translate_image(image, x_shift, y_shift, border_value=0):
     image_height, image_width = image.shape[:2]
     channels = 1 if image.ndim == 2 else image.shape[2]
     
-    if isinstance(border_value, numbers.Real):
-        dst_image = np.full_like(image, border_value)
-    elif isinstance(border_value, tuple):
+    if isinstance(border_value, (tuple, list)):
         assert len(border_value) == channels, \
-            'Expected the num of elements in tuple equals the channels' \
+            'Expected the num of elements in tuple equals the channels ' \
             'of input image. Found {} vs {}'.format(
                 len(border_value), channels)
-        if channels == 1:
-            dst_image = np.full_like(image, border_value[0])
-        else:
-            border_value = np.asarray(border_value, dtype=image.dtype)
-            dst_image = np.empty_like(image)
-            dst_image[:] = border_value
-    else:
-        raise ValueError(
-            'Invalid type {} for `border_value`.'.format(type(border_value)))
-        
+    dst_image = khandy.create_solid_color_image(
+        image_height, image_width, border_value, dtype=image.dtype)
+    
     if (abs(x_shift) >= image_width) or (abs(y_shift) >= image_height):
         return dst_image
         
