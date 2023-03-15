@@ -121,16 +121,14 @@ class DownloadError(Exception):
     __str__ = __repr__
 
     
-def download_image(image_url, min_filesize=None, max_filesize=None, 
-                   imghdr_check=False, params=None, **kwargs) -> bytes:
+def download_image(image_url, min_filesize=0, max_filesize=100*1024*1024, 
+                   params=None, **kwargs) -> bytes:
     """
     References:
         https://httpwg.org/specs/rfc9110.html#field.content-length
         https://requests.readthedocs.io/en/latest/user/advanced/#body-content-workflow
     """
     stream = kwargs.pop('stream', True)
-    min_filesize = min_filesize or 0
-    max_filesize = max_filesize or 100 * 1024 * 1024
     
     with requests.get(image_url, stream=stream, params=params, **kwargs) as response:
         response.raise_for_status()
@@ -154,19 +152,9 @@ def download_image(image_url, min_filesize=None, max_filesize=None,
                 raise DownloadError(DownloadStatusCode.FILE_SIZE_TOO_SMALL)
         
         filesize = 0
-        first_chunk = True
         chunks = []
         for chunk in response.iter_content(chunk_size=10*1024):
-            if imghdr_check and first_chunk:
-                # imghdr.what fails to determine image format sometimes!
-                extension = imghdr.what('', chunk[:64])
-                if extension is None:
-                    raise DownloadError(DownloadStatusCode.URL_IS_NOT_IMAGE)
-                chunks.append(chunk)
-                first_chunk = False
-            else:
-                chunks.append(chunk)
-            
+            chunks.append(chunk)
             filesize += len(chunk)
             if filesize > max_filesize:
                 raise DownloadError(DownloadStatusCode.FILE_SIZE_TOO_LARGE)
