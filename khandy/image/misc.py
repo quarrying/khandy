@@ -233,12 +233,12 @@ def create_solid_color_image(image_width, image_height, color, dtype=None):
     elif isinstance(color, (tuple, list)):
         if len(color) == 1:
             image = np.full((image_height, image_width), color[0], dtype=dtype)
-        elif len(color) == 3:
-            image = np.full((1, 1, 3), color, dtype=dtype)
+        elif len(color) in (3, 4):
+            image = np.full((1, 1, len(color)), color, dtype=dtype)
             image = cv2.copyMakeBorder(image, 0, image_height-1, 0, image_width-1, 
                                        cv2.BORDER_CONSTANT, value=color)
         else:
-            raise ValueError(f'Unsupported `color`, its size only support 1 or 3, got {len(color)}.')
+            raise ValueError(f'Unsupported `color`, its size only support 1, 3 and 4, got {len(color)}.')
     else:
         raise ValueError(f'Invalid type {type(color)} for `color`.')
     return image
