@@ -238,7 +238,9 @@ def create_solid_color_image(image_width, image_height, color, dtype=None):
             image = cv2.copyMakeBorder(image, 0, image_height-1, 0, image_width-1, 
                                        cv2.BORDER_CONSTANT, value=color)
         else:
-            raise ValueError(f'Unsupported `color`, its size only support 1, 3 and 4, got {len(color)}.')
+            color = np.asarray(color, dtype=dtype)
+            image = np.empty((image_height, image_width, len(color)), dtype=dtype)
+            image[:] = color
     else:
         raise ValueError(f'Invalid type {type(color)} for `color`.')
     return image
