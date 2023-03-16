@@ -32,6 +32,8 @@ def translate_image(image, x_shift, y_shift, border_value=0):
             'Expected the num of elements in tuple equals the channels ' \
             'of input image. Found {} vs {}'.format(
                 len(border_value), channels)
+    else:
+        border_value = (border_value,) * channels
     dst_image = khandy.create_solid_color_image(
         image_height, image_width, border_value, dtype=image.dtype)
     

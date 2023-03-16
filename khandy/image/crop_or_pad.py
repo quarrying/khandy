@@ -29,6 +29,8 @@ def crop(image, x_min, y_min, x_max, y_max, border_value=0):
             'Expected the num of elements in tuple equals the channels ' \
             'of input image. Found {} vs {}'.format(
                 len(border_value), channels)
+    else:
+        border_value = (border_value,) * channels
     dst_image = khandy.create_solid_color_image(
         dst_width, dst_height, border_value, dtype=image.dtype)
 
