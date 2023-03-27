@@ -42,7 +42,7 @@ def get_host_ip():
     return ip
     
 
-def set_logger(filename, level=logging.INFO, logger_name=None, formatter=None, with_print=False):
+def set_logger(filename, level=logging.INFO, logger_name=None, formatter=None, with_print=True):
     logger = logging.getLogger(logger_name) 
     logger.setLevel(level)
     
