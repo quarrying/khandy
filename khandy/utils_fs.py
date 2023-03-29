@@ -118,6 +118,7 @@ def listdirs(paths, path_sep=None, full_path=True):
 
 
 def get_all_filenames(path, extensions=None, is_valid_file=None):
+    warnings.warn('`get_all_filenames` will be deprecated, use `list_items_in_dir` instead!')
     if (extensions is not None) and (is_valid_file is not None):
         raise ValueError("Both extensions and is_valid_file cannot "
                          "be not None at the same time")
@@ -140,6 +141,7 @@ def get_all_filenames(path, extensions=None, is_valid_file=None):
 
 
 def get_top_level_dirs(path, full_path=True):
+    warnings.warn('`get_top_level_dirs` will be deprecated, use `list_dirs_in_dir` instead!')
     if path is None:
         path = os.getcwd()
     path_ex = os.path.expanduser(path)
@@ -153,6 +155,7 @@ def get_top_level_dirs(path, full_path=True):
 
 
 def get_top_level_files(path, full_path=True):
+    warnings.warn('`get_top_level_files` will be deprecated, use `list_files_in_dir` instead!')
     if path is None:
         path = os.getcwd()
     path_ex = os.path.expanduser(path)
@@ -164,6 +167,71 @@ def get_top_level_files(path, full_path=True):
         return [item for item in filenames
                 if os.path.isfile(os.path.join(path_ex, item))]
                 
+
+def list_items_in_dir(path=None, recursive=False, full_path=True):
+    """List all entries in directory
+    """
+    if path is None:
+        path = os.getcwd()
+    path_ex = os.path.expanduser(path)
+    
+    if not recursive:
+        names = os.listdir(path_ex)
+        if full_path:
+            return [os.path.join(path_ex, name) for name in sorted(names)]
+        else:
+            return sorted(names)
+    else:
+        all_names = []
+        for root, dirnames, filenames in sorted(os.walk(path_ex, followlinks=True)):
+            all_names += [os.path.join(root, name) for name in sorted(dirnames)]
+            all_names += [os.path.join(root, name) for name in sorted(filenames)]
+        return all_names
+
+
+def list_dirs_in_dir(path=None, recursive=False, full_path=True):
+    """List all dirs in directory
+    """
+    if path is None:
+        path = os.getcwd()
+    path_ex = os.path.expanduser(path)
+
+    if not recursive:
+        names = os.listdir(path_ex)
+        if full_path:
+            return [os.path.join(path_ex, name) for name in sorted(names)
+                    if os.path.isdir(os.path.join(path_ex, name))]
+        else:
+            return [name for name in sorted(names)
+                    if os.path.isdir(os.path.join(path_ex, name))]
+    else:
+        all_names = []
+        for root, dirnames, _ in sorted(os.walk(path_ex, followlinks=True)):
+            all_names += [os.path.join(root, name) for name in sorted(dirnames)]
+        return all_names
+
+
+def list_files_in_dir(path=None, recursive=False, full_path=True):
+    """List all files in directory
+    """
+    if path is None:
+        path = os.getcwd()
+    path_ex = os.path.expanduser(path)
+
+    if not recursive:
+        names = os.listdir(path_ex)
+        if full_path:
+            return [os.path.join(path_ex, name) for name in sorted(names)
+                    if os.path.isfile(os.path.join(path_ex, name))]
+        else:
+            return [name for name in sorted(names)
+                    if os.path.isfile(os.path.join(path_ex, name))]
+    else:
+        all_names = []
+        for root, _, filenames in sorted(os.walk(path_ex, followlinks=True)):
+            all_names += [os.path.join(root, name) for name in sorted(filenames)]
+        return all_names
+        
 
 def get_folder_size(dirname):
     if not os.path.exists(dirname):
@@ -183,7 +251,7 @@ def escape_filename(filename, new_char='_'):
 
 
 def replace_invalid_filename_char(filename, new_char='_'):
-    warnings.warn('replace_invalid_filename_char will be deprecated, use escape_filename instead!')
+    warnings.warn('`replace_invalid_filename_char` will be deprecated, use `escape_filename` instead!')
     return escape_filename(filename, new_char)
 
 
