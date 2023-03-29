@@ -93,6 +93,7 @@ def makedirs(name, mode=0o755):
     References:
         mmcv.mkdir_or_exist
     """
+    warnings.warn('`makedirs` will be deprecated!')
     if name == '':
         return
     name = os.path.expanduser(name)
@@ -102,6 +103,7 @@ def makedirs(name, mode=0o755):
 def listdirs(paths, path_sep=None, full_path=True):
     """Enhancement on `os.listdir`
     """
+    warnings.warn('`listdirs` will be deprecated!')
     assert isinstance(paths, (str, tuple, list))
     if isinstance(paths, str):
         path_sep = path_sep or os.path.pathsep
