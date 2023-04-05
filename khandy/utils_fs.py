@@ -120,7 +120,7 @@ def listdirs(paths, path_sep=None, full_path=True):
 
 
 def get_all_filenames(path, extensions=None, is_valid_file=None):
-    warnings.warn('`get_all_filenames` will be deprecated, use `list_items_in_dir` instead!')
+    warnings.warn('`get_all_filenames` will be deprecated, use `list_files_in_dir` with `recursive=True` instead!')
     if (extensions is not None) and (is_valid_file is not None):
         raise ValueError("Both extensions and is_valid_file cannot "
                          "be not None at the same time")
