@@ -60,7 +60,7 @@ def set_logger(filename, level=logging.INFO, logger_name=None, formatter=None, w
         elif type(handler) == logging.StreamHandler:
             logger.removeHandler(handler)
             
-    file_handler = logging.FileHandler(filename)
+    file_handler = logging.FileHandler(filename, encoding='utf-8')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
     if with_print:
