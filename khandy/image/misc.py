@@ -156,9 +156,9 @@ def normalize_image_shape(image, swap_rb=False):
             else:
                 image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
         else:
-            raise ValueError('Unsupported!')
+            raise ValueError(f'Unsupported image channel number, only support 1, 3 and 4, got {num_channels}!')
     else:
-        raise ValueError('Unsupported!')
+        raise ValueError(f'Unsupported image ndarray ndim, only support 2 and 3, got {image.ndim}!')
     return image
 
 
@@ -203,16 +203,16 @@ def is_gray_image(image, tol=3):
         num_channels = image.shape[-1]
         if num_channels == 1:
             return True
+        elif num_channels == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            gray3 = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+            mae = np.mean(cv2.absdiff(image, gray3))
+            return mae <= tol
         elif num_channels == 4:
             rgb = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
             gray = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
             gray3 = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
             mae = np.mean(cv2.absdiff(rgb, gray3))
-            return mae <= tol
-        elif num_channels == 3:
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            gray3 = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-            mae = np.mean(cv2.absdiff(image, gray3))
             return mae <= tol
         else:
             return False
