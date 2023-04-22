@@ -44,6 +44,10 @@ def draw_text(image, text, position, color=(255,0,0), font=None, font_size=15):
         torchvision.utils.draw_bounding_boxes
     """
     if isinstance(image, np.ndarray):
+        # PIL.Image.fromarray fails with uint16 arrays
+        # https://github.com/python-pillow/Pillow/issues/1514
+        if (image.dtype == np.uint16) and (image.ndim != 2):
+            image = (image / 256).astype(np.uint8)
         pil_image = Image.fromarray(image)
     elif isinstance(image, PIL.Image.Image):
         pil_image = image
@@ -88,6 +92,10 @@ def draw_bounding_boxes(image, boxes, labels=None, colors=None,
         torchvision.utils.draw_bounding_boxes
     """
     if isinstance(image, np.ndarray):
+        # PIL.Image.fromarray fails with uint16 arrays
+        # https://github.com/python-pillow/Pillow/issues/1514
+        if (image.dtype == np.uint16) and (image.ndim != 2):
+            image = (image / 256).astype(np.uint8)
         pil_image = Image.fromarray(image)
     elif isinstance(image, PIL.Image.Image):
         pil_image = image
