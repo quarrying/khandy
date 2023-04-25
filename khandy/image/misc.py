@@ -128,8 +128,8 @@ def normalize_image_dtype(image, keep_num_channels=False):
     return image
     
     
-def normalize_image_shape(image, swap_rb=False):
-    """Normalize image shape to (h, w, 3).
+def normalize_image_channel(image, swap_rb=False):
+    """Normalize image channel number and order to RGB or BGR.
     
     Args:
         image : ndarray
@@ -139,7 +139,7 @@ def normalize_image_shape(image, swap_rb=False):
             
     Returns:
         out: ndarray
-            Image whose shape is (h, w, 3).
+            Image whose shape is (..., 3).
     """
     if image.ndim == 2:
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
@@ -160,6 +160,11 @@ def normalize_image_shape(image, swap_rb=False):
     else:
         raise ValueError(f'Unsupported image ndarray ndim, only support 2 and 3, got {image.ndim}!')
     return image
+
+
+def normalize_image_shape(image, swap_rb=False):
+    warnings.warn('khandy.normalize_image_shape will be deprecated, use khandy.normalize_image_channel instead!')
+    return normalize_image_channel(image, swap_rb)
 
 
 def stack_image_list(image_list, dtype=np.float32):
