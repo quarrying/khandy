@@ -8,6 +8,7 @@ from .list_utils import *
 from .misc import *
 from .numpy_utils import *
 from .split_utils import *
+from .text_utils import *
 from .time_utils import *
 from .version import *
 
