@@ -19,14 +19,14 @@ def is_chinese_char(uchar: str) -> bool:
         `is_chinese_char` in https://github.com/thunlp/OpenNRE/
     """
     codepoint = ord(uchar)
-    if ((codepoint >= 0x4E00 and codepoint <= 0x9FFF) or # CJK Unified Ideographs
-        (codepoint >= 0x3400 and codepoint <= 0x4DBF) or # CJK Unified Ideographs Extension A
-        (codepoint >= 0xF900 and codepoint <= 0xFAFF) or # CJK Compatibility Ideographs
-        (codepoint >= 0x20000 and codepoint <= 0x2A6DF) or # CJK Unified Ideographs Extension B
-        (codepoint >= 0x2A700 and codepoint <= 0x2B73F) or
-        (codepoint >= 0x2B740 and codepoint <= 0x2B81F) or
-        (codepoint >= 0x2B820 and codepoint <= 0x2CEAF) or
-        (codepoint >= 0x2F800 and codepoint <= 0x2FA1F)): # CJK Compatibility Supplement
+    if ((0x4E00 <= codepoint <= 0x9FFF) or # CJK Unified Ideographs
+        (0x3400 <= codepoint <= 0x4DBF) or # CJK Unified Ideographs Extension A
+        (0xF900 <= codepoint <= 0xFAFF) or # CJK Compatibility Ideographs
+        (0x20000 <= codepoint <= 0x2A6DF) or # CJK Unified Ideographs Extension B
+        (0x2A700 <= codepoint <= 0x2B73F) or
+        (0x2B740 <= codepoint <= 0x2B81F) or
+        (0x2B820 <= codepoint <= 0x2CEAF) or
+        (0x2F800 <= codepoint <= 0x2FA1F)): # CJK Compatibility Supplement
         return True
     return False
 
