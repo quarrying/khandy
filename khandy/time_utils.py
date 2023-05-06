@@ -50,7 +50,9 @@ def get_timestamp_us(time_val=None, rounded=True):
     return _to_timestamp(time_val, multiplier=1000000, rounded=rounded)
 
 
-def get_utc8now():
+def get_utc8now() -> datetime.datetime:
+    """get current UTC-8 time or Beijing time
+    """
     tz = datetime.timezone(datetime.timedelta(hours=8))
     utc8now = datetime.datetime.now(tz)
     return utc8now
