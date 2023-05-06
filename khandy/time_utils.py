@@ -4,7 +4,7 @@ import numbers
 import datetime
 
 
-def _to_timestamp(val):
+def _to_timestamp(val, multiplier=1, rounded=False):
     if val is None:
         timestamp = time.time()
     elif isinstance(val, numbers.Real):
@@ -25,37 +25,29 @@ def _to_timestamp(val):
             raise TypeError('when argument is str, it should conform to isoformat')
     else:
         raise TypeError('unsupported type!')
+    timestamp = timestamp * multiplier
+    if rounded:
+        # The return value is an integer if ndigits is omitted or None.
+        timestamp = round(timestamp)
     return timestamp
 
 
 def get_timestamp(time_val=None, rounded=True):
     """timestamp in seconds.
     """
-    timestamp = _to_timestamp(time_val)
-    if rounded:
-        # The return value is an integer if ndigits is omitted or None.
-        timestamp = round(timestamp)
-    return timestamp
+    return _to_timestamp(time_val, multiplier=1, rounded=rounded)
 
 
 def get_timestamp_ms(time_val=None, rounded=True):
     """timestamp in milliseconds.
     """
-    timestamp = _to_timestamp(time_val) * 1000
-    if rounded:
-        # The return value is an integer if ndigits is omitted or None.
-        timestamp = round(timestamp)
-    return timestamp
+    return _to_timestamp(time_val, multiplier=1000, rounded=rounded)
 
 
 def get_timestamp_us(time_val=None, rounded=True):
     """timestamp in microseconds.
     """
-    timestamp = _to_timestamp(time_val) * 1000000
-    if rounded:
-        # The return value is an integer if ndigits is omitted or None.
-        timestamp = round(timestamp)
-    return timestamp
+    return _to_timestamp(time_val, multiplier=1000000, rounded=rounded)
 
 
 def get_utc8now():
