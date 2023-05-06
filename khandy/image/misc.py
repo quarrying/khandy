@@ -247,5 +247,5 @@ def create_solid_color_image(image_width, image_height, color, dtype=None):
             image = np.empty((image_height, image_width, len(color)), dtype=dtype)
             image[:] = color
     else:
-        raise ValueError(f'Invalid type {type(color)} for `color`.')
+        raise TypeError(f'Invalid type {type(color)} for `color`.')
     return image

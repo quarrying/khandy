@@ -52,7 +52,7 @@ def draw_text(image, text, position, color=(255,0,0), font=None, font_size=15):
     elif isinstance(image, PIL.Image.Image):
         pil_image = image
     else:
-        raise ValueError('Unsupported image type!')
+        raise TypeError('Unsupported image type!')
     assert pil_image.mode in ['L', 'RGB', 'RGBA']
     
     assert _is_legal_color(color)
@@ -100,7 +100,7 @@ def draw_bounding_boxes(image, boxes, labels=None, colors=None,
     elif isinstance(image, PIL.Image.Image):
         pil_image = image
     else:
-        raise ValueError('Unsupported image type!')
+        raise TypeError('Unsupported image type!')
     pil_image = pil_image.convert('RGB')
     
     if font is None:

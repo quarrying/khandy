@@ -20,7 +20,7 @@ def replace_path_stem(path, new_stem):
     elif hasattr(new_stem, '__call__'):
         return os.path.join(dirname, new_stem(stem) + extension)
     else:
-        raise ValueError('Unsupported Type!')
+        raise TypeError('Unsupported Type!')
         
 
 def get_path_extension(path):

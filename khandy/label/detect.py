@@ -544,7 +544,7 @@ def convert_detect(record, out_fmt):
     elif isinstance(record, DetectIrRecord):
         ir_record = record
     else:
-        raise ValueError('Unsupported type for record')
+        raise TypeError('Unsupported type for record')
         
     if out_fmt in ('ir', 'detect_ir'):
         dst_record = ir_record
