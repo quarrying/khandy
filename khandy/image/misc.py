@@ -99,6 +99,67 @@ def imwrite_bytes(filename, image_bytes: bytes, update_extension: bool = True):
     return filename
 
 
+def rescale_image(image: np.ndarray, rescale_factor='auto', dst_dtype=np.float32):
+    """Rescale image by rescale_factor.
+
+    Args:
+        img (ndarray): Image to be rescaled.
+        rescale_factor (str, int or float, *optional*, defaults to `'auto'`): 
+            rescale the image by the specified scale factor. When is `'auto'`, 
+            rescale the image to [0, 1).
+        dtype (np.dtype, *optional*, defaults to `np.float32`):
+            The dtype of the output image. Defaults to `np.float32`.
+
+    Returns:
+        ndarray: The rescaled image.
+    """
+    if rescale_factor == 'auto':
+        if np.issubdtype(image.dtype, np.unsignedinteger):
+            rescale_factor = 1. / np.iinfo(image.dtype).max
+        else:
+            raise TypeError(f'Only support uint dtype ndarray when `rescale_factor` is `auto`, got {image.dtype}')
+    elif issubclass(rescale_factor, (int, float)):
+        pass
+    else:
+        raise TypeError('rescale_factor must be "auto", int or float')
+    image = image.astype(dst_dtype, copy=True)
+    image *= rescale_factor
+    image = image.astype(dst_dtype)
+    return image
+
+
+def normalize_image_value(image: np.ndarray, mean, std, rescale_factor=None):
+    """Normalize an image with mean and std, rescale optionally.
+
+    Args:
+        image (ndarray): Image to be normalized.
+        mean (int, float, Sequence[int], Sequence[float], ndarray): The mean to be used for normalize.
+        std (int, float, Sequence[int], Sequence[float], ndarray): The std to be used for normalize.
+        rescale_factor (None, 'auto', int or float, *optional*, defaults to `None`): 
+            rescale the image by the specified scale factor. When is `'auto'`, 
+            rescale the image to [0, 1); When is `None`, do not rescale.
+
+    Returns:
+        ndarray: The normalized image which dtype is np.float32.
+    """
+    dst_dtype = np.float32
+    mean = np.array(mean, dtype=dst_dtype).flatten()
+    std = np.array(std, dtype=dst_dtype).flatten()
+    if rescale_factor == 'auto':
+        if np.issubdtype(image.dtype, np.unsignedinteger):
+            mean *= np.iinfo(image.dtype).max
+            std *= np.iinfo(image.dtype).max
+        else:
+            raise TypeError(f'Only support uint dtype ndarray when `rescale_factor` is `auto`, got {image.dtype}')
+    elif isinstance(rescale_factor, (int, float)):
+        mean *= rescale_factor
+        std *= rescale_factor
+    image = image.astype(dst_dtype, copy=True)
+    image -= mean
+    image /= std
+    return image
+
+
 def normalize_image_dtype(image, keep_num_channels=False):
     """Normalize image dtype to uint8 (usually for visualization).
     
