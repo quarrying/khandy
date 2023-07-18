@@ -289,8 +289,25 @@ def is_gray_image(image, tol=3):
 def is_solid_color_image(image, tol=4):
     assert is_numpy_image(image)
     mean = np.array(cv2.mean(image)[:-1], dtype=np.float32)
-    mae = np.mean(np.abs(image - mean))
-    return mae <= tol
+    
+    if image.ndim == 2:
+        mae = np.mean(np.abs(image - mean[0]))
+        return mae <= tol
+    elif image.ndim == 3:
+        num_channels = image.shape[-1]
+        if num_channels == 1:
+            mae = np.mean(np.abs(image - mean[0]))
+            return mae <= tol
+        elif num_channels == 3:
+            mae = np.mean(np.abs(image - mean))
+            return mae <= tol
+        elif num_channels == 4:
+            mae = np.mean(np.abs(image[:,:,:-1] - mean))
+            return mae <= tol
+        else:
+            return False
+    else:
+        return False
 
 
 def create_solid_color_image(image_width, image_height, color, dtype=None):
