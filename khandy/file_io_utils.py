@@ -1,6 +1,7 @@
-import json
 import base64
+import json
 import numbers
+import pickle
 import warnings
 from collections import OrderedDict
 
@@ -74,3 +75,13 @@ def load_as_base64(filename) -> bytes:
     warnings.warn('khandy.load_as_base64 will be deprecated, use khandy.load_bytes instead!')
     return load_bytes(filename, True)
 
+
+def load_object(filename):
+    with open(filename, 'rb') as f:
+        return pickle.load(f)
+        
+        
+def save_object(filename, obj):
+    with open(filename, 'wb') as f:
+        pickle.dump(obj, f)
+        
