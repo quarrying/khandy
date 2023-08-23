@@ -8,6 +8,54 @@ from enum import Enum
 import requests
 
 
+def all_of(iterable, pred):
+    """Returns whether all elements in the iterable satisfy the predicate.
+
+    Args:
+        iterable (Iterable): An iterable to check.
+        pred (callable): A predicate to apply to each element.
+
+    Returns:
+        bool: True if all elements satisfy the predicate, False otherwise.
+
+    References:
+        https://en.cppreference.com/w/cpp/algorithm/all_any_none_of
+    """
+    return all(pred(element) for element in iterable)
+
+
+def any_of(iterable, pred):
+    """Returns whether any element in the iterable satisfies the predicate.
+
+    Args:
+        iterable (Iterable): An iterable to check.
+        pred (callable): A predicate to apply to each element.
+
+    Returns:
+        bool: True if any element satisfies the predicate, False otherwise.
+
+    References:
+        https://en.cppreference.com/w/cpp/algorithm/all_any_none_of
+    """
+    return any(pred(element) for element in iterable)
+
+
+def none_of(iterable, pred):
+    """Returns whether no elements in the iterable satisfy the predicate.
+
+    Args:
+        iterable (Iterable): An iterable to check.
+        pred (callable): A predicate to apply to each element.
+
+    Returns:
+        bool: True if no elements satisfy the predicate, False otherwise.
+
+    References:
+        https://en.cppreference.com/w/cpp/algorithm/all_any_none_of
+    """
+    return not any(pred(element) for element in iterable)
+
+
 def print_with_no(obj):
     if hasattr(obj, '__len__'):
         for k, item in enumerate(obj):
