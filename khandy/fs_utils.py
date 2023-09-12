@@ -176,6 +176,10 @@ def list_items_in_dir(path=None, recursive=False, full_path=True):
     if path is None:
         path = os.getcwd()
     path_ex = os.path.expanduser(path)
+    if not os.path.exists(path_ex):
+        raise FileNotFoundError(f'{path_ex} is not found!')
+    elif not os.path.isdir(path_ex):
+        raise NotADirectoryError(f'{path_ex} is not a directory!')
     
     if not recursive:
         names = os.listdir(path_ex)
@@ -197,7 +201,11 @@ def list_dirs_in_dir(path=None, recursive=False, full_path=True):
     if path is None:
         path = os.getcwd()
     path_ex = os.path.expanduser(path)
-
+    if not os.path.exists(path_ex):
+        raise FileNotFoundError(f'{path_ex} is not found!')
+    elif not os.path.isdir(path_ex):
+        raise NotADirectoryError(f'{path_ex} is not a directory!')
+    
     if not recursive:
         names = os.listdir(path_ex)
         if full_path:
@@ -219,7 +227,11 @@ def list_files_in_dir(path=None, recursive=False, full_path=True):
     if path is None:
         path = os.getcwd()
     path_ex = os.path.expanduser(path)
-
+    if not os.path.exists(path_ex):
+        raise FileNotFoundError(f'{path_ex} is not found!')
+    elif not os.path.isdir(path_ex):
+        raise NotADirectoryError(f'{path_ex} is not a directory!')
+    
     if not recursive:
         names = os.listdir(path_ex)
         if full_path:
@@ -235,11 +247,17 @@ def list_files_in_dir(path=None, recursive=False, full_path=True):
         return all_names
         
 
-def get_folder_size(dirname):
-    if not os.path.exists(dirname):
-        raise ValueError("Incorrect path: {}".format(dirname))
+def get_folder_size(path):
+    if path is None:
+        path = os.getcwd()
+    path_ex = os.path.expanduser(path)
+    if not os.path.exists(path_ex):
+        raise FileNotFoundError(f'{path_ex} is not found!')
+    elif not os.path.isdir(path_ex):
+        raise NotADirectoryError(f'{path_ex} is not a directory!')
+    
     total_size = 0
-    for root, _, filenames in os.walk(dirname):
+    for root, _, filenames in os.walk(path_ex):
         for name in filenames:
             total_size += os.path.getsize(os.path.join(root, name))
     return total_size
