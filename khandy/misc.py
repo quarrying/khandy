@@ -1,11 +1,55 @@
-import json
-import socket
-import logging
 import argparse
+import collections.abc
+import json
+import logging
+import socket
 import warnings
 from enum import Enum
 
 import requests
+
+
+def is_seq_of(seq, item_type, seq_type=None) -> bool:
+    """Check whether it is a sequence of some type.
+
+    Args:
+        seq (Sequence): The sequence to be checked.
+        item_type (type): Expected type of sequence items.
+        seq_type (type, optional): Expected sequence type.
+
+    Returns:
+        bool: Whether the sequence is valid.
+    
+    References:
+        mmcv
+    """
+    if seq_type is None:
+        exp_seq_type = collections.abc.Sequence
+    else:
+        assert issubclass(seq_type, collections.abc.Sequence)
+        exp_seq_type = seq_type
+    if not isinstance(seq, exp_seq_type):
+        return False
+    for item in seq:
+        if not isinstance(item, item_type):
+            return False
+    return True
+
+
+def is_list_of(seq, item_type):
+    """Check whether it is a list of some type.
+
+    A partial method of :func:`is_seq_of`.
+    """
+    return is_seq_of(seq, item_type, seq_type=list)
+
+
+def is_tuple_of(seq, item_type):
+    """Check whether it is a tuple of some type.
+
+    A partial method of :func:`is_seq_of`.
+    """
+    return is_seq_of(seq, item_type, seq_type=tuple)
 
 
 def all_of(iterable, pred):
