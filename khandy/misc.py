@@ -1,11 +1,60 @@
 import argparse
 import json
 import logging
+import numbers
 import socket
 import warnings
 from enum import Enum
+from typing import Optional
 
 import requests
+
+
+def is_number_between(value: numbers.Real, 
+                      lower: Optional[numbers.Real], upper: Optional[numbers.Real], 
+                      lower_close: bool = True, upper_close: bool = False) -> bool:
+    """Compares a value to upper and lower bounds, considering the bounds are closed or open.
+    
+    Args:
+        value: A value of type numbers.Real, which represents the number to be checked.
+        lower: An optional value of type numbers.Real, which represents the lower bound of the range. 
+            It can be None if no lower bound is provided.
+        upper: An optional value of type numbers.Real, which represents the upper bound of the range. 
+            It can be None if no upper bound is provided.
+        lower_close: A boolean value that indicates whether the lower bound should be considered closed or open. 
+            If True, the lower bound is considered closed, meaning the value is included in the range. 
+            If False, it is considered open, meaning the value is not included. Defaults to True.
+        upper_close: A boolean value that indicates whether the upper bound should be considered closed or open. 
+            If True, the upper bound is considered closed, meaning the value is included in the range. 
+            If False, it is considered open, meaning the value is not included. Defaults to False.
+
+    Notes:
+        When `lower` is None, it can be understood as negative infinity. 
+        When `upper` is None, it can be understood as positive infinity. 
+        When the interval formed by `lower` and `upper` is not valid, the interval can be understood as an empty set.
+    """
+    assert isinstance(value, numbers.Real)
+    assert lower is None or isinstance(lower, numbers.Real)
+    assert upper is None or isinstance(upper, numbers.Real)
+    assert isinstance(lower_close, bool)
+    assert isinstance(upper_close, bool)
+    
+    if upper is not None:
+        if upper_close:
+            upper_result = value <= upper
+        else:
+            upper_result = value < upper
+    else:
+        upper_result = True
+    
+    if lower is not None:
+        if lower_close:
+            lower_result = lower <= value
+        else:
+            lower_result = lower < value
+    else:
+        lower_result = True
+    return upper_result and lower_result
 
 
 def all_of(iterable, pred):
