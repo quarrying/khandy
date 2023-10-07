@@ -4,7 +4,7 @@ from .feature_utils import *
 from .file_io_utils import *
 from .fs_utils import *
 from .hash_utils import *
-from .list_utils import *
+from .seq_utils import *
 from .misc import *
 from .numpy_utils import *
 from .split_utils import *
