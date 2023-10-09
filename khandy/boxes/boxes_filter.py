@@ -1,18 +1,70 @@
 import numpy as np
 
 
-def filter_small_boxes(boxes, min_width, min_height):
-    """Filters all boxes with side smaller than min size. 
+def find_max_area_box(boxes):
+    """Find the index of the bounding box with the maximum area.
 
     Args:
-        boxes: a numpy array with shape [N, 4] holding N boxes.
-        min_width (float): minimum width
-        min_height (float): minimum height
-
+        boxes (numpy array): A 2D numpy array of shape (N, 4) representing a group of bounding boxes. 
+            Each row in the array represents a bounding box with the coordinates of the top-left and 
+            bottom-right corners.
+            
     Returns:
-        keep: indices of the boxes that have width larger than
-            min_width and height larger than min_height.
+        int: An integer value representing the index of the bounding box with the maximum area in 
+            the input 'boxes' array.
+    """
+    widths = boxes[:, 2] - boxes[:, 0]
+    heights = boxes[:, 3] - boxes[:, 1]
+    areas = widths * heights
+    return np.argmax(areas)
 
+
+def sort_boxes_by_area(boxes, reverse=False):
+    """Sort bounding boxes based on their areas.
+
+    Args:
+        boxes (numpy array): A 2D numpy array of shape (N, 4) representing a group of bounding boxes. 
+            Each row in the array represents a bounding box with the coordinates of the top-left and 
+            bottom-right corners.
+            
+        reverse (bool): A boolean value indicating whether to sort the bounding boxes in descending order 
+            instead of ascending order of their areas. Defaults to False.
+    
+    Returns:
+        int array: A numpy array of integers representing the indices of the bounding boxes sorted 
+            by their areas in the input 'boxes' array. The indices can be used to sort the bounding boxes 
+            based on their areas. If 'reverse' is set to True, the bounding boxes will be sorted in 
+            descending order of their areas.
+    """
+    widths = boxes[:, 2] - boxes[:, 0]
+    heights = boxes[:, 3] - boxes[:, 1]
+    areas = widths * heights
+    if not reverse:
+        return np.argsort(areas)
+    else:
+        return np.argsort(areas)[::-1]
+    
+
+def filter_small_boxes(boxes, min_width, min_height):
+    """Filter bounding boxes based on minimum width and height requirements.
+
+    Args:
+        boxes (numpy array): A 2D numpy array of shape (N, 4) representing a group of bounding boxes. 
+            Each row in the array represents a bounding box with the coordinates of the top-left and 
+            bottom-right corners.
+        min_width (float or None): The minimum allowed width of the bounding boxes. If set to None, 
+            no width requirement will be enforced.
+        min_height (float or None): The minimum allowed height of the bounding boxes. If set to None, 
+            no height requirement will be enforced.
+    
+    Returns:
+        int array: A numpy array of integers representing the indices of the bounding boxes in the 
+            input 'boxes' array that meet the minimum width and height requirements. The indices can be 
+            used to filter the bounding boxes based on their dimensions.
+        
+    Raises:
+        ValueError: If both min_width and min_height are set to None at the same time.
+        
     References:
         `_filter_boxes` in py-faster-rcnn
         `prune_small_boxes` in TensorFlow object detection API.
@@ -21,11 +73,13 @@ def filter_small_boxes(boxes, min_width, min_height):
     """
     widths = boxes[:, 2] - boxes[:, 0]
     heights = boxes[:, 3] - boxes[:, 1]
-    # keep represents indices to keep, 
-    # mask represents bool ndarray, so use mask here.
-    mask = (widths >= min_width)
-    mask &= (heights >= min_height)
-    return np.nonzero(mask)[0]
+    mask = np.ones_like(widths, dtype=bool)
+    if min_width is not None:
+        mask &= (widths >= min_width)
+    if min_height is not None:
+        mask &= (heights >= min_height)
+    indices = np.nonzero(mask)[0]
+    return indices
     
 
 def filter_boxes_outside(boxes, reference_box):
