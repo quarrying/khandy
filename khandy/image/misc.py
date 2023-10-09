@@ -118,7 +118,7 @@ def imwrite_bytes(filename, image_bytes: bytes, use_adpative_ext: bool = True):
     """
     extension = get_image_extension(image_bytes)
     name_extension = khandy.get_path_extension(filename)
-    if name_extension.lower() == 'jpg' and extension.lower() == 'jpeg':
+    if name_extension.lower() == '.jpg' and extension.lower() == 'jpeg':
         extension == 'jpg'
     if (extension.lower() != name_extension.lower()[1:]):
         if use_adpative_ext:

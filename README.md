@@ -1,5 +1,5 @@
 ## Overview
-Handy Utilities for Computer Vision
+Handy utilities mainly for computer vision
 
 
 ## Installation
@@ -11,6 +11,8 @@ pip install -e .
 
 
 ## Dependencies
+One of the principles of this project is to ensure minimal dependencies.
+
 - Python 3.5+
 - NumPy 1.11+
 - OpenCV 2.0+
