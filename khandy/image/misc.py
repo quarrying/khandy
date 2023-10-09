@@ -14,7 +14,7 @@ def imread(file_or_buffer, flags=-1):
     """Improvement on cv2.imread, make it support filename including chinese character.
     """
     try:
-        if isinstance(file_or_buffer, bytes):
+        if isinstance(file_or_buffer, (bytes, bytearray, memoryview)):
             return cv2.imdecode(np.frombuffer(file_or_buffer, dtype=np.uint8), flags)
         else:
             # support type: file or str or Path
