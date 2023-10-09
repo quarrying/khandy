@@ -10,6 +10,43 @@ import numpy as np
 from PIL import Image
 
 
+def get_image_extension(file_or_buffer):
+    """Returns the extension of the image based on the given file or buffer.
+    Wrapper for imghdr.what and fix bugs about jpeg format.
+    
+    Args:
+        file_or_buffer: A file path or buffer object that can be used as input for imghdr.what() function.
+
+    Returns:
+        A string representing the extension of the image, based on the given file or buffer.
+
+    Raises:
+        TypeError: If the input type is not supported as a file input.
+
+    References:
+        https://bugs.python.org/issue28591
+        https://github.com/h2non/filetype.py/blob/master/filetype/types/image.py
+        https://github.com/kovidgoyal/calibre/blob/master/src/calibre/utils/imghdr.py
+    """
+    if isinstance(file_or_buffer, (str, os.PathLike)):
+        extension = imghdr.what(file_or_buffer)
+    elif (hasattr(file_or_buffer, 'read') and
+          hasattr(file_or_buffer, 'tell') and
+          hasattr(file_or_buffer, 'seek')):
+        extension = imghdr.what(file_or_buffer)
+    elif isinstance(file_or_buffer, (bytes, bytearray)):
+        extension = imghdr.what('', file_or_buffer)
+    else:
+        raise TypeError('Unsupported type as file input: %s' % type(file_or_buffer))
+    
+    if extension is None:
+        # fix bugs about jpeg formats.
+        file_header = khandy.get_file_header(file_or_buffer)
+        if file_header[:3] == b'\xff\xd8\xff':
+            extension = 'jpeg'
+    return extension
+
+
 def imread(file_or_buffer, flags=-1):
     """Improvement on cv2.imread, make it support filename including chinese character.
     """

@@ -1,6 +1,7 @@
 import base64
 import json
 import numbers
+import os
 import pickle
 import warnings
 from collections import OrderedDict
@@ -85,3 +86,35 @@ def save_object(filename, obj):
     with open(filename, 'wb') as f:
         pickle.dump(obj, f)
         
+
+def get_file_header(file_or_buffer, num_bytes=32):
+    """Retrieve the file header of a given file or buffer.
+
+    Args:
+        file_or_buffer: A file path or buffer object.
+        num_bytes: The number of bytes to read from the beginning of the 
+            file or buffer. Defaults to 32.
+
+    Returns:
+        A bytes or bytearray object representing the retrieved file header.
+
+    Raises:
+        TypeError: If the input type is not supported as a file input.
+    """
+    if isinstance(file_or_buffer, (str, os.PathLike)):
+        with open(file_or_buffer, 'rb') as f:
+            file_header = f.read(num_bytes)
+    elif (hasattr(file_or_buffer, 'read') and 
+          hasattr(file_or_buffer, 'tell') and 
+          hasattr(file_or_buffer, 'seek')):
+        location = file_or_buffer.tell()
+        file_header = file_or_buffer.read(num_bytes)
+        file_or_buffer.seek(location)
+    elif isinstance(file_or_buffer, memoryview):
+        return bytearray(file_or_buffer[:num_bytes].tolist())
+    elif isinstance(file_or_buffer, (bytes, bytearray)):
+        file_header = file_or_buffer[:num_bytes]
+    else:
+        raise TypeError('Unsupported type as file input: %s' % type(file_or_buffer))
+    return file_header
+
