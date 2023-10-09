@@ -1,4 +1,7 @@
+from typing import List
+
 import numpy as np
+from numpy.core.multiarray import normalize_axis_index
 
 
 def sigmoid(x):
@@ -171,3 +174,24 @@ def top_k(x, k, axis=-1, largest=True, sorted=True):
     return topk_values, topk_indices
     
     
+def sum_by_indices_list(x: np.ndarray, indices_list: List[List[int]] = None, axis=-1):
+    """Sums of array elements according to a given list of index lists over a given axis.
+
+    Args:
+        x (np.ndarray): Input array to perform the sum operation.
+        indices_list (List[List[int]]): List of index lists corresponding to the axis along which to sum.
+        axis (int): Axis along which to perform the sum operation. Defaults to the last axis.
+
+    Returns:
+        np.ndarray: Output array after performing the sum operation along the specified axis.
+            Has the same shape as the input array with the exception of the dimension along the axis 
+            specified by indices_list, which has a length equal to the number of index lists in indices_list.
+    """
+    axis = normalize_axis_index(axis, x.ndim)
+    new_shape = list(x.shape)
+    new_shape[axis] = len(indices_list)
+    dst = np.empty(new_shape, dtype=x.dtype)
+    for new_index, old_indices in enumerate(indices_list):
+        dest_dims = (slice(None),) * axis + (new_index,)
+        dst[dest_dims] = np.sum(x.take(old_indices, axis), axis=axis, keepdims=False)
+    return dst
