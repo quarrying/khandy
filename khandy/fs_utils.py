@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 import warnings
+from typing import Callable, Optional
 
 
 def get_path_stem(path):
@@ -86,6 +87,76 @@ def normalize_path(path, norm_case=True):
         # On other operating systems, return the path unchanged.
         path = os.path.normcase(path)
     return path
+    
+
+def upsert_prefix_to_path_stem(filename, prefix: str, validator: Optional[Callable] = None, sep='_'):
+    """Adds a prefix to the stem of the filename or updates it if already exists.
+  
+    Args:  
+        filename (str): The original filename.  
+        prefix (str): The prefix to be added.  
+        validator (Optional[Callable]): The validator function to determine whether to add the prefix.  
+            If None, the prefix will always be added.  
+        sep (str): The separator used to split the stem. Default is "_".  
+  
+    Returns:  
+        str: The new filename with the prefix added to the stem.  
+    """
+    assert validator is None or hasattr(validator, '__call__')
+    dirname, basename = os.path.split(filename)
+    stem, extension = os.path.splitext(basename)
+    if stem.startswith('.') and extension == '':
+        stem, extension = extension, stem
+
+    stem_parts = stem.split(sep, maxsplit=1)
+    first_part = stem_parts[0]
+    if first_part == '':
+        stem_parts = stem_parts[1:]
+        
+    if validator is None:
+        stem_parts.insert(0, prefix)
+    elif not validator(first_part):
+        stem_parts.insert(0, prefix)
+    else:
+        if len(stem_parts) != 0:
+            stem_parts[0] = prefix
+    new_basename = sep.join(stem_parts) + extension
+    return os.path.join(dirname, new_basename)
+
+
+def upsert_suffix_to_path_stem(filename, suffix: str, validator: Optional[Callable] = None, sep='_'):
+    """Adds a suffix to the stem of the filename or updates it if already exists.
+
+    Args:  
+        filename (str): The original filename.  
+        suffix (str): The suffix to be added.  
+        validator (Optional[Callable]): The validator function to determine whether to add the suffix.  
+            If None, the suffix will always be added.  
+        sep (str): The separator used to split the stem. Default is "_".  
+  
+    Returns:  
+        str: The new filename with the suffix added to the stem.
+    """
+    assert validator is None or hasattr(validator, '__call__')
+    dirname, basename = os.path.split(filename)
+    stem, extension = os.path.splitext(basename)
+    if stem.startswith('.') and extension == '':
+        stem, extension = extension, stem
+        
+    stem_parts = stem.rsplit(sep, maxsplit=1)
+    last_part = stem_parts[-1]
+    if last_part == '':
+        stem_parts = stem_parts[:-1]
+    
+    if validator is None:
+        stem_parts.append(suffix)
+    elif not validator(last_part):
+        stem_parts.append(suffix)
+    else:
+        if len(stem_parts) != 0:
+            stem_parts[-1] = suffix
+    new_basename = sep.join(stem_parts) + extension
+    return os.path.join(dirname, new_basename)
     
 
 def makedirs(name, mode=0o755):
