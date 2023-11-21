@@ -43,15 +43,15 @@ def replace_path_extension(path, new_extension=None):
     References:
         `std::filesystem::path::replace_extension` since C++17
     """
-    filename_wo_ext = os.path.splitext(path)[0]
+    path_wo_ext = os.path.splitext(path)[0]
     if new_extension == '' or new_extension is None:
-        return filename_wo_ext
+        return path_wo_ext
     elif new_extension.startswith('.'):
-        return ''.join([filename_wo_ext, new_extension]) 
+        return f'{path_wo_ext}{new_extension}'
     else:
-        return '.'.join([filename_wo_ext, new_extension])
-
-
+        return f'{path_wo_ext}.{new_extension}'
+    
+    
 def normalize_extension(extension):
     if extension.startswith('.'):
         new_extension = extension.lower()
