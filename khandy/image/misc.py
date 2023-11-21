@@ -2,6 +2,7 @@ import os
 import imghdr
 import numbers
 import warnings
+from dataclasses import dataclass, field
 from io import BytesIO
 
 import cv2
@@ -9,6 +10,35 @@ import khandy
 import numpy as np
 from PIL import Image
 
+
+@dataclass
+class ImageSize:
+    width: int
+    height: int
+    cols: int = field(init=False)
+    rows: int = field(init=False)
+    area: int = field(init=False)
+    aspect_ratio: float = field(init=False)
+
+    def __post_init__(self):
+        self.cols = self.width
+        self.rows = self.height
+        self.area = self.width * self.height
+        self.aspect_ratio = self.width / self.height
+        
+        
+def get_image_size(obj) -> ImageSize:
+    if isinstance(obj, (str, os.PathLike)):
+        with open(obj, 'rb') as f:
+            image = Image.open(f)
+            return ImageSize(width=image.width, height=image.height)
+    elif isinstance(obj, Image.Image):
+        return ImageSize(width=obj.width, height=obj.height)
+    elif isinstance(obj, np.ndarray) and obj.ndim >= 2:
+        return ImageSize(width=obj.shape[1], height=obj.shape[0])
+    else:
+        raise TypeError(f"Unexpected type {type(obj)}")
+    
 
 def get_image_extension(file_or_buffer):
     """Returns the extension of the image based on the given file or buffer.
