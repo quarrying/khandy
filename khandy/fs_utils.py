@@ -89,8 +89,8 @@ def normalize_path(path, norm_case=True):
     return path
     
 
-def upsert_prefix_to_path_stem(filename, prefix: str, validator: Optional[Callable] = None, sep='_'):
-    """Adds a prefix to the stem of the filename or updates it if already exists.
+def upsert_prefix_into_path_stem(filename, prefix: str, validator: Optional[Callable] = None, sep='_'):
+    """Inserts a prefix into the stem of the filename or updates it if already exists.
   
     Args:  
         filename (str): The original filename.  
@@ -124,8 +124,8 @@ def upsert_prefix_to_path_stem(filename, prefix: str, validator: Optional[Callab
     return os.path.join(dirname, new_basename)
 
 
-def upsert_suffix_to_path_stem(filename, suffix: str, validator: Optional[Callable] = None, sep='_'):
-    """Adds a suffix to the stem of the filename or updates it if already exists.
+def upsert_suffix_into_path_stem(filename, suffix: str, validator: Optional[Callable] = None, sep='_'):
+    """Inserts a suffix into the stem of the filename or updates it if already exists.
 
     Args:  
         filename (str): The original filename.  
