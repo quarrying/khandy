@@ -40,15 +40,15 @@ def get_image_size(obj) -> ImageSize:
         raise TypeError(f"Unexpected type {type(obj)}")
     
 
-def get_image_extension(file_or_buffer):
-    """Returns the extension of the image based on the given file or buffer.
+def get_image_file_type(file_or_buffer):
+    """Returns the file type of the image based on the given file or buffer.
     Wrapper for imghdr.what and fix bugs about jpeg format.
     
     Args:
         file_or_buffer: A file path or buffer object that can be used as input for imghdr.what() function.
 
     Returns:
-        A string representing the extension of the image, based on the given file or buffer.
+        A string representing the file type of the image, based on the given file or buffer.
 
     Raises:
         TypeError: If the input type is not supported as a file input.
@@ -75,6 +75,11 @@ def get_image_extension(file_or_buffer):
         if file_header[:3] == b'\xff\xd8\xff':
             extension = 'jpeg'
     return extension
+
+
+def get_image_extension(file_or_buffer):
+    warnings.warn('khandy.get_image_extension will be deprecated, use khandy.get_image_file_type instead!')
+    return get_image_file_type(file_or_buffer)
 
 
 def imread(file_or_buffer, flags=-1):
