@@ -84,6 +84,9 @@ def get_image_extension(file_or_buffer):
 
 def imread(file_or_buffer, flags=-1):
     """Improvement on cv2.imread, make it support filename including chinese character.
+    
+    Args:
+        flags: same as OpenCV
     """
     try:
         if isinstance(file_or_buffer, (bytes, bytearray, memoryview)):
