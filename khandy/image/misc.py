@@ -143,7 +143,8 @@ def imread_pil(file_or_buffer, to_mode=None):
         return None
         
         
-def imwrite_bytes(filename, image_bytes: bytes, use_adpative_ext: bool = True):
+def imwrite_bytes(filename, image_bytes: bytes, raise_if_not_image: bool = True, 
+                  use_adpative_ext: bool = True):
     """Write image bytes to file.
     
     Args:
@@ -151,19 +152,24 @@ def imwrite_bytes(filename, image_bytes: bytes, use_adpative_ext: bool = True):
             filename which image_bytes is written into.
         image_bytes: bytes
             image content to be written.
+        raise_if_not_image: bool
+            whether to raise if image_bytes is not image. Defaults to True.
         use_adpative_ext: bool
             whether to adaptively handle the file extension. Defaults to True.
     """
-    extension = get_image_extension(image_bytes)
-    name_extension = khandy.get_path_extension(filename)
-    if name_extension.lower() == '.jpg' and extension.lower() == 'jpeg':
-        extension == 'jpg'
-    if (extension.lower() != name_extension.lower()[1:]):
-        if use_adpative_ext:
-            filename = khandy.replace_path_extension(filename, extension)
-        else:
-            image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), -1)
-            image_bytes = cv2.imencode(name_extension, image)[1]
+    extension = get_image_file_type(image_bytes)
+    if extension is None and raise_if_not_image:
+        raise Exception('image_bytes is not image!')
+    if extension is not None:
+        name_extension = khandy.get_path_extension(filename)
+        if name_extension.lower() == '.jpg' and extension.lower() == 'jpeg':
+            extension == 'jpg'
+        if (extension.lower() != name_extension.lower()[1:]):
+            if use_adpative_ext:
+                filename = khandy.replace_path_extension(filename, extension)
+            else:
+                image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), -1)
+                image_bytes = cv2.imencode(name_extension, image)[1]
     
     with open(filename, "wb") as f:
         f.write(image_bytes)
