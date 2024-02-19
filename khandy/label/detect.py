@@ -75,7 +75,7 @@ class PascalVocRecord:
     folder: str = ''
     filename: str = ''
     path: str = ''
-    source: PascalVocSource = PascalVocSource()
+    source: PascalVocSource = field(default_factory=PascalVocSource)
     size: Optional[PascalVocSize] = None
     segmented: int = 0
     objects: List[PascalVocObject] = field(default_factory=list)
