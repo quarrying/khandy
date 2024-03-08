@@ -35,24 +35,23 @@ def convert_lists_to_record(*list_objs, delimiter=None):
     return records
 
 
-def shuffle_table(*table):
+def shuffle_table(table):
     """
     Notes:
-        table can be seen as list of list which have equal items.
+        table can be seen as sequence of sequence which have equal items.
     """
-    shuffled_list = list(zip(*table))
-    random.shuffle(shuffled_list)
-    tuple_list = zip(*shuffled_list)
-    return [list(item) for item in tuple_list]
+    shuffled = list(zip(*table))
+    random.shuffle(shuffled)
+    dst_table = tuple(zip(*shuffled))
+    return dst_table
     
     
 def transpose_table(table):
     """
     Notes:
-        table can be seen as list of list which have equal items.
+        table can be seen as sequence of sequence which have equal items.
     """
-    m, n = len(table), len(table[0])
-    return [[table[i][j] for i in range(m)] for j in range(n)]
+    return tuple(zip(*table))
 
 
 def concat_list(in_list):
