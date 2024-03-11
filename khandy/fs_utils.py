@@ -1,8 +1,10 @@
+import logging
 import os
 import re
 import shutil
 import warnings
-from typing import Callable, Optional
+from datetime import datetime
+from typing import Callable, Optional, List
 
 
 def get_path_stem(path):
@@ -462,3 +464,116 @@ def rename_file(src, dst, action_if_exist='rename'):
     return dst
     
     
+def _get_default_logger(logger_name):
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.INFO)
+    console = logging.StreamHandler()
+    console.setFormatter(logging.Formatter('%(message)s'))
+    logger.addHandler(console)
+    return logger
+
+
+def copy_dir(src_dir, dst_dir, action_if_file_exist='rename', logger=None):
+    """Recursively copies a directory and its contents from the source directory to the destination directory.  
+  
+    Args:  
+        src_dir (str): Path to the source directory to be copied.  
+        dst_dir (str): Path to the destination directory where the source directory will be copied.  
+        action_if_file_exist (str, optional): Action to be taken if a file already exists in the destination directory.
+            Defaults to 'rename'. Other options refers to `khandy.copy_file`.
+        logger (logging.Logger, optional): A custom logger to use for logging messages. 
+            If not provided, a default logger is used.
+  
+    Returns:
+        None
+  
+    Raises:  
+        KeyboardInterrupt: If the operation is interrupted by the user.  
+        Exception: If any other exception occurs during the copying process, the exception will be caught and logged.  
+    """
+    if logger is None:
+        logger = _get_default_logger(__name__)
+    try:
+        logger.info(f'{datetime.now()} MAKE {src_dir}')
+        for root, dirs, files in os.walk(src_dir):
+            dst_root = os.path.normpath(os.path.join(dst_dir, os.path.relpath(root, src_dir)))
+            for file in files:
+                copy_file(os.path.join(root, file), dst_root, action_if_file_exist)
+                logger.info(f'{datetime.now()} COPY {os.path.join(root, file)} -> {dst_root}')
+            for dir in dirs:
+                os.makedirs(os.path.join(dst_root, dir), exist_ok=True)
+                logger.info(f'{datetime.now()} MAKE {os.path.join(root, dir)}')
+    except KeyboardInterrupt as e:
+        raise e
+    except Exception as e:
+        logger.error(f'{datetime.now()} ERROR: {e}')
+
+
+def move_dir(src_dir, dst_dir, action_if_file_exist='rename', rmtree_after_move=False, logger=None):
+    """Recursively moves a directory and its contents from the source directory to the destination directory.  
+  
+    Args:  
+        src_dir (str): Path to the source directory to be moved.  
+        dst_dir (str): Path to the destination directory where the source directory will be moved.  
+        action_if_file_exist (str, optional): Action to be taken if a file already exists in the destination directory.  
+            Defaults to 'rename'. Other options refers to `khandy.move_file`.
+        rmtree_after_move (bool, optional): Whether remove src dir after move.
+        logger (logging.Logger, optional): A custom logger to use for logging messages. 
+            If not provided, a default logger is used. 
+  
+    Returns:  
+        None
+  
+    Raises:  
+        KeyboardInterrupt: If the operation is interrupted by the user.  
+        Exception: If any other exception occurs during the moving process, the exception will be caught and logged.  
+    """
+    if logger is None:
+        logger = _get_default_logger(__name__)
+    try:
+        for root, dirs, files in os.walk(src_dir):
+            dst_root = os.path.normpath(os.path.join(dst_dir, os.path.relpath(root, src_dir)))
+            for file in files:
+                move_file(os.path.join(root, file), dst_root, action_if_file_exist)
+                logger.info(f'{datetime.now()} MOVE {os.path.join(root, file)} -> {dst_root}')
+            for dir in dirs:
+                os.makedirs(os.path.join(dst_root, dir), exist_ok=True)
+        if rmtree_after_move:
+            shutil.rmtree(src_dir)
+    except KeyboardInterrupt as e:
+        raise e
+    except Exception as e:
+        logger.error(f'{datetime.now()} ERROR: {e}')
+        
+
+def rename_files(old_names: List[str], new_names: List[str], action_if_file_exist='rename', logger=None):
+    """Renames a list of files based on provided old and new file name pairs.  
+    
+    Args:
+        old_names (List[str]): A list of old file names to be renamed.  
+        new_names (List[str]): A list of new file names corresponding to the old file names.  
+        action_if_file_exist (str, optional): Specifies the action to be taken if a new file already exists.  
+            Defaults to 'rename'. Other options refers to `khandy.rename_file`.
+        logger (logging.Logger, optional): A custom logger for recording log messages. 
+            If not provided, a default logger is used. 
+  
+    Returns:
+        None
+  
+    Raises:
+        KeyboardInterrupt: If the operation is interrupted by the user.  
+        Exception: If any other exception occurs during the renaming process, the exception will be caught and logged.  
+    """
+    if logger is None:
+        logger = _get_default_logger(__name__)
+    try:
+        for k, (old_name, new_name) in enumerate(zip(old_names, new_names)):
+            if new_name == old_name:
+                logger.info(f'{datetime.now()} [{k+1}/{len(old_names)}] KEEP SAME: {old_name}')
+                continue
+            new_name = rename_file(old_name, new_name, action_if_file_exist)
+            logger.info(f'{datetime.now()} [{k+1}/{len(old_names)}] RENAME {old_name} -> {new_name}')
+    except KeyboardInterrupt as e:
+        raise e
+    except Exception as e:
+        logger.error(f'{datetime.now()} ERROR: {e}')
