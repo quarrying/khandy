@@ -8,24 +8,50 @@ def sigmoid(x):
     return 1. / (1 + np.exp(-x))
     
     
-def softmax(x, axis=-1, copy=True):
-    """
-    Args:
-        copy: Copy x or not.
-        
+def softmax(x: np.ndarray, axis=-1, valid_indices=None, copy=True):
+    """Compute the softmax function.
+      
+    Args:  
+        x (np.ndarray): The input array.
+        axis (int, optional): The axis to perform the softmax operation. Defaults to -1.
+        valid_indices (np.ndarray or None, optional): An array of valid indices to be used for fancy indexing.
+            If None, all elements in x will be used. Defaults to None.
+        copy (bool, optional): Whether to create a copy of the input array. Defaults to True.
+          
+    Returns:
+        np.ndarray: The softmax output array.
+
     Referneces:
-        `from sklearn.utils.extmath import softmax`
+        sklearn.utils.extmath.softmax
+        scipy.special.softmax
     """
     if copy:
         x = np.copy(x)
-    max_val = np.max(x, axis=axis, keepdims=True)
-    x -= max_val
-    np.exp(x, x)
-    sum_exp = np.sum(x, axis=axis, keepdims=True)
-    x /= sum_exp
+        
+    if valid_indices is not None:
+        # https://numpy.org/doc/stable/reference/generated/numpy.take.html
+        # https://numpy.org/doc/stable/user/basics.copies.html
+        # np.take returns a copy
+        interested_x = np.take(x, valid_indices, axis=axis)
+    else:
+        interested_x = x
+        
+    max_val = np.max(interested_x, axis=axis, keepdims=True)
+    interested_x -= max_val
+    np.exp(interested_x, interested_x)
+    sum_exp = np.sum(interested_x, axis=axis, keepdims=True)
+    interested_x /= sum_exp
+    
+    # # If valid_indices are provided, place the softmax results back into the original array at the valid indices
+    if valid_indices is not None:
+        axis = normalize_axis_index(axis, x.ndim)
+        x.fill(0)
+        x[(slice(None),) * axis + (valid_indices,)] = interested_x
+    else:
+        x = interested_x
     return x
-    
-    
+
+
 def log_sum_exp(x, axis=-1, keepdims=False):
     """
     References:
