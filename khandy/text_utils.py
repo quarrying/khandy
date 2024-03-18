@@ -1,24 +1,24 @@
 import re
 
 
-CONTENT_WITH_PAREN_PATTERN_STR_EN = r'^(?:(?P<out_paren>[^(]+))?'
-CONTENT_WITH_PAREN_PATTERN_STR_EN += r'(?:[(](?P<in_paren>[^)]*)[)])?$'
-CONTENT_WITH_PAREN_PATTERN_EN = re.compile(CONTENT_WITH_PAREN_PATTERN_STR_EN)
+CONTENT_WITH_HW_PAREN_PATTERN = r'(?:(?P<out_paren>[^(]+))?'
+CONTENT_WITH_HW_PAREN_PATTERN += r'(?:[(](?P<in_paren>[^)]*)[)])?'
+CONTENT_WITH_HW_PAREN_PATTERN_OBJ = re.compile(CONTENT_WITH_HW_PAREN_PATTERN)
 
-CONTENT_WITH_PAREN_PATTERN_STR_CN = r'^(?:(?P<out_paren>[^（]+))?'
-CONTENT_WITH_PAREN_PATTERN_STR_CN += r'(?:（(?P<in_paren>[^）]*)）)?$'
-CONTENT_WITH_PAREN_PATTERN_CN = re.compile(CONTENT_WITH_PAREN_PATTERN_STR_CN)
+CONTENT_WITH_FW_PAREN_PATTERN = r'(?:(?P<out_paren>[^（]+))?'
+CONTENT_WITH_FW_PAREN_PATTERN += r'(?:（(?P<in_paren>[^）]*)）)?'
+CONTENT_WITH_FW_PAREN_PATTERN_OBJ = re.compile(CONTENT_WITH_FW_PAREN_PATTERN)
 
-CONTENT_IN_PAREN_PATTERN_STR = r"\([^)]*\)|（[^）]*）"
-CONTENT_IN_PAREN_PATTERN = re.compile(CONTENT_IN_PAREN_PATTERN_STR)
+CONTENT_IN_PAREN_PATTERN = r"\([^)]*\)|（[^）]*）"
+CONTENT_IN_PAREN_PATTERN_OBJ = re.compile(CONTENT_IN_PAREN_PATTERN)
 
 
 def split_content_with_paren(string):
-    matched_en = CONTENT_WITH_PAREN_PATTERN_EN.match(string)
+    matched_en = CONTENT_WITH_HW_PAREN_PATTERN_OBJ.fullmatch(string)
     if matched_en is not None:
         outside, inside = matched_en.groups()
         if inside is None:
-            matched_cn = CONTENT_WITH_PAREN_PATTERN_CN.match(string)
+            matched_cn = CONTENT_WITH_FW_PAREN_PATTERN_OBJ.fullmatch(string)
             if matched_cn is not None:
                 outside, inside = matched_cn.groups() 
             else:
@@ -33,7 +33,7 @@ def strip_content_in_paren(string):
     Notes:
         strip_content_in_paren cannot process nested paren correctly
     """
-    return re.sub(CONTENT_IN_PAREN_PATTERN, "", string)
+    return re.sub(CONTENT_IN_PAREN_PATTERN_OBJ, "", string)
 
 
 def is_chinese_char(uchar: str) -> bool:
