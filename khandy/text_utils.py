@@ -1,4 +1,5 @@
 import re
+from typing import Tuple, Optional
 
 
 CONTENT_WITH_HW_PAREN_PATTERN = r'(?:(?P<out_paren>[^(]+))?'
@@ -13,11 +14,61 @@ CONTENT_IN_PAREN_PATTERN = r"\([^)]*\)|（[^）]*）"
 CONTENT_IN_PAREN_PATTERN_OBJ = re.compile(CONTENT_IN_PAREN_PATTERN)
 
 
-def split_content_with_paren(string):
+def has_nested_or_unmatched_paren(string: str, paren_type: str = 'hw') -> bool:
+    """Check if a string contains nested or unmatched parentheses.
+  
+    Args:
+        string (str): The input string to be checked.
+        paren_type (str): The type of parentheses to be used. Options are 'fw' (full-width) and 'hw' (half-width). Defaults to 'hw'.
+  
+    Returns:
+        bool: True if the string contains nested or unmatched parentheses, False otherwise.
+  
+    Raises:
+        ValueError: If paren_type is not one of 'fw' or 'hw'.
+    """  
+    if paren_type == 'fw': # full-width
+        left_char, right_char = '（）'
+    elif paren_type == 'hw': # half-width
+        left_char, right_char = '()'
+    else:
+        raise ValueError(f'paren_type only support fw and hw, got {paren_type}')
+    
+    stack = []
+    for char in string:
+        if char == left_char:
+            # If stack is not empty, we have a nested parenthesis
+            if len(stack) != 0:  
+                return True
+            stack.append(char)
+        elif char == right_char:
+            # If stack is empty, we have an unmatched parenthesis
+            if len(stack) == 0:  
+                return True
+            stack.pop()
+    # If stack is not empty, we have unmatched opening parentheses
+    return len(stack) != 0
+
+
+def split_content_with_paren(string: str) -> Tuple[Optional[str], Optional[str]]:
+    """Split a string into two parts based on the presence of parentheses.  
+  
+    Args:
+        string (str): The input string to be split.
+  
+    Returns:
+        Tuple[Optional[str], Optional[str]]: A tuple containing two optional string elements.
+            The first element is the part outside the parentheses (or None if not found).
+            The second element is the part inside the parentheses (or None if not found).
+    """
+    if has_nested_or_unmatched_paren(string, 'hw'):
+        return None, None
     matched_en = CONTENT_WITH_HW_PAREN_PATTERN_OBJ.fullmatch(string)
     if matched_en is not None:
         outside, inside = matched_en.groups()
         if inside is None:
+            if has_nested_or_unmatched_paren(string, 'fw'):
+                return None, None
             matched_cn = CONTENT_WITH_FW_PAREN_PATTERN_OBJ.fullmatch(string)
             if matched_cn is not None:
                 outside, inside = matched_cn.groups() 
