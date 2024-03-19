@@ -50,34 +50,36 @@ def has_nested_or_unmatched_paren(string: str, paren_type: str = 'hw') -> bool:
     return len(stack) != 0
 
 
-def split_content_with_paren(string: str) -> Tuple[Optional[str], Optional[str]]:
-    """Split a string into two parts based on the presence of parentheses.  
+def split_content_with_paren(string: str, paren_type: str = 'hw') -> Tuple[Optional[str], Optional[str]]:
+    """Split a string into two parts based on the presence of parentheses of a specified type.
   
     Args:
         string (str): The input string to be split.
+        paren_type (str, optional): The type of parentheses to split on. Defaults to 'hw' (half-width parentheses).
+            Accepted values are 'hw' for half-width parentheses and 'fw' for full-width parentheses.
   
     Returns:
         Tuple[Optional[str], Optional[str]]: A tuple containing two optional string elements.
             The first element is the part outside the parentheses (or None if not found).
             The second element is the part inside the parentheses (or None if not found).
-    """
+  
+    Raises:  
+        AssertionError: If the `paren_type` is not one of 'hw' or 'fw'.
+    """ 
+    assert paren_type in ('hw', 'fw'), f"Paren type must be either 'hw' or 'fw', got {paren_type}."
+    pattern_obj = {
+        'hw': CONTENT_WITH_HW_PAREN_PATTERN_OBJ,
+        'fw': CONTENT_WITH_FW_PAREN_PATTERN_OBJ
+    }[paren_type]
+
     if has_nested_or_unmatched_paren(string, 'hw'):
         return None, None
-    matched_en = CONTENT_WITH_HW_PAREN_PATTERN_OBJ.fullmatch(string)
-    if matched_en is not None:
-        outside, inside = matched_en.groups()
-        if inside is None:
-            if has_nested_or_unmatched_paren(string, 'fw'):
-                return None, None
-            matched_cn = CONTENT_WITH_FW_PAREN_PATTERN_OBJ.fullmatch(string)
-            if matched_cn is not None:
-                outside, inside = matched_cn.groups() 
-            else:
-                outside, inside = None, None
-    else:
-        outside, inside = None, None
+    matched = pattern_obj.fullmatch(string)
+    if matched is None:
+        return None, None
+    outside, inside = matched.groups()
     return outside, inside
-
+    
 
 def strip_content_in_paren(string):
     """
