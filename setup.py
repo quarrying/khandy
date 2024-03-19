@@ -31,7 +31,6 @@ setup(
     python_requires=">=3.8",
     keywords='computer vision',
     packages=find_packages(),
-    
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
