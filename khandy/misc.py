@@ -166,11 +166,10 @@ def set_logger(filename, level=logging.INFO, logger_name=None, formatter=None, w
     return logger
 
 
-def print_arguments(args):
+def print_arguments(args, sort=True):
     assert isinstance(args, argparse.Namespace)
-    arg_list = sorted(vars(args).items())
-    for key, value in arg_list:
-        print('{}: {}'.format(key, value))
+    args = vars(args)
+    print(json.dumps(args, indent=4, sort_keys=sort))
 
 
 def save_arguments(filename, args, sort=True):
