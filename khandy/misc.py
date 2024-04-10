@@ -115,7 +115,46 @@ def print_with_no(obj):
     else:
         print('[1] {}'.format(obj))
         
-      
+        
+def print_type_and_shape(x, name="x", max_seq_len=10):
+    """Print the type and shape of a given object x.
+  
+    Args:
+        x (Any]):
+            The object to print its type and shape.
+        name (str, optional):
+            The name of the object x to be printed. Defaults to "x".
+        max_seq_len (int, optional):
+            The maximum sequence length to print for list or tuple. Defaults to 10.
+  
+    Returns:
+        None
+    """
+    if (hasattr(x, 'shape') and not callable(x.shape) and
+        hasattr(x, 'dtype') and not callable(x.dtype)):
+        # e.g. torch.Tensor and numpy.ndarray
+        print(f"{name}: {type(x)}[{x.dtype}], {x.shape}")
+    elif (hasattr(x, 'shape') and not callable(x.shape)):
+        print(f"{name}: {type(x)}, {x.shape}")
+    elif isinstance(x, (tuple, list)):
+        print(f"{name}: {type(x)}, {len(x)}")
+        seq_len = len(x)
+        if max_seq_len is not None:
+            seq_len = min(max_seq_len, len(x))
+        for i in range(seq_len):
+            print_type_and_shape(x[i], f"  {name}[{i}]")
+        if len(x) > seq_len:
+            print(f"  {name}[...]: ...")
+    elif isinstance(x, dict):
+        print(f"{name}: {type(x)}")
+        for k, v in x.items():
+            print_type_and_shape(v, f"  {name}.{k}")
+    elif isinstance(x, (int, bool, float)):
+        print(f"{name}: {type(x)}, {x}")
+    else:
+        print(f"{name}: {type(x)}")
+
+
 def get_file_line_count(filename, encoding='utf-8'):
     line_count = 0
     buffer_size = 1024 * 1024 * 8
