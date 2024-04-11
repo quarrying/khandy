@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import numbers
+import os
 import socket
 import warnings
 from enum import Enum
@@ -330,3 +331,27 @@ def download_file(url, min_filesize=0, max_filesize=100*1024*1024,
     return file_bytes
     
 
+def get_git_repo_root(path: Optional[str] = None) -> Optional[str]:
+    """Get the root directory of a Git repository.
+
+    Args:
+        path (Optional[str]): The path to the directory where the Git repository is located.
+            If not provided, the current working directory will be used.
+
+    Returns:
+        Optional[str]: The absolute path of the top-level directory of the Git repository.
+            If the Git repository is not found or an error occurs, None will be returned.
+    """
+    if path is None:
+        path = os.getcwd()
+    try:
+        # Show the absolute path of the top-level directory of the working tree.
+        output = os.popen(f'git -C "{path}" rev-parse --show-toplevel').read().strip()
+        if output:
+            return output
+        else:
+            return None
+    except Exception as e:
+        print(f"Error occurred while getting Git repo root: {e}")
+        return None
+    
