@@ -1,6 +1,7 @@
 import re
-from typing import Tuple, Optional
-
+from dataclasses import dataclass
+from enum import Enum
+from typing import List, Optional, Tuple
 
 CONTENT_WITH_HW_PAREN_PATTERN = r'(?:(?P<out_paren>[^(]+))?'
 CONTENT_WITH_HW_PAREN_PATTERN += r'(?:[(](?P<in_paren>[^)]*)[)])?'
@@ -111,3 +112,101 @@ def is_chinese_char(uchar: str) -> bool:
     return False
 
 
+def strip_blank_lines(lines: List[str]) -> List[str]:
+    """Strip leading and trailing blank lines from a list of lines.
+
+    Args:
+        lines (list[str]): A list of lines to process.
+
+    Returns:
+        list[str]: A new list containing the lines with leading and trailing blank lines removed.
+    """
+    start_index, end_index = None, None
+    for k, line in enumerate(lines):
+        if line.strip() != '':
+            start_index = k
+            break
+    if start_index is None:
+        return []
+    for k, line in enumerate(lines[::-1]):
+        if line.strip() != '':
+            end_index = len(lines) - k
+            break
+    return lines[start_index: end_index]
+
+
+class MarkdownTableAlignType(Enum):
+    DEFAULT = 0
+    LEFT = 1
+    RIGHT = 2
+    BOTH = 3
+    
+    
+@dataclass
+class MarkdownTable:
+    headers: List[str]
+    align_types: List[MarkdownTableAlignType]
+    rows: List[List[str]]
+    
+    
+def _get_cell_align_type(cell: str) -> MarkdownTableAlignType:
+    cell = re.sub(r'\s', '', cell)
+    cell = re.sub(r'-{2,}', '-', cell)
+    if cell == '-':
+        return MarkdownTableAlignType.DEFAULT
+    elif cell == ':-':
+        return MarkdownTableAlignType.LEFT
+    elif cell == '-:':
+        return MarkdownTableAlignType.RIGHT
+    elif cell == ':-:':
+        return MarkdownTableAlignType.BOTH
+    else:
+        raise Exception('parse align type')
+    
+    
+def _split_table_line(line: str, length=None) -> List[str]:
+    line = line.strip('|')
+    cells = line.split('|')
+    cells = [cell.strip() for cell in cells]
+    if length is not None and length > len(cells):
+        cells += ['' for _ in range(length - len(cells))]
+    return cells
+
+
+def parse_markdown_table(lines: List[str]) -> MarkdownTable:
+    """Parse a markdown table from a list of lines.
+  
+    Args:
+        lines (List[str]): A list of lines containing the markdown table.
+  
+    Returns:
+        MarkdownTable: A parsed markdown table object.
+  
+    Raises:
+        Exception: If a blank line is encountered.
+        Exception: If the number of lines is too short.
+        Exception: If the number of cells in the header line does not match the number of cells in the splitter line.
+        Exception: If the number of cells in a row does not match the number of cells in the header line.
+    """
+    lines = strip_blank_lines(lines)
+    for line in lines:
+        if line.strip() == '':
+            raise Exception('blank line')
+    if len(lines) < 2:
+        raise Exception('#line too short')
+
+    headers = _split_table_line(lines[0])
+    splitters = _split_table_line(lines[1])
+    if len(splitters) != len(headers):
+        raise Exception('#cell unmatched')
+    align_types = [_get_cell_align_type(item) for item in splitters]
+
+    rows = []
+    for line in lines[2:]:
+        parts = _split_table_line(line, len(headers))
+        if len(parts) != len(headers):
+            raise Exception('#cell unmatched')
+        rows.append(parts)
+        
+    return MarkdownTable(headers, align_types, rows)
+    
