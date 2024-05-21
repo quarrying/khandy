@@ -1,5 +1,6 @@
+
+import codecs
 import os
-import imghdr
 import numbers
 import warnings
 from dataclasses import dataclass, field
@@ -40,41 +41,81 @@ def get_image_size(obj) -> ImageSize:
         raise TypeError(f"Unexpected type {type(obj)}")
     
 
+def _is_isobmff(buf):
+    if len(buf) < 16 or buf[4:8] != b'ftyp':
+        return False
+    if len(buf) < int(codecs.encode(buf[0:4], 'hex'), 16):
+        return False
+    return True
+
+
+def _get_ftyp(buf):
+    ftyp_len = int(codecs.encode(buf[0:4], 'hex'), 16)
+    major_brand = buf[8:12].decode(errors='ignore')
+    minor_version = int(codecs.encode(buf[12:16], 'hex'), 16)
+    compatible_brands = []
+    for i in range(16, ftyp_len, 4):
+        compatible_brands.append(buf[i:i+4].decode(errors='ignore'))
+    return major_brand, minor_version, compatible_brands
+
+
+def match_heic(buf):
+    if _is_isobmff(buf):
+        major_brand, minor_version, compatible_brands = _get_ftyp(buf)
+        if major_brand == 'heic':
+            return True
+        if major_brand in ['mif1', 'msf1'] and 'heic' in compatible_brands:
+            return True
+
+
 def get_image_file_type(file_or_buffer):
-    """Returns the file type of the image based on the given file or buffer.
-    Wrapper for imghdr.what and fix bugs about jpeg format.
-    
+    """Determine the image file type based on the file header.
+
     Args:
-        file_or_buffer: A file path or buffer object that can be used as input for imghdr.what() function.
+        file_or_buffer (Union[BinaryIO, bytes]): file_or_buffer: A file path or buffer object.
 
     Returns:
-        A string representing the file type of the image, based on the given file or buffer.
-
-    Raises:
-        TypeError: If the input type is not supported as a file input.
+        Union[str, None]: A lowercase string representing the image file type ('bmp', 'gif', 'jpeg', 'png', 'tiff', 'webp', 'heic')
+        or None if the file type is not recognized.
 
     References:
         https://bugs.python.org/issue28591
         https://github.com/h2non/filetype.py/blob/master/filetype/types/image.py
         https://github.com/kovidgoyal/calibre/blob/master/src/calibre/utils/imghdr.py
+        https://peps.python.org/pep-0594/#imghdr
+        https://github.com/sphinx-doc/sphinx/blob/a502e7523376e0344c1c9cc8a9d128143cd98b2d/sphinx/util/images.py
     """
-    if isinstance(file_or_buffer, (str, os.PathLike)):
-        extension = imghdr.what(file_or_buffer)
-    elif (hasattr(file_or_buffer, 'read') and
-          hasattr(file_or_buffer, 'tell') and
-          hasattr(file_or_buffer, 'seek')):
-        extension = imghdr.what(file_or_buffer)
-    elif isinstance(file_or_buffer, (bytes, bytearray)):
-        extension = imghdr.what('', file_or_buffer)
-    else:
-        raise TypeError('Unsupported type as file input: %s' % type(file_or_buffer))
-    
-    if extension is None:
-        # fix bugs about jpeg formats.
-        file_header = khandy.get_file_header(file_or_buffer)
-        if file_header[:3] == b'\xff\xd8\xff':
-            extension = 'jpeg'
-    return extension
+    header = khandy.get_file_header(file_or_buffer, 32)
+
+    # https://en.wikipedia.org/wiki/BMP_file_format#Bitmap_file_header
+    if header.startswith(b'BM'):
+        return 'bmp'
+
+    # https://en.wikipedia.org/wiki/GIF#File_format
+    if header.startswith((b'GIF87a', b'GIF89a')):
+        return 'gif'
+
+    # https://en.wikipedia.org/wiki/JPEG_File_Interchange_Format#File_format_structure
+    if header.startswith(b'\xFF\xD8\xFF'):
+        return 'jpeg'
+
+    # https://en.wikipedia.org/wiki/PNG#File_header
+    if header.startswith(b'\x89PNG\r\n\x1A\n'):
+        return 'png'
+
+    # https://en.wikipedia.org/wiki/TIFF#Byte_order
+    if header.startswith((b'MM', b'II')):
+        return 'tiff'
+
+    # https://en.wikipedia.org/wiki/WebP#Technology
+    if header.startswith(b'RIFF') and header[8:12] == b'WEBP':
+        return 'webp'
+
+    # https://en.wikipedia.org/wiki/High_Efficiency_Image_File_Format
+    if match_heic(header):
+        return 'heic'
+
+    return None
 
 
 def get_image_extension(file_or_buffer):
