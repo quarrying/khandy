@@ -206,17 +206,17 @@ def set_logger(filename, level=logging.INFO, logger_name=None, formatter=None, w
     return logger
 
 
-def print_arguments(args, sort=True):
+def print_arguments(args, sort_keys=True, indent=4):
     assert isinstance(args, argparse.Namespace)
     args = vars(args)
-    print(json.dumps(args, indent=4, sort_keys=sort))
+    print(json.dumps(args, indent=indent, sort_keys=sort_keys))
 
 
-def save_arguments(filename, args, sort=True):
+def save_arguments(filename, args, sort_keys=True, indent=4):
     assert isinstance(args, argparse.Namespace)
     args = vars(args)
     with open(filename, 'w') as f:
-        json.dump(args, f, indent=4, sort_keys=sort)
+        json.dump(args, f, indent=indent, sort_keys=sort_keys)
 
 
 class DownloadStatusCode(Enum):
