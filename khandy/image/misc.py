@@ -112,6 +112,7 @@ def get_image_file_type(file_or_buffer):
         return 'webp'
 
     # https://en.wikipedia.org/wiki/High_Efficiency_Image_File_Format
+    header = khandy.get_file_header(file_or_buffer, 8192)
     if match_heic(header):
         return 'heic'
 
