@@ -1,12 +1,14 @@
 import argparse
+import builtins
 import json
 import logging
 import numbers
 import os
 import socket
 import warnings
+from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import List, Optional, Tuple, Union
 
 import requests
 
@@ -117,43 +119,60 @@ def print_with_no(obj):
         print('[1] {}'.format(obj))
         
         
-def print_type_and_shape(x, name="x", max_seq_len=10):
-    """Print the type and shape of a given object x.
+@dataclass
+class TypeShapeSpec:
+    name: str
+    type: Optional[builtins.type] = None
+    shape: Optional[Union[Tuple[int], int]] = None
+    dtype: Optional[str] = None
+    value: Optional[Union[int, bool, float]] = None
+    
+    def __repr__(self):
+        type = self.type
+        if self.dtype is not None:
+            type = f'{type}[{self.dtype}]'
+        repr_str = f"{self.name}: {type}, {self.shape}"
+        if self.value is not None:
+            repr_str = f'{repr_str}, {self.value}'
+        return repr_str
+    
+    
+def get_type_and_shape(x, name='x', max_seq_len=10) -> List[TypeShapeSpec]:
+    """Determines the type and shape (sometimes dtype and value) of the given object x and returns a list of TypeShapeSpec objects.
   
-    Args:
-        x (Any]):
-            The object to print its type and shape.
-        name (str, optional):
-            The name of the object x to be printed. Defaults to "x".
-        max_seq_len (int, optional):
-            The maximum sequence length to print for list or tuple. Defaults to 10.
+    Args:  
+        x (Any): The object to analyze.
+        name (str, optional): The name of the object. Defaults to 'x'.
+        max_seq_len (int, optional): The maximum sequence length to analyze for sequences. Defaults to 10.
   
-    Returns:
-        None
+    Returns:  
+        List[TypeShapeSpec]: A list of TypeShapeSpec objects representing the type, shape, dtype, and value of x.
     """
     if (hasattr(x, 'shape') and not callable(x.shape) and
         hasattr(x, 'dtype') and not callable(x.dtype)):
         # e.g. torch.Tensor and numpy.ndarray
-        print(f"{name}: {type(x)}[{x.dtype}], {x.shape}")
+        results = [TypeShapeSpec(name, type(x), x.shape, str(x.dtype))]
     elif (hasattr(x, 'shape') and not callable(x.shape)):
-        print(f"{name}: {type(x)}, {x.shape}")
+        results = [TypeShapeSpec(name, type(x), x.shape)]
     elif isinstance(x, (tuple, list)):
-        print(f"{name}: {type(x)}, {len(x)}")
-        seq_len = len(x)
+        results = [TypeShapeSpec(name, type(x), len(x))]
         if max_seq_len is not None:
             seq_len = min(max_seq_len, len(x))
         for i in range(seq_len):
-            print_type_and_shape(x[i], f"  {name}[{i}]")
+            results += get_type_and_shape(x[i], f"  {name}[{i}]", max_seq_len)
         if len(x) > seq_len:
-            print(f"  {name}[...]: ...")
+            results += [TypeShapeSpec(f"  {name}[...]")]
     elif isinstance(x, dict):
-        print(f"{name}: {type(x)}")
+        results = [TypeShapeSpec(name, type(x))]
         for k, v in x.items():
-            print_type_and_shape(v, f"  {name}.{k}")
+            results += get_type_and_shape(v, f"  {name}.{k}", max_seq_len)
+    elif isinstance(x, str):
+        results = [TypeShapeSpec(name, type(x), len(x))]
     elif isinstance(x, (int, bool, float)):
-        print(f"{name}: {type(x)}, {x}")
+        results = [TypeShapeSpec(name, type(x), value=x)]
     else:
-        print(f"{name}: {type(x)}")
+        results = [TypeShapeSpec(name, type(x))]
+    return results
 
 
 def get_file_line_count(filename, encoding='utf-8'):
