@@ -248,19 +248,24 @@ def rescale_image(image: np.ndarray, rescale_factor='auto', dst_dtype=np.float32
 
 
 def normalize_image_value(image: np.ndarray, mean, std, rescale_factor=None):
-    """Normalize an image with mean and std, rescale optionally.
-
+    """Normalize image values using provided mean and standard deviation.  
+  
     Args:
-        image (ndarray): Image to be normalized.
-        mean (int, float, Sequence[int], Sequence[float], ndarray): The mean to be used for normalize.
-        std (int, float, Sequence[int], Sequence[float], ndarray): The std to be used for normalize.
-        rescale_factor (None, 'auto', int or float, *optional*, defaults to `None`): 
-            rescale the image by the specified scale factor. When is `'auto'`, 
-            rescale the image to [0, 1); When is `None`, do not rescale.
-
+        image (np.ndarray): The input image to be normalized.
+        mean (int, float, Sequence[int], Sequence[float], np.ndarray): The mean to be used for normalize.
+        std (int, float, Sequence[int], Sequence[float], np.ndarray): The std to be used for normalize.
+        rescale_factor (Union[int, float, str, None], optional): Rescale factor for mean and std.
+            If set to 'auto', it will scale the mean and std based on the maximum value of the image dtype (only for unsigned integers).
+            If int or float, the mean and std will be multiplied by the given factor.
+            If None, no rescaling will be done. Defaults to None.
+  
     Returns:
-        ndarray: The normalized image which dtype is np.float32.
-    """
+        np.ndarray: The normalized image with dtype np.float32.
+  
+    Raises:
+        TypeError: If the `rescale_factor` is not one of the supported types (int, float, str, None).
+        TypeError: If the image dtype is not unsigned integer when `rescale_factor` is set to 'auto'.
+    """  
     dst_dtype = np.float32
     mean = np.array(mean, dtype=dst_dtype).flatten()
     std = np.array(std, dtype=dst_dtype).flatten()
