@@ -1,8 +1,8 @@
-
 import collections.abc
 import itertools
 import numbers
 import random
+import warnings
 
 
 def to_list(obj):
@@ -18,6 +18,8 @@ def to_list(obj):
 
 
 def convert_lists_to_record(*list_objs, delimiter=None):
+    warnings.warn('convert_lists_to_record will be deprecated, use convert_table_to_records or/with transpose_table instead!')
+
     assert len(list_objs) >= 1, 'list_objs length must >= 1.'
     delimiter = delimiter or ','
 
@@ -32,6 +34,34 @@ def convert_lists_to_record(*list_objs, delimiter=None):
     for record in record_list:
         record_str = [str(item) for item in record]
         records.append(delimiter.join(record_str))
+    return records
+
+
+def convert_table_to_records(*table, delimiter=None):
+    """Convert a table of tuples or lists into a list of records separated by a delimiter.  
+  
+    Args:  
+        *table: A variable number of tuples or lists representing rows in the table.  
+        delimiter (str, optional): The delimiter to use for separating values in each record. Defaults to ','.  
+  
+    Returns:  
+        list: A list of strings, where each string is a record representing a row in the table.  
+  
+    Raises:  
+        AssertionError: If the length of 'table' is less than 1.  
+        AssertionError: If the first item in 'table' is not a tuple or list.  
+        AssertionError: If any subsequent item in 'table' is not a tuple or list of the same length as the first item.  
+    """  
+    assert len(table) >= 1, 'table length must >= 1.'
+    delimiter = delimiter or ','
+
+    assert isinstance(table[0], (tuple, list))
+    number = len(table[0])
+    for item in table[1:]:
+        assert isinstance(item, (tuple, list))
+        assert len(item) == number, '{} != {}'.format(len(item), number)
+        
+    records = [delimiter.join(str(item) for item in row) for row in table]
     return records
 
 
