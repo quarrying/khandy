@@ -31,7 +31,7 @@ def convert_lists_to_record(*list_objs, delimiter=None):
     for item in list_objs[1:]:
         assert isinstance(item, (tuple, list))
         assert len(item) == number, '{} != {}'.format(len(item), number)
-        
+
     records = []
     record_list = zip(*list_objs)
     for record in record_list:
@@ -41,20 +41,20 @@ def convert_lists_to_record(*list_objs, delimiter=None):
 
 
 def convert_table_to_records(*table, delimiter=None):
-    """Convert a table of tuples or lists into a list of records separated by a delimiter.  
-  
-    Args:  
-        *table: A variable number of tuples or lists representing rows in the table.  
-        delimiter (str, optional): The delimiter to use for separating values in each record. Defaults to ','.  
-  
-    Returns:  
-        list: A list of strings, where each string is a record representing a row in the table.  
-  
-    Raises:  
-        AssertionError: If the length of 'table' is less than 1.  
-        AssertionError: If the first item in 'table' is not a tuple or list.  
-        AssertionError: If any subsequent item in 'table' is not a tuple or list of the same length as the first item.  
-    """  
+    """Convert a table of tuples or lists into a list of records separated by a delimiter.
+
+    Args:
+        *table: A variable number of tuples or lists representing rows in the table.
+        delimiter (str, optional): The delimiter to use for separating values in each record. Defaults to ','.
+
+    Returns:
+        list: A list of strings, where each string is a record representing a row in the table.
+
+    Raises:
+        AssertionError: If the length of 'table' is less than 1.
+        AssertionError: If the first item in 'table' is not a tuple or list.
+        AssertionError: If any subsequent item in 'table' is not a tuple or list of the same length as the first item.
+    """
     assert len(table) >= 1, 'table length must >= 1.'
     delimiter = delimiter or ','
 
@@ -63,7 +63,7 @@ def convert_table_to_records(*table, delimiter=None):
     for item in table[1:]:
         assert isinstance(item, (tuple, list))
         assert len(item) == number, '{} != {}'.format(len(item), number)
-        
+
     records = [delimiter.join(str(item) for item in row) for row in table]
     return records
 
@@ -77,8 +77,8 @@ def shuffle_table(table):
     random.shuffle(shuffled)
     dst_table = tuple(zip(*shuffled))
     return dst_table
-    
-    
+
+
 def transpose_table(table):
     """
     Notes:
@@ -95,12 +95,12 @@ def concat_list(in_list):
 
     Returns:
         list: The concatenated flat list.
-    
+
     References:
         mmcv.concat_list
     """
     return list(itertools.chain(*in_list))
-    
+
 
 def split_by_num(x, num_splits, strict=True):
     """
@@ -113,7 +113,7 @@ def split_by_num(x, num_splits, strict=True):
     # NB: np.ndarray is not Sequence
     assert isinstance(x, (collections.abc.Sequence, np.ndarray))
     assert isinstance(num_splits, numbers.Integral)
-    
+
     if strict:
         assert len(x) % num_splits == 0
     split_size = (len(x) + num_splits - 1) // num_splits
@@ -121,8 +121,8 @@ def split_by_num(x, num_splits, strict=True):
     for i in range(0, len(x), split_size):
         out_list.append(x[i: i + split_size])
     return out_list
-    
-    
+
+
 def split_by_size(x, sizes):
     """
     References:
@@ -132,7 +132,7 @@ def split_by_size(x, sizes):
     # NB: np.ndarray is not Sequence
     assert isinstance(x, (collections.abc.Sequence, np.ndarray))
     assert isinstance(sizes, (list, tuple))
-     
+
     assert sum(sizes) == len(x)
     out_list = []
     start_index = 0
@@ -140,8 +140,8 @@ def split_by_size(x, sizes):
         out_list.append(x[start_index: start_index + size])
         start_index += size
     return out_list
-    
-    
+
+
 def split_by_slice(x, slices):
     """
     References:
@@ -150,7 +150,7 @@ def split_by_slice(x, slices):
     # NB: np.ndarray is not Sequence
     assert isinstance(x, (collections.abc.Sequence, np.ndarray))
     assert isinstance(slices, (list, tuple))
-    
+
     out_list = []
     indices = [0] + list(slices) + [len(x)]
     for i in range(len(slices) + 1):
@@ -162,13 +162,13 @@ def split_by_ratio(x, ratios):
     # NB: np.ndarray is not Sequence
     assert isinstance(x, (collections.abc.Sequence, np.ndarray))
     assert isinstance(ratios, (list, tuple))
-    
+
     pdf = [k / sum(ratios) for k in ratios]
     cdf = [sum(pdf[:k]) for k in range(len(pdf) + 1)]
     indices = [int(round(len(x) * k)) for k in cdf]
     return [x[indices[i]: indices[i + 1]] for i in range(len(ratios))]
-    
-    
+
+
 def to_ntuple(x, n):
     """Convert the input into a tuple of length n.
 
@@ -217,7 +217,7 @@ def is_seq_of(seq, item_type, seq_type=None) -> bool:
 
     Returns:
         bool: Whether the sequence is valid.
-    
+
     References:
         mmcv
     """
@@ -364,7 +364,7 @@ class EqLenSequences:
         for k, v in self._fields.items():
             setattr(ret, k, v[index])
         return ret
-    
+
     def __str__(self) -> str:
         """Return a string representation of the EqLenSequences object.
 
@@ -377,7 +377,7 @@ class EqLenSequences:
         return s
 
     __repr__ = __str__
-    
+
     def get_fields(self) -> Dict[str, Sequence]:
         """Return a dictionary of all fields and their corresponding Sequence objects.
 
@@ -385,4 +385,24 @@ class EqLenSequences:
             Dict[str, Sequence]: A dictionary where keys are field names and values are Sequence objects.
         """
         return self._fields
-    
+
+    def filter_(self, index: Union[int, slice]) -> "EqLenSequences":
+        """Filter the EqLenSequences object by indexing or slicing to return a modified version of the object with the selected elements.
+
+        Args:
+            index: Index or slice to filter the elements.
+
+        Returns:
+            The modified EqLenSequences object with the selected elements.
+
+        Raises:
+            IndexError: If the index is out of range.
+        """
+        if type(index) is int:
+            if index >= len(self) or index < -len(self):
+                raise IndexError("EqLenSequences index out of range!")
+            else:
+                index = slice(index, None, len(self))
+        for name, value in self._fields.items():
+            self._fields[name] = value[index]
+        return self
