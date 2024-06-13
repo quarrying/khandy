@@ -2,6 +2,7 @@ import os
 import copy
 import json
 import dataclasses
+import warnings
 from dataclasses import dataclass, field
 from collections import OrderedDict
 from typing import Optional, List
@@ -474,8 +475,14 @@ class CocoHandler:
             )
             coco_record.objects.append(coco_object)
         return coco_record
-        
-        
+    
+    @staticmethod
+    def load_class_names(filename):
+        json_data = khandy.load_json(filename)
+        categories = json_data['categories']
+        return [cate_item['name'] for cate_item in categories]
+
+
 def load_detect(filename, fmt, **kwargs) -> DetectIrRecord:
     if fmt == 'labelme':
         labelme_record = LabelmeHandler.load(filename, **kwargs)
@@ -576,6 +583,7 @@ def replace_detect_label(record: DetectIrRecord, label_map, ignore=True):
 
 
 def load_coco_class_names(filename):
+    warnings.warn('load_coco_class_names will be deprecated, use CocoHandler.load_class_names instead!')
     json_data = khandy.load_json(filename)
     categories = json_data['categories']
     return [cat_item['name'] for cat_item in categories]
