@@ -3,6 +3,7 @@ import itertools
 import numbers
 import random
 import warnings
+from typing import Dict, Sequence, Union
 
 import numpy as np
 
@@ -248,3 +249,140 @@ def is_tuple_of(seq, item_type):
     """
     return is_seq_of(seq, item_type, seq_type=tuple)
 
+
+class EqLenSequences:
+    """A class that represents a collection of uniformly sized objects.
+    Attributes are added as fields, and all fields must have the same length.
+
+    References:
+        https://github.com/facebookresearch/detectron2/blob/main/detectron2/structures/instances.py
+    """
+    def __init__(self, **kwargs):
+        """Initialize the class with keyword arguments as fields.
+
+        Args:
+            **kwargs: Keyword arguments where the key is the field name and the value is a Sequence object.
+        """
+        self._fields: Dict[str, Sequence] = {}
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    def __setattr__(self, name: str, value: Sequence) -> None:
+        """Set an attribute on the instance.
+
+        Args:
+            name (str): The name of the attribute to set.
+            value (Sequence): The value to assign to the attribute. Must have a __len__ and __getitem__ attribute.
+
+        Raises:
+            AttributeError: If trying to set the private attribute '_fields' after it has been initialized.
+            AssertionError: If the value does not have a __len__ or __getitem__ attribute or the length is inconsistent with existing fields.
+        """
+        if name == '_fields':
+            # hasattr is implemented by calling getattr(object, name) and
+            # seeing whether it raises an AttributeError or not.
+            if not hasattr(self, name):
+                super().__setattr__(name, value)
+            else:
+                raise AttributeError(f'{name} has been used as a private attribute, which is immutable.')
+        else:
+            assert hasattr(value, '__len__'), 'value must contain `__len__` attribute'
+            assert hasattr(value, '__getitem__'), 'value must contain `__getitem__` attribute'
+            if len(self._fields) > 0:
+                msg = f'len(value) is not consistent with len(self), {len(value)} vs {len(self)}'
+                assert len(value) == len(self), msg
+            self._fields[name] = value
+
+    def __getattr__(self, name: str) -> Sequence:
+        """Get an attribute from the instance.
+
+        Args:
+            name (str): The name of the attribute to retrieve.
+
+        Returns:
+            Sequence: The value of the attribute.
+
+        Raises:
+            AttributeError: If the attribute does not exist.
+        """
+        if name == '_fields' or name not in self._fields:
+            raise AttributeError(f"Cannot find field '{name}' in the given EqLenSequences!")
+        return self._fields[name]
+
+    def __delattr__(self, name: str):
+        """Delete an attribute from the instance.
+
+        Args:
+            name (str): The name of the attribute to delete.
+
+        Raises:
+            AttributeError: If trying to delete the private attribute '_fields'.
+        """
+        if name == '_fields':
+            raise AttributeError(f'{name} has been used as a private attribute, which is immutable.')
+        del self._fields[name]
+
+    def __len__(self) -> int:
+        """Get the length of the objects in the fields.
+
+        Returns:
+            int: The length of the objects in the fields, or 0 if there are no fields.
+        """
+        for v in self._fields.values():
+            return len(v)
+        return 0
+
+    def __contains__(self, name: str) -> bool:
+        """Check if a field name is present in the instance.
+
+        Args:
+            name (str): The name of the field to check.
+
+        Returns:
+            bool: True if the field name exists, False otherwise.
+        """
+        return name in self._fields
+
+    def __getitem__(self, index: Union[int, slice]) -> "EqLenSequences":
+        """Get a subset of the EqLenSequences object based on the given index or slice.
+
+        Args:
+            index: An integer index or a slice object.
+
+        Returns:
+            EqLenSequences: A new EqLenSequences object containing the subset of the original data.
+
+        Raises:
+            IndexError: If the integer index is out of range.
+        """
+        if type(index) is int:
+            if index >= len(self) or index < -len(self):
+                raise IndexError("EqLenSequences index out of range!")
+            else:
+                index = slice(index, None, len(self))
+        ret = EqLenSequences()
+        for k, v in self._fields.items():
+            setattr(ret, k, v[index])
+        return ret
+    
+    def __str__(self) -> str:
+        """Return a string representation of the EqLenSequences object.
+
+        Returns:
+            str: A string representation of the object.
+        """
+        s = self.__class__.__name__ + "("
+        s += "num_instances={}, ".format(len(self))
+        s += "fields={{{}}})".format(", ".join((f"{k}: {v}" for k, v in self._fields.items())))
+        return s
+
+    __repr__ = __str__
+    
+    def get_fields(self) -> Dict[str, Sequence]:
+        """Return a dictionary of all fields and their corresponding Sequence objects.
+
+        Returns:
+            Dict[str, Sequence]: A dictionary where keys are field names and values are Sequence objects.
+        """
+        return self._fields
+    
