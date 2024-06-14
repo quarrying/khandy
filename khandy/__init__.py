@@ -16,3 +16,4 @@ from .boxes import *
 from .image import *
 from .points import *
 from . import label
+from . import model
