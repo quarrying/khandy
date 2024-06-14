@@ -376,7 +376,7 @@ class EqLenSequences:
         """
         return self._fields
 
-    def filter_(self, index: Union[int, slice]) -> "EqLenSequences":
+    def filter_(self, index: Union[int, slice]):
         """Filter the object by indexing the stored sequences using the provided index.
 
         Args:
@@ -396,3 +396,9 @@ class EqLenSequences:
         for name in self._fields:
             super().__setattr__(name, getattr(self, name)[index])
         return self
+    
+    def filter(self, index: Union[int, slice], inplace):
+        if inplace:
+            return self.filter_(index)
+        else:
+            return self[index]
