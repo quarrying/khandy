@@ -210,3 +210,43 @@ def parse_markdown_table(lines: List[str]) -> MarkdownTable:
         
     return MarkdownTable(headers, align_types, rows)
     
+
+def dumps_markdown_table(table: MarkdownTable, align_header=False) -> List[str]:
+    """Convert a khandy.MarkdownTable object to a list of strings representing a Markdown table.
+  
+    Args:
+        table (khandy.MarkdownTable): The Markdown table object to be converted.
+        align_header (bool, optional): Whether to align the table header to the specified lengths. Defaults to False.
+  
+    Returns:
+        List[str]: A list of strings representing the Markdown table.
+    """
+    min_length = 5 
+    lengths = [max(min_length, len(header)) for header in table.headers]
+    for row in table.rows:
+        lengths = [max(len(cell), lengths[k]) for k, cell in enumerate(row)]
+
+    if align_header:
+        header_cells = [f'{header}'.ljust(lengths[k]) for k, header in enumerate(table.headers)]
+    else:
+        header_cells = table.headers
+
+    splitter_cells = []
+    for k, align_type in enumerate(table.align_types):
+        if align_type == MarkdownTableAlignType.DEFAULT:
+            cell = f'{"-" * lengths[k]}'
+        elif align_type == MarkdownTableAlignType.LEFT:
+            cell = f':{"-" * (lengths[k] - 2)}-'
+        elif align_type == MarkdownTableAlignType.RIGHT:
+            cell = f'-{"-" * (lengths[k] - 2)}:'
+        elif align_type == MarkdownTableAlignType.BOTH:
+            cell = f':{"-" * (lengths[k] - 2)}:'
+        splitter_cells.append(cell)
+
+    cells_list = [header_cells, splitter_cells]
+    for row in table.rows:
+        cells_list.append([f'{cell}'.ljust(lengths[k]) for k, cell in enumerate(row)])
+    dst_lines = [' | '.join(cells) for cells in cells_list]
+    dst_lines = [line.strip() for line in dst_lines]
+    return dst_lines
+
