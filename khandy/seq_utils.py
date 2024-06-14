@@ -351,9 +351,8 @@ class EqLenSequences:
                 raise IndexError(f"{self.__class__.__name__} index out of range!")
             else:
                 key = slice(key, None, len(self))
-        ret = self.__class__()
-        for name in self._fields:
-            setattr(ret, name, getattr(self, name)[key])
+        kwargs = {name: getattr(self, name)[key] for name in self._fields}
+        ret = self.__class__(**kwargs)
         return ret
 
     def __str__(self) -> str:
