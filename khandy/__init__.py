@@ -7,6 +7,7 @@ from .hash_utils import *
 from .seq_utils import *
 from .misc import *
 from .numpy_utils import *
+from .optional_pkgs import *
 from .text_utils import *
 from .time_utils import *
 from .version import *
