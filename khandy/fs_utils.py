@@ -4,10 +4,10 @@ import re
 import shutil
 import warnings
 from datetime import datetime
-from typing import Callablel, List, Literal, Optional
-\
+from typing import Callable, List, Literal, Optional, Union
 
-def get_path_stem(path):
+
+def get_path_stem(path: str) -> str:
     """
     References:
         `std::filesystem::path::stem` since C++17
@@ -15,7 +15,7 @@ def get_path_stem(path):
     return os.path.splitext(os.path.basename(path))[0]
 
 
-def replace_path_stem(path, new_stem):
+def replace_path_stem(path: str, new_stem: Union[str, Callable[[str], str]]) -> str:
     dirname, basename = os.path.split(path)
     stem, extension = os.path.splitext(basename)
     if isinstance(new_stem, str):
@@ -26,7 +26,7 @@ def replace_path_stem(path, new_stem):
         raise TypeError('Unsupported Type!')
         
 
-def get_path_extension(path):
+def get_path_extension(path: str) -> str:
     """
     References:
         `std::filesystem::path::extension` since C++17
@@ -37,7 +37,7 @@ def get_path_extension(path):
     return os.path.splitext(os.path.basename(path))[1]
     
 
-def replace_path_extension(path, new_extension=None):
+def replace_path_extension(path: str, new_extension: Optional[str] = None) -> str:
     """Replaces the extension with new_extension or removes it when the default value is used.
     Firstly, if this path has an extension, it is removed. Then, a dot character is appended 
     to the pathname, if new_extension is not empty or does not begin with a dot character.
@@ -54,7 +54,7 @@ def replace_path_extension(path, new_extension=None):
         return f'{path_wo_ext}.{new_extension}'
     
     
-def normalize_extension(extension):
+def normalize_extension(extension: str) -> str:
     if extension.startswith('.'):
         new_extension = extension.lower()
     else:
@@ -62,7 +62,7 @@ def normalize_extension(extension):
     return new_extension
 
 
-def is_path_in_extensions(path, extensions):
+def is_path_in_extensions(path: str, extensions: Union[str, List[str]]) -> bool:
     if isinstance(extensions, str):
         extensions = [extensions]
     extensions = [normalize_extension(item) for item in extensions]
@@ -79,10 +79,13 @@ def get_path_parts(path: str, sep: Optional[Literal['/', '\\']] = None) -> List[
             Must be None, '/', or '\\'. Defaults to the system-specific path separator (os.path.sep).  
   
     Returns:
-        list: A list of strings representing the individual parts of the path.  
+        List[str]: A list of strings representing the individual parts of the path.  
   
     Raises:
         ValueError: If sep is not None, '/', or '\\'.
+
+    Notes:
+        This implementation is different from pathlib.Path.parts. 
     """
     if sep is not None and sep not in ('/', '\\'):
         raise ValueError("sep must be None, '/', or '\\'")
@@ -92,7 +95,7 @@ def get_path_parts(path: str, sep: Optional[Literal['/', '\\']] = None) -> List[
     return parts
 
 
-def normalize_path(path, norm_case=True):
+def normalize_path(path: str, norm_case: bool = True) -> str:
     """
     References:
         https://en.cppreference.com/w/cpp/filesystem/canonical
@@ -113,7 +116,7 @@ def normalize_path(path, norm_case=True):
     return path
     
 
-def upsert_prefix_into_path_stem(filename, prefix: str, validator: Optional[Callable[[str], bool]] = None, sep='_'):
+def upsert_prefix_into_path_stem(filename: str, prefix: str, validator: Optional[Callable[[str], bool]] = None, sep: str = '_') -> str:
     """Upsert a prefix into the first part of the file stem in a given file path.
 
     Args:
@@ -153,7 +156,7 @@ def upsert_prefix_into_path_stem(filename, prefix: str, validator: Optional[Call
     return os.path.join(dirname, new_basename)
 
 
-def upsert_suffix_into_path_stem(filename, suffix: str, validator: Optional[Callable[[str], bool]] = None, sep='_'):
+def upsert_suffix_into_path_stem(filename: str, suffix: str, validator: Optional[Callable[[str], bool]] = None, sep: str = '_') -> str:
     """Upsert a suffix into the last part of the file stem in a given file path.
 
     Args:
@@ -275,7 +278,7 @@ def get_top_level_files(path, full_path=True):
                 if os.path.isfile(os.path.join(path_ex, item))]
                 
 
-def list_items_in_dir(path=None, recursive=False, full_path=True):
+def list_items_in_dir(path: Optional[str] = None, recursive: bool = False, full_path: bool = True) -> List[str]:
     """List all entries in directory
     """
     if path is None:
@@ -300,7 +303,7 @@ def list_items_in_dir(path=None, recursive=False, full_path=True):
         return all_names
 
 
-def list_dirs_in_dir(path=None, recursive=False, full_path=True):
+def list_dirs_in_dir(path: Optional[str] = None, recursive: bool = False, full_path: bool = True) -> List[str]:
     """List all dirs in directory
     """
     if path is None:
@@ -326,7 +329,7 @@ def list_dirs_in_dir(path=None, recursive=False, full_path=True):
         return all_names
 
 
-def list_files_in_dir(path=None, recursive=False, full_path=True):
+def list_files_in_dir(path: Optional[str] = None, recursive: bool = False, full_path: bool = True) -> List[str]:
     """List all files in directory
     """
     if path is None:
@@ -352,7 +355,7 @@ def list_files_in_dir(path=None, recursive=False, full_path=True):
         return all_names
         
 
-def get_folder_size(path):
+def get_folder_size(path: str) -> int:
     if path is None:
         path = os.getcwd()
     path_ex = os.path.expanduser(path)
@@ -368,7 +371,7 @@ def get_folder_size(path):
     return total_size
 
     
-def escape_filename(filename, new_char='_'):
+def escape_filename(filename: str, new_char: str = '_') -> str:
     assert isinstance(new_char, str)
     control_chars = ''.join((map(chr, range(0x00, 0x20))))
     pattern = r'[\\/*?:"<>|{}]'.format(control_chars)
@@ -380,7 +383,7 @@ def replace_invalid_filename_char(filename, new_char='_'):
     return escape_filename(filename, new_char)
 
 
-def copy_file(src, dst_dir, action_if_exist='rename'):
+def copy_file(src: str, dst_dir: str, action_if_exist: Optional[Literal['ignore', 'rename']] = 'rename') -> str:
     """
     Args:
         src: source file path
@@ -418,7 +421,7 @@ def copy_file(src, dst_dir, action_if_exist='rename'):
     return dst
     
     
-def move_file(src, dst_dir, action_if_exist='rename'):
+def move_file(src: str, dst_dir: str, action_if_exist: Optional[Literal['ignore', 'rename']] = 'rename') -> str:
     """
     Args:
         src: source file path
@@ -456,7 +459,7 @@ def move_file(src, dst_dir, action_if_exist='rename'):
     return dst
     
     
-def rename_file(src, dst, action_if_exist='rename'):
+def rename_file(src: str, dst: str, action_if_exist: Optional[Literal['ignore', 'rename']] = 'rename') -> str:
     """
     Args:
         src: source file path
@@ -505,7 +508,9 @@ def _get_default_logger(logger_name):
     return logger
 
 
-def copy_dir(src_dir, dst_dir, action_if_file_exist='rename', logger=None):
+def copy_dir(src_dir: str, dst_dir: str, 
+             action_if_file_exist: Optional[Literal['ignore', 'rename']] = 'rename', 
+             logger: Optional[logging.Logger] = None):
     """Recursively copies a directory and its contents from the source directory to the destination directory.  
   
     Args:  
@@ -541,7 +546,9 @@ def copy_dir(src_dir, dst_dir, action_if_file_exist='rename', logger=None):
         logger.error(f'{datetime.now()} ERROR: {e}')
 
 
-def move_dir(src_dir, dst_dir, action_if_file_exist='rename', rmtree_after_move=False, logger=None):
+def move_dir(src_dir: str, dst_dir: str, 
+             action_if_file_exist: Optional[Literal['ignore', 'rename']] = 'rename', 
+             rmtree_after_move: bool = False, logger: Optional[logging.Logger] = None):
     """Recursively moves a directory and its contents from the source directory to the destination directory.  
   
     Args:  
@@ -578,7 +585,9 @@ def move_dir(src_dir, dst_dir, action_if_file_exist='rename', rmtree_after_move=
         logger.error(f'{datetime.now()} ERROR: {e}')
         
 
-def rename_files(old_names: List[str], new_names: List[str], action_if_file_exist='rename', logger=None):
+def rename_files(old_names: List[str], new_names: List[str], 
+                 action_if_file_exist: Optional[Literal['ignore', 'rename']] = 'rename', 
+                 logger: Optional[logging.Logger] = None):
     """Renames a list of files based on provided old and new file name pairs.  
     
     Args:
