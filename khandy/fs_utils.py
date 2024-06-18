@@ -91,18 +91,23 @@ def normalize_path(path, norm_case=True):
     return path
     
 
-def upsert_prefix_into_path_stem(filename, prefix: str, validator: Optional[Callable] = None, sep='_'):
-    """Inserts a prefix into the stem of the filename or updates it if already exists.
-  
-    Args:  
-        filename (str): The original filename.  
-        prefix (str): The prefix to be added.  
-        validator (Optional[Callable]): The validator function to determine whether to add the prefix.  
-            If None, the prefix will always be added.  
-        sep (str): The separator used to split the stem. Default is "_".  
-  
-    Returns:  
-        str: The new filename with the prefix added to the stem.  
+def upsert_prefix_into_path_stem(filename, prefix: str, validator: Optional[Callable[[str], bool]] = None, sep='_'):
+    """Upsert a prefix into the first part of the file stem in a given file path.
+
+    Args:
+        filename (str): The full path of the file.
+        prefix (str): The prefix to be inserted or updated.
+        validator (Optional[Callable[[str], bool]]): An optional callable that takes a string and returns a boolean.
+            If provided, it will be used to determine if the prefix should be inserted or updated.
+            If the validator returns False for the first part of the stem, the prefix will be inserted.
+            If the validator returns True, the first part of the stem will be replaced with the prefix.
+        sep (str, optional): The separator used to split the stem. Defaults to '_'.
+
+    Returns:
+        str: The new file path with the updated stem.
+
+    Raises:
+        AssertionError: If the validator is not None and is not callable.
     """
     assert validator is None or hasattr(validator, '__call__')
     dirname, basename = os.path.split(filename)
@@ -126,18 +131,23 @@ def upsert_prefix_into_path_stem(filename, prefix: str, validator: Optional[Call
     return os.path.join(dirname, new_basename)
 
 
-def upsert_suffix_into_path_stem(filename, suffix: str, validator: Optional[Callable] = None, sep='_'):
-    """Inserts a suffix into the stem of the filename or updates it if already exists.
+def upsert_suffix_into_path_stem(filename, suffix: str, validator: Optional[Callable[[str], bool]] = None, sep='_'):
+    """Upsert a suffix into the last part of the file stem in a given file path.
 
-    Args:  
-        filename (str): The original filename.  
-        suffix (str): The suffix to be added.  
-        validator (Optional[Callable]): The validator function to determine whether to add the suffix.  
-            If None, the suffix will always be added.  
-        sep (str): The separator used to split the stem. Default is "_".  
-  
-    Returns:  
-        str: The new filename with the suffix added to the stem.
+    Args:
+        filename (str): The full path of the file.
+        suffix (str): The suffix to be inserted or updated.
+        validator (Optional[Callable[[str], bool]]): An optional callable function that takes a string as input
+            and returns a boolean. If provided, it will be used to determine if the suffix should be inserted or updated.
+            If the validator returns False for the last part of the stem, the suffix will be appended.
+            If the validator returns True, the last part of the stem will be replaced with the suffix.
+        sep (str, optional): The separator used to split the stem. Defaults to '_'.
+
+    Returns:
+        str: The new file path with the updated stem.
+
+    Raises:
+        AssertionError: If the validator is not None and is not callable.
     """
     assert validator is None or hasattr(validator, '__call__')
     dirname, basename = os.path.split(filename)
