@@ -5,6 +5,7 @@ import logging
 import numbers
 import os
 import socket
+import subprocess
 import warnings
 from dataclasses import dataclass
 from enum import Enum
@@ -373,4 +374,20 @@ def get_git_repo_root(path: Optional[str] = None) -> Optional[str]:
     except Exception as e:
         print(f"Error occurred while getting Git repo root: {e}")
         return None
+    
+
+def get_gpu_count() -> int:
+    """Return the count of GPUs available on the system.
+
+    This function uses the 'nvidia-smi' command to query the system for NVIDIA GPUs.
+    It counts the occurrences of 'UUID' in the output to estimate the number of GPUs.
+
+    Returns:
+        int: The number of GPUs found, or 0 if an error occurs while executing the 'nvidia-smi' command.
+    """
+    try:
+        output = subprocess.check_output(['nvidia-smi', '--list-gpus'], text=True)
+        return output.count('UUID')
+    except subprocess.CalledProcessError:
+        return 0
     
