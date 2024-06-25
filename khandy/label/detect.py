@@ -1,22 +1,23 @@
-import os
 import copy
-import json
 import dataclasses
+import json
+import numbers
+import os
 import warnings
-from dataclasses import dataclass, field
-from collections import OrderedDict
-from typing import Optional, List
 import xml.etree.ElementTree as ET
+from collections import OrderedDict
+from dataclasses import dataclass, field
+from typing import List, Optional
 
-import khandy
 import lxml
 import lxml.builder
 import numpy as np
 
+import khandy
 
-__all__ = ['DetectIrObject', 'DetectIrRecord', 'load_detect', 
+__all__ = ['DetectIrObject', 'DetectIrRecord', 'load_detect',
            'save_detect', 'convert_detect', 'replace_detect_label',
-           'load_coco_class_names']
+           'load_coco_class_names', 'crop_detect']
 
 
 @dataclass
@@ -28,8 +29,8 @@ class DetectIrObject:
     y_min: float
     x_max: float
     y_max: float
-    
-    
+
+
 @dataclass
 class DetectIrRecord:
     """Intermediate Representation Format of Record
@@ -38,30 +39,30 @@ class DetectIrRecord:
     width: int
     height: int
     objects: List[DetectIrObject] = field(default_factory=list)
-    
-    
+
+
 @dataclass
 class PascalVocSource:
     database: str = ''
     annotation: str = ''
     image: str = ''
-    
-    
+
+
 @dataclass
 class PascalVocSize:
     height: int
     width: int
     depth: int
-    
-    
+
+
 @dataclass
 class PascalVocBndbox:
     xmin: float
     ymin: float
     xmax: float
     ymax: float
-    
-    
+
+
 @dataclass
 class PascalVocObject:
     name: str
@@ -69,8 +70,8 @@ class PascalVocObject:
     truncated: int = 0
     difficult: int = 0
     bndbox: Optional[PascalVocBndbox] = None
-    
-    
+
+
 @dataclass
 class PascalVocRecord:
     folder: str = ''
@@ -80,33 +81,33 @@ class PascalVocRecord:
     size: Optional[PascalVocSize] = None
     segmented: int = 0
     objects: List[PascalVocObject] = field(default_factory=list)
-    
-    
+
+
 class PascalVocHandler:
     @staticmethod
     def load(filename, **kwargs) -> PascalVocRecord:
         pascal_voc_record = PascalVocRecord()
-        
+
         xml_tree = ET.parse(filename)
         pascal_voc_record.folder = xml_tree.find('folder').text
         pascal_voc_record.filename = xml_tree.find('filename').text
         pascal_voc_record.path = xml_tree.find('path').text
         pascal_voc_record.segmented = xml_tree.find('segmented').text
-        
+
         source_tag = xml_tree.find('source')
         pascal_voc_record.source = PascalVocSource(
             database=source_tag.find('database').text,
             # annotation=source_tag.find('annotation').text,
             # image=source_tag.find('image').text
         )
-        
+
         size_tag = xml_tree.find('size')
         pascal_voc_record.size = PascalVocSize(
             width=int(size_tag.find('width').text),
             height=int(size_tag.find('height').text),
             depth=int(size_tag.find('depth').text)
         )
-        
+
         object_tags = xml_tree.findall('object')
         for index, object_tag in enumerate(object_tags):
             bndbox_tag = object_tag.find('bndbox')
@@ -125,7 +126,7 @@ class PascalVocHandler:
             )
             pascal_voc_record.objects.append(pascal_voc_object)
         return pascal_voc_record
-        
+
     @staticmethod
     def save(filename, pascal_voc_record: PascalVocRecord):
         maker = lxml.builder.ElementMaker()
@@ -136,14 +137,14 @@ class PascalVocHandler:
             maker.source(
                 maker.database(pascal_voc_record.source.database),
             ),
-            maker.size( 
+            maker.size(
                 maker.width(str(pascal_voc_record.size.width)),
                 maker.height(str(pascal_voc_record.size.height)),
                 maker.depth(str(pascal_voc_record.size.depth)),
             ),
             maker.segmented(str(pascal_voc_record.segmented)),
         )
-        
+
         for pascal_voc_object in pascal_voc_record.objects:
             object_tag = maker.object(
                 maker.name(pascal_voc_object.name),
@@ -158,12 +159,12 @@ class PascalVocHandler:
                 ),
             )
             xml.append(object_tag)
-            
+
         if not filename.endswith('.xml'):
             filename = filename + '.xml'
         with open(filename, 'wb') as f:
             f.write(lxml.etree.tostring(xml, pretty_print=True, encoding='utf-8'))
-            
+
     @staticmethod
     def to_ir(pascal_voc_record: PascalVocRecord) -> DetectIrRecord:
         ir_record = DetectIrRecord(
@@ -181,7 +182,7 @@ class PascalVocHandler:
             )
             ir_record.objects.append(ir_object)
         return ir_record
-        
+
     @staticmethod
     def from_ir(ir_record: DetectIrRecord) -> PascalVocRecord:
         pascal_voc_record = PascalVocRecord(
@@ -204,8 +205,8 @@ class PascalVocHandler:
             )
             pascal_voc_record.objects.append(pascal_voc_object)
         return pascal_voc_record
-        
-        
+
+
 class _NumpyEncoder(json.JSONEncoder):
     """ Special json encoder for numpy types """
     def default(self, obj):
@@ -280,7 +281,7 @@ class LabelmeHandler:
             )
             ir_record.objects.append(ir_object)
         return ir_record
-        
+
     @staticmethod
     def from_ir(ir_record: DetectIrRecord) -> LabelmeRecord:
         labelme_record = LabelmeRecord(
@@ -292,12 +293,12 @@ class LabelmeHandler:
             labelme_shape = LabelmeShape(
                 label=ir_object.label,
                 shape_type='rectangle',
-                points=[[ir_object.x_min, ir_object.y_min], 
+                points=[[ir_object.x_min, ir_object.y_min],
                         [ir_object.x_max, ir_object.y_max]]
             )
             labelme_record.shapes.append(labelme_shape)
         return labelme_record
-        
+
 
 @dataclass
 class YoloObject:
@@ -306,16 +307,16 @@ class YoloObject:
     y_center: float
     width: float
     height: float
-    
-    
+
+
 @dataclass
 class YoloRecord:
     filename: Optional[str] = None
     width: Optional[int] = None
     height: Optional[int] = None
     objects: List[YoloObject] = field(default_factory=list)
-    
-    
+
+
 class YoloHandler:
     @staticmethod
     def load(filename, **kwargs) -> YoloRecord:
@@ -368,7 +369,7 @@ class YoloHandler:
             )
             ir_record.objects.append(ir_object)
         return ir_record
-        
+
     @staticmethod
     def from_ir(ir_record: DetectIrRecord) -> YoloRecord:
         yolo_record = YoloRecord(
@@ -390,8 +391,8 @@ class YoloHandler:
             )
             yolo_record.objects.append(yolo_object)
         return yolo_record
-    
-        
+
+
 @dataclass
 class CocoObject:
     label: str
@@ -399,29 +400,29 @@ class CocoObject:
     y_min: float
     width: float
     height: float
-    
-    
+
+
 @dataclass
 class CocoRecord:
     filename: str
     width: int
     height: int
     objects: List[CocoObject] = field(default_factory=list)
-    
+
 
 class CocoHandler:
     @staticmethod
     def load(filename, **kwargs) -> List[CocoRecord]:
         json_data = khandy.load_json(filename)
-        
+
         images = json_data['images']
         annotations = json_data['annotations']
         categories = json_data['categories']
-        
+
         label_map = {}
         for cat_item in categories:
             label_map[cat_item['id']] = cat_item['name']
-        
+
         coco_records = OrderedDict()
         for image_item in images:
             coco_records[image_item['id']] = CocoRecord(
@@ -429,7 +430,7 @@ class CocoHandler:
                 width=image_item['width'],
                 height=image_item['height'],
                 objects=[])
-                
+
         for annotation_item in annotations:
             coco_object = CocoObject(
                 label=label_map[annotation_item['category_id']],
@@ -439,7 +440,7 @@ class CocoHandler:
                 height=annotation_item['bbox'][3])
             coco_records[annotation_item['image_id']].objects.append(coco_object)
         return list(coco_records.values())
-        
+
     @staticmethod
     def to_ir(coco_record: CocoRecord) -> DetectIrRecord:
         ir_record = DetectIrRecord(
@@ -475,7 +476,7 @@ class CocoHandler:
             )
             coco_record.objects.append(coco_object)
         return coco_record
-    
+
     @staticmethod
     def load_class_names(filename):
         json_data = khandy.load_json(filename)
@@ -499,8 +500,8 @@ def load_detect(filename, fmt, **kwargs) -> DetectIrRecord:
     else:
         raise ValueError(f"Unsupported detect label fmt. Got {fmt}")
     return ir_record
-    
-    
+
+
 def save_detect(filename, ir_record: DetectIrRecord, out_fmt):
     os.makedirs(os.path.dirname(os.path.abspath(filename)), exist_ok=True)
     if out_fmt == 'labelme':
@@ -552,7 +553,7 @@ def convert_detect(record, out_fmt):
         ir_record = record
     else:
         raise TypeError('Unsupported type for record')
-        
+
     if out_fmt in ('ir', 'detect_ir'):
         dst_record = ir_record
     elif out_fmt == 'labelme':
@@ -564,7 +565,7 @@ def convert_detect(record, out_fmt):
     elif out_fmt == 'coco':
         dst_record = CocoHandler.from_ir(ir_record)
     return dst_record
-    
+
 
 def replace_detect_label(record: DetectIrRecord, label_map, ignore=True):
     dst_record = copy.deepcopy(record)
@@ -587,4 +588,51 @@ def load_coco_class_names(filename):
     json_data = khandy.load_json(filename)
     categories = json_data['categories']
     return [cat_item['name'] for cat_item in categories]
+
+
+def crop_detect(ir_record: khandy.label.DetectIrRecord, x_min, y_min, x_max, y_max, min_area_ratio) -> khandy.label.DetectIrRecord:
+    """Crops DetectIrRecord based on a bounding box and a minimum area ratio.
+
+    Args:
+        ir_record (khandy.label.DetectIrRecord): The DetectIrRecord to process.
+        x_min (int): The minimum x-coordinate of the cropping box.
+        y_min (int): The minimum y-coordinate of the cropping box.
+        x_max (int): The maximum x-coordinate of the cropping box.
+        y_max (int): The maximum y-coordinate of the cropping box.
+        min_area_ratio (float): The minimum intersection over area (IOA) ratio for an object to be considered within the cropped box.
+
+    Returns:
+        khandy.label.DetectIrRecord: A new DetectIrRecord containing the cropped objects.
+
+    Raises:
+        AssertionError: If any of the coordinate values are not integers or if the cropping box is not valid (x_min > x_max or y_min > y_max).
+
+    See Also:
+        crop_image
+    """
+    assert isinstance(x_min, numbers.Integral) and isinstance(y_min, numbers.Integral)
+    assert isinstance(x_max, numbers.Integral) and isinstance(y_max, numbers.Integral)
+    assert (x_min < x_max) and (y_min < y_max)
+
+    dst_ir_record = khandy.label.DetectIrRecord('', width=x_max - x_min, height=y_max - y_min)
+    cropped_box = [x_min, y_min, x_max, y_max]
+    cropped_box = np.asarray(cropped_box, dtype=np.float32).reshape(1, -1)
+    for ir_object in ir_record.objects:
+        object_box = [ir_object.x_min, ir_object.y_min, ir_object.x_max, ir_object.y_max]
+        object_box = np.asarray(object_box, dtype=np.float32).reshape(1, -1)
+        ioa = khandy.paired_overlap_ratio(cropped_box, object_box, 'ioa').item()
+        if ioa >= min_area_ratio:
+            max_x_mins = np.maximum(cropped_box[:, 0], object_box[:, 0])
+            max_y_mins = np.maximum(cropped_box[:, 1], object_box[:, 1])
+            min_x_maxs = np.minimum(cropped_box[:, 2], object_box[:, 2])
+            min_y_maxs = np.minimum(cropped_box[:, 3], object_box[:, 3])
+            new_ir_object = khandy.label.DetectIrObject(
+                label=ir_object.label,
+                x_min=max_x_mins[0] - x_min,
+                y_min=max_y_mins[0] - y_min,
+                x_max=min_x_maxs[0] - x_min,
+                y_max=min_y_maxs[0] - y_min)
+            dst_ir_record.objects.append(new_ir_object)
+    return dst_ir_record
+
 

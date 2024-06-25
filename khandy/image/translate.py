@@ -19,7 +19,7 @@ def translate_image(image, x_shift, y_shift, border_value=0):
         ndarray: The translated image.
 
     See Also:
-        crop_or_pad
+        crop_image
     """
     assert khandy.is_numpy_image(image)
     assert isinstance(x_shift, numbers.Integral)
