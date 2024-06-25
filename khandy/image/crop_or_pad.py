@@ -5,7 +5,7 @@ import khandy
 import numpy as np
 
 
-def crop(image, x_min, y_min, x_max, y_max, border_value=0):
+def crop_image(image, x_min, y_min, x_max, y_max, border_value=0):
     """Crop the given image at specified rectangular area.
     
     See Also:
@@ -52,8 +52,8 @@ def crop(image, x_min, y_min, x_max, y_max, border_value=0):
     
 
 def crop_or_pad(image, x_min, y_min, x_max, y_max, border_value=0):
-    warnings.warn('crop_or_pad will be deprecated, use crop instead!')
-    return crop(image, x_min, y_min, x_max, y_max, border_value)
+    warnings.warn('crop_or_pad will be deprecated, use crop_image instead!')
+    return crop_image(image, x_min, y_min, x_max, y_max, border_value)
 
 
 def crop_coords(boxes, image_width, image_height):
