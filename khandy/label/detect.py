@@ -7,7 +7,7 @@ import warnings
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Dict, List, Optional, Union
 
 import lxml
 import lxml.builder
@@ -484,7 +484,7 @@ class CocoHandler:
         return [cate_item['name'] for cate_item in categories]
 
 
-def load_detect(filename, fmt, **kwargs) -> DetectIrRecord:
+def load_detect(filename, fmt, **kwargs) -> Union[DetectIrRecord, List[DetectIrRecord]]:
     if fmt == 'labelme':
         labelme_record = LabelmeHandler.load(filename, **kwargs)
         ir_record = LabelmeHandler.to_ir(labelme_record)
@@ -567,7 +567,7 @@ def convert_detect(record, out_fmt):
     return dst_record
 
 
-def replace_detect_label(record: DetectIrRecord, label_map, ignore=True):
+def replace_detect_label(record: DetectIrRecord, label_map: Dict[str, str], ignore: bool = True) -> DetectIrRecord:
     dst_record = copy.deepcopy(record)
     dst_objects = []
     for ir_object in dst_record.objects:
@@ -590,11 +590,11 @@ def load_coco_class_names(filename):
     return [cat_item['name'] for cat_item in categories]
 
 
-def crop_detect(ir_record: khandy.label.DetectIrRecord, x_min, y_min, x_max, y_max, min_area_ratio) -> khandy.label.DetectIrRecord:
+def crop_detect(ir_record: DetectIrRecord, x_min, y_min, x_max, y_max, min_area_ratio) -> DetectIrRecord:
     """Crops DetectIrRecord based on a bounding box and a minimum area ratio.
 
     Args:
-        ir_record (khandy.label.DetectIrRecord): The DetectIrRecord to process.
+        ir_record ( DetectIrRecord): The DetectIrRecord to process.
         x_min (int): The minimum x-coordinate of the cropping box.
         y_min (int): The minimum y-coordinate of the cropping box.
         x_max (int): The maximum x-coordinate of the cropping box.
@@ -602,7 +602,7 @@ def crop_detect(ir_record: khandy.label.DetectIrRecord, x_min, y_min, x_max, y_m
         min_area_ratio (float): The minimum intersection over area (IOA) ratio for an object to be considered within the cropped box.
 
     Returns:
-        khandy.label.DetectIrRecord: A new DetectIrRecord containing the cropped objects.
+        DetectIrRecord: A new DetectIrRecord containing the cropped objects.
 
     Raises:
         AssertionError: If any of the coordinate values are not integers or if the cropping box is not valid (x_min > x_max or y_min > y_max).
@@ -614,7 +614,7 @@ def crop_detect(ir_record: khandy.label.DetectIrRecord, x_min, y_min, x_max, y_m
     assert isinstance(x_max, numbers.Integral) and isinstance(y_max, numbers.Integral)
     assert (x_min < x_max) and (y_min < y_max)
 
-    dst_ir_record = khandy.label.DetectIrRecord('', width=x_max - x_min, height=y_max - y_min)
+    dst_ir_record = DetectIrRecord('', width=x_max - x_min, height=y_max - y_min)
     cropped_box = [x_min, y_min, x_max, y_max]
     cropped_box = np.asarray(cropped_box, dtype=np.float32).reshape(1, -1)
     for ir_object in ir_record.objects:
@@ -626,7 +626,7 @@ def crop_detect(ir_record: khandy.label.DetectIrRecord, x_min, y_min, x_max, y_m
             max_y_mins = np.maximum(cropped_box[:, 1], object_box[:, 1])
             min_x_maxs = np.minimum(cropped_box[:, 2], object_box[:, 2])
             min_y_maxs = np.minimum(cropped_box[:, 3], object_box[:, 3])
-            new_ir_object = khandy.label.DetectIrObject(
+            new_ir_object = DetectIrObject(
                 label=ir_object.label,
                 x_min=max_x_mins[0] - x_min,
                 y_min=max_y_mins[0] - y_min,
