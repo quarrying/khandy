@@ -18,10 +18,10 @@ def crop_image(image, x_min, y_min, x_max, y_max, border_value=0):
     assert khandy.is_numpy_image(image)
     assert isinstance(x_min, numbers.Integral) and isinstance(y_min, numbers.Integral)
     assert isinstance(x_max, numbers.Integral) and isinstance(y_max, numbers.Integral)
-    assert (x_min <= x_max) and (y_min <= y_max)
+    assert (x_min < x_max) and (y_min < y_max)
     
     src_height, src_width = image.shape[:2]
-    dst_height, dst_width = y_max - y_min + 1, x_max - x_min + 1
+    dst_height, dst_width = y_max - y_min, x_max - x_min
     channels = 1 if image.ndim == 2 else image.shape[2]
     
     if isinstance(border_value, (tuple, list)):
@@ -35,12 +35,12 @@ def crop_image(image, x_min, y_min, x_max, y_max, border_value=0):
         dst_width, dst_height, border_value, dtype=image.dtype)
 
     src_x_begin = max(x_min, 0)
-    src_x_end   = min(x_max + 1, src_width)
+    src_x_end   = min(x_max, src_width)
     dst_x_begin = src_x_begin - x_min
     dst_x_end   = src_x_end - x_min
 
     src_y_begin = max(y_min, 0)
-    src_y_end   = min(y_max + 1, src_height)
+    src_y_end   = min(y_max, src_height)
     dst_y_begin = src_y_begin - y_min
     dst_y_end   = src_y_end - y_min
     
@@ -67,16 +67,16 @@ def crop_coords(boxes, image_width, image_height):
     y_mins = boxes[:, 1]
     x_maxs = boxes[:, 2]
     y_maxs = boxes[:, 3]
-    dst_widths = x_maxs - x_mins + 1
-    dst_heights = y_maxs - y_mins + 1
+    dst_widths = x_maxs - x_mins
+    dst_heights = y_maxs - y_mins
     
     src_x_begin = np.maximum(x_mins, 0)
-    src_x_end   = np.minimum(x_maxs + 1, image_width)
+    src_x_end   = np.minimum(x_maxs, image_width)
     dst_x_begin = src_x_begin - x_mins
     dst_x_end   = src_x_end - x_mins
     
     src_y_begin = np.maximum(y_mins, 0)
-    src_y_end   = np.minimum(y_maxs + 1, image_height)
+    src_y_end   = np.minimum(y_maxs, image_height)
     dst_y_begin = src_y_begin - y_mins
     dst_y_end   = src_y_end - y_mins
 
