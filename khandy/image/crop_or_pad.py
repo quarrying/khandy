@@ -91,7 +91,7 @@ def crop_or_pad_coords(boxes, image_width, image_height):
     return crop_coords(boxes, image_width, image_height)
 
 
-def center_crop(image, dst_width, dst_height, strict=True):
+def center_crop_image(image, dst_width, dst_height, strict=True):
     """
     strict: 
         when True, raise error if src size is less than dst size. 
@@ -110,7 +110,12 @@ def center_crop(image, dst_width, dst_height, strict=True):
     return cropped
 
 
-def center_pad(image, dst_width, dst_height, strict=True):
+def center_crop(image, dst_width, dst_height, strict=True):
+    warnings.warn('center_crop will be deprecated, use center_crop_image instead!')
+    return center_crop_image(image, dst_width, dst_height, strict)
+
+
+def center_pad_image(image, dst_width, dst_height, strict=True):
     """
     strict: 
         when True, raise error if src size is greater than dst size. 
@@ -136,3 +141,6 @@ def center_pad(image, dst_width, dst_height, strict=True):
     return np.pad(image, padding, 'constant')
 
     
+def center_pad(image, dst_width, dst_height, strict=True):
+    warnings.warn('center_pad will be deprecated, use center_pad_image instead!')
+    return center_pad_image(image, dst_width, dst_height, strict)
