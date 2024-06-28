@@ -315,13 +315,11 @@ def list_dirs_in_dir(path: Optional[str] = None, recursive: bool = False, full_p
         raise NotADirectoryError(f'{path_ex} is not a directory!')
     
     if not recursive:
-        names = os.listdir(path_ex)
-        if full_path:
-            return [os.path.join(path_ex, name) for name in sorted(names)
-                    if os.path.isdir(os.path.join(path_ex, name))]
-        else:
-            return [name for name in sorted(names)
-                    if os.path.isdir(os.path.join(path_ex, name))]
+        with os.scandir(path_ex) as it:
+            if full_path:
+                return sorted([entry.path for entry in it if entry.is_dir()])
+            else:
+                return sorted([entry.name for entry in it if entry.is_dir()])
     else:
         all_names = []
         for root, dirnames, _ in sorted(os.walk(path_ex, followlinks=True)):
@@ -341,13 +339,11 @@ def list_files_in_dir(path: Optional[str] = None, recursive: bool = False, full_
         raise NotADirectoryError(f'{path_ex} is not a directory!')
     
     if not recursive:
-        names = os.listdir(path_ex)
-        if full_path:
-            return [os.path.join(path_ex, name) for name in sorted(names)
-                    if os.path.isfile(os.path.join(path_ex, name))]
-        else:
-            return [name for name in sorted(names)
-                    if os.path.isfile(os.path.join(path_ex, name))]
+        with os.scandir(path_ex) as it:
+            if full_path:
+                return sorted([entry.path for entry in it if entry.is_file()])
+            else:
+                return sorted([entry.name for entry in it if entry.is_file()])
     else:
         all_names = []
         for root, _, filenames in sorted(os.walk(path_ex, followlinks=True)):

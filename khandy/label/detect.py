@@ -229,7 +229,7 @@ class LabelmeShape:
     label: str
     points: np.ndarray
     shape_type: str
-    flags: dict = field(default_factory=dict)
+    flags: Dict[str, bool] = field(default_factory=dict)
     group_id: Optional[int] = None
 
     def __post_init__(self):
@@ -239,7 +239,7 @@ class LabelmeShape:
 @dataclass
 class LabelmeRecord:
     version: str = '4.5.6'
-    flags: dict = field(default_factory=dict)
+    flags: Dict[str, bool] = field(default_factory=dict)
     shapes: List[LabelmeShape] = field(default_factory=list)
     imagePath: Optional[str] = None
     imageData: Optional[str] = None
