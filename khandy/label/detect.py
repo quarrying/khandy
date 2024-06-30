@@ -112,10 +112,10 @@ class PascalVocHandler:
         for index, object_tag in enumerate(object_tags):
             bndbox_tag = object_tag.find('bndbox')
             bndbox = PascalVocBndbox(
-                xmin=float(bndbox_tag.find('xmin').text) - 1,
-                ymin=float(bndbox_tag.find('ymin').text) - 1,
-                xmax=float(bndbox_tag.find('xmax').text) - 1,
-                ymax=float(bndbox_tag.find('ymax').text) - 1
+                xmin=float(bndbox_tag.find('xmin').text),
+                ymin=float(bndbox_tag.find('ymin').text),
+                xmax=float(bndbox_tag.find('xmax').text),
+                ymax=float(bndbox_tag.find('ymax').text)
             )
             pascal_voc_object = PascalVocObject(
                 name=object_tag.find('name').text,
