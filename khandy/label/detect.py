@@ -17,7 +17,7 @@ import khandy
 
 __all__ = ['DetectIrObject', 'DetectIrRecord', 'load_detect',
            'save_detect', 'convert_detect', 'replace_detect_label',
-           'load_coco_class_names', 'crop_detect']
+           'load_coco_class_names', 'crop_detect', 'fliter_detect_by_label']
 
 
 @dataclass
@@ -635,4 +635,16 @@ def crop_detect(ir_record: DetectIrRecord, x_min, y_min, x_max, y_max, min_area_
             dst_ir_record.objects.append(new_ir_object)
     return dst_ir_record
 
+
+def fliter_detect_by_label(ir_record: DetectIrRecord, labels: Union[str, List[str]]) -> DetectIrRecord:
+    labels = khandy.to_list(labels)
+    dst_ir_record = DetectIrRecord(
+        filename=ir_record.filename,
+        width=ir_record.width,
+        height=ir_record.height
+    )
+    for obj in ir_record.objects:
+        if obj.label in labels:
+            dst_ir_record.objects.append(obj)
+    return dst_ir_record
 
