@@ -3,12 +3,12 @@ import itertools
 import numbers
 import random
 import warnings
-from typing import Any, Union
+from typing import Any, List, Optional, Union
 
 import numpy as np
 
 
-def to_list(obj):
+def to_list(obj) -> Optional[List]:
     if obj is None:
         return None
     elif hasattr(obj, '__iter__') and not isinstance(obj, str):

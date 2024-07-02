@@ -5,9 +5,10 @@ import os
 import pickle
 import warnings
 from collections import OrderedDict
+from typing import List
 
 
-def load_list(filename, encoding='utf-8', start=0, stop=None):
+def load_list(filename, encoding='utf-8', start=0, stop=None) -> List[str]:
     assert isinstance(start, numbers.Integral) and start >= 0
     assert (stop is None) or (isinstance(stop, numbers.Integral) and stop > start)
     

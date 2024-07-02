@@ -82,7 +82,7 @@ def split_content_with_paren(string: str, paren_type: str = 'hw') -> Tuple[Optio
     return outside, inside
     
 
-def strip_content_in_paren(string):
+def strip_content_in_paren(string: str) -> str:
     """
     Notes:
         strip_content_in_paren cannot process nested paren correctly
@@ -164,7 +164,7 @@ def _get_cell_align_type(cell: str) -> MarkdownTableAlignType:
         raise Exception('parse align type')
     
     
-def _split_table_line(line: str, length=None) -> List[str]:
+def _split_table_line(line: str, length: Optional[int] = None) -> List[str]:
     line = line.strip('|')
     cells = line.split('|')
     cells = [cell.strip() for cell in cells]
@@ -211,7 +211,7 @@ def parse_markdown_table(lines: List[str]) -> MarkdownTable:
     return MarkdownTable(headers, align_types, rows)
     
 
-def dumps_markdown_table(table: MarkdownTable, align_header=False) -> List[str]:
+def dumps_markdown_table(table: MarkdownTable, align_header: bool = False) -> List[str]:
     """Convert a khandy.MarkdownTable object to a list of strings representing a Markdown table.
   
     Args:
