@@ -1,8 +1,13 @@
-import khandy
+from collections.abc import Sequence
+from typing import Tuple, Union
+
 import numpy as np
 
+import khandy
 
-def sort_points(points, axes=-1, reverse=False):
+
+def sort_points(points: np.ndarray, axes: Union[int, Sequence[int]] = -1, 
+                reverse: Union[bool, Sequence[bool]] = False) -> Tuple[np.ndarray, np.ndarray]:
     assert isinstance(points, np.ndarray) and points.ndim == 2
 
     axes = khandy.to_list(axes)
@@ -12,15 +17,18 @@ def sort_points(points, axes=-1, reverse=False):
         assert len(reverse) == len(axes)
     else:
         raise TypeError('reverse type should be bool or sequence of bool')
-    
-    sorted_inds = np.arange(len(points))
-    for k in range(len(axes)):
-        inds = np.argsort(points[sorted_inds, axes[k]], kind='stable')
-        # # Following codes is used for test.
-        # print(np.allclose(points[sorted_inds[inds], axes[k]], 
-        #                   np.sort(points[sorted_inds, axes[k]])))
-        sorted_inds = sorted_inds[inds]
-        if reverse[k]:
-            sorted_inds = sorted_inds[::-1]
+
+    maxs = np.max(points, axis=0)
+    mins = np.min(points, axis=0)
+    pos = np.zeros((len(points),), dtype=points.dtype)
+    for k, (axis, reverse_on_axis) in enumerate(zip(axes, reverse)):
+        if k != 0:
+            pos *= maxs[axes[k-1]] - mins[axes[k-1]]
+        if reverse_on_axis:
+            pos += maxs[axis] - points[:, axis]
+        else:
+            pos += points[:, axis] - mins[axis]
+
+    sorted_inds = np.argsort(pos)
     return sorted_inds, points[sorted_inds]
 
