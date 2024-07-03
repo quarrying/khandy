@@ -132,7 +132,9 @@ def non_max_suppression(boxes, scores, thresh, classes=None, ratio_type="iou"):
         # from different classes do not overlap
         max_coordinate = np.max(boxes)
         offsets = classes * (max_coordinate + 1)
-        boxes = boxes + offsets[:, None]
+        if offsets.ndim == 1:
+            offsets = offsets[:, None]
+        boxes += offsets
     
     x_mins = boxes[:, 0]
     y_mins = boxes[:, 1]
