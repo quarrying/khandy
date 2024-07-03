@@ -391,3 +391,56 @@ def get_gpu_count() -> int:
     except subprocess.CalledProcessError:
         return 0
     
+    
+def get_sw_slices(length: int, window_size: int, stride: Optional[int] = None,
+                  drop_last: bool = False, adjust_last: bool = True) -> List[Tuple[int, int]]:
+    """Generate a list of tuples representing sliding window slices of a sequence of given length.
+
+    Args:
+        length (int): The total length of the sequence to be sliced.
+        window_size (int): The size of each sliding window.
+        stride (Optional[int], optional): The step size (or stride) between the start of each window.
+            If None, it defaults to the window_size. Defaults to None.
+        drop_last (bool, optional): Whether to drop the last window if it is incomplete.
+            Defaults to False.
+        adjust_last (bool, optional): Whether to adjust the start index of the last window
+            if it is incomplete and drop_last is False. This ensures the last window's size
+            equals the window_size if possible. Defaults to True.
+
+    Returns:
+        List[Tuple[int, int]]: A list of tuples, where each tuple (start, end) represents
+            a sliding window slice of the sequence. The end index is exclusive.
+
+    Raises:
+        TypeError: If `length`, `window_size`, or `stride` are not of the expected type.
+        ValueError: If `length`, `stride`, or `window_size` are zero or negative.
+    """
+    if not isinstance(length, int):
+        raise TypeError(f'`length` must be int, got {type(length)}')
+    if not isinstance(window_size, int):
+        raise TypeError(f'`window_size` must be int, got {type(window_size)}')
+    if not isinstance(stride, int) and (stride is not None):
+        raise TypeError(f'`stride` must be int or None, got {type(stride)}')
+    if length <= 0:
+        raise ValueError(f'`length` cannot be zero or negative, got {length}')
+    if stride is not None and stride <= 0:
+        raise ValueError(f'`stride` cannot be zero or negative, got {stride}')
+    if window_size <= 0:
+        raise ValueError(f'`window_size` cannot be zero or negative, got {window_size}')
+
+    stride = stride or window_size
+
+    slices = []
+    max_index = min_index = 0
+    while max_index < length:
+        max_index = min_index + window_size
+        if max_index > length:
+            if not drop_last:
+                max_index = length
+                if adjust_last:
+                    min_index = max(0, max_index - window_size)
+                slices.append((min_index, max_index))
+        else:
+            slices.append((min_index, max_index))
+        min_index = min_index + stride
+    return slices
