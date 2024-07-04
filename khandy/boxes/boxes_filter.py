@@ -134,8 +134,8 @@ def non_max_suppression(boxes, scores, thresh, classes=None, ratio_type="iou"):
         offsets = classes * (max_coordinate + 1)
         if offsets.ndim == 1:
             offsets = offsets[:, None]
-        boxes += offsets
-    
+        boxes = boxes + offsets
+
     x_mins = boxes[:, 0]
     y_mins = boxes[:, 1]
     x_maxs = boxes[:, 2]
