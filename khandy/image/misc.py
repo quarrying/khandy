@@ -16,18 +16,28 @@ from PIL import Image
 class ImageSize:
     width: int
     height: int
-    cols: int = field(init=False)
-    rows: int = field(init=False)
-    area: int = field(init=False)
-    aspect_ratio: float = field(init=False)
 
-    def __post_init__(self):
-        self.cols = self.width
-        self.rows = self.height
-        self.area = self.width * self.height
-        self.aspect_ratio = self.width / self.height
-        
-        
+    @property
+    def cols(self) -> int:
+        return self.width
+    
+    @property
+    def rows(self) -> int:
+        return self.height
+    
+    @property
+    def area(self) -> int:
+        return self.width * self.height
+    
+    @property
+    def aspect_ratio(self) -> float:
+        return self.width / self.height
+    
+    @property
+    def ar(self) -> float:
+        return self.width / self.height
+    
+    
 def get_image_size(obj) -> ImageSize:
     if isinstance(obj, (str, os.PathLike)):
         with open(obj, 'rb') as f:
