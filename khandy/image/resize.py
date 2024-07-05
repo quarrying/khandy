@@ -82,7 +82,9 @@ def resize_image_short(image, dst_size, return_scale=False, interpolation='bilin
     if not return_scale:
         return resized_image
     else:
-        return resized_image, scale
+        x_scale = dst_width / src_width
+        y_scale = dst_height / src_height
+        return resized_image, x_scale, y_scale
     
     
 def resize_image_long(image, dst_size, return_scale=False, interpolation='bilinear'):
@@ -103,7 +105,9 @@ def resize_image_long(image, dst_size, return_scale=False, interpolation='biline
     if not return_scale:
         return resized_image
     else:
-        return resized_image, scale
+        x_scale = dst_width / src_width
+        y_scale = dst_height / src_height
+        return resized_image, x_scale, y_scale
         
         
 def resize_image_to_range(image, min_length, max_length, return_scale=False, interpolation='bilinear'):
@@ -145,7 +149,9 @@ def resize_image_to_range(image, min_length, max_length, return_scale=False, int
     if not return_scale:
         return resized_image
     else:
-        return resized_image, scale
+        x_scale = dst_width / src_width
+        y_scale = dst_height / src_height
+        return resized_image, x_scale, y_scale
         
         
 def letterbox_image(image, dst_width, dst_height, border_value=0,
