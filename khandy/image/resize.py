@@ -14,7 +14,7 @@ interp_codes = {
 }
 
 
-def scale_image(image, x_scale, y_scale, interpolation='bilinear'):
+def scale_image(image, x_scale, y_scale, return_scale=False, interpolation='bilinear'):
     """Scale image.
     
     Reference:
@@ -27,7 +27,12 @@ def scale_image(image, x_scale, y_scale, interpolation='bilinear'):
     
     resized_image = cv2.resize(image, (dst_width, dst_height), 
                                interpolation=interp_codes[interpolation])
-    return resized_image
+    if not return_scale:
+        return resized_image
+    else:
+        x_scale = dst_width / src_width
+        y_scale = dst_height / src_height
+        return resized_image, x_scale, y_scale
 
 
 def resize_image(image, dst_width, dst_height, return_scale=False, interpolation='bilinear'):
