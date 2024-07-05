@@ -1,9 +1,11 @@
 import warnings
+from dataclasses import dataclass
+from typing import Tuple
 
 import cv2
-import khandy
 import numpy as np
 
+import khandy
 
 interp_codes = {
     'nearest': cv2.INTER_NEAREST,
@@ -153,36 +155,70 @@ def resize_image_to_range(image, min_length, max_length, return_scale=False, int
         y_scale = dst_height / src_height
         return resized_image, x_scale, y_scale
         
-        
-def letterbox_image(image, dst_width, dst_height, border_value=0,
-                    return_scale=False, interpolation='bilinear'):
-    """Resize an image preserving the original aspect ratio using padding.
-    
+
+@dataclass
+class LetterBoxDetail:
+    resized_w: int
+    resized_h: int
+    x_scale: float
+    y_scale: float
+    pad_top: int
+    pad_left: int
+    pad_bottom: int
+    pad_right: int
+
+
+def letterbox_image(image, dst_width, dst_height, border_value=0, interpolation='bilinear') -> Tuple[np.ndarray, LetterBoxDetail]:
+    """Resize an image while preserving its aspect ratio and pad it to match the desired dimensions.
+  
+    Args:  
+        image (numpy.ndarray): The input image to be resized and padded.  
+        dst_width (int): The desired width of the output image.  
+        dst_height (int): The desired height of the output image.  
+        border_value: The color value to use for padding. Defaults to 0 (black).  
+        interpolation (str, optional): The interpolation method to use for resizing. Defaults to 'bilinear'.  
+  
+    Returns:  
+        tuple: A tuple containing:  
+            padded_image (numpy.ndarray): The resized and padded image.  
+            lb_detail (LetterBoxDetail): An object containing details of the resizing and padding process.  
+
     References:
-        `letterbox_image` in `https://github.com/pjreddie/darknet/blob/master/src/image.c`
-    """
+        letterbox_image` in `https://github.com/pjreddie/darknet/blob/master/src/image.c`
+    """  
     assert khandy.is_numpy_image(image)
     src_height, src_width = image.shape[:2]
     scale = min(dst_width / src_width, dst_height / src_height)
-    resize_w = int(round(scale * src_width))
-    resize_h = int(round(scale * src_height))
+    resized_w = int(round(scale * src_width))
+    resized_h = int(round(scale * src_height))
 
-    resized_image = cv2.resize(image, (resize_w, resize_h), 
-                               interpolation=interp_codes[interpolation])
-    pad_top = (dst_height - resize_h) // 2
-    pad_bottom = (dst_height - resize_h) - pad_top
-    pad_left = (dst_width - resize_w) // 2
-    pad_right = (dst_width - resize_w) - pad_left
-    padded_image = cv2.copyMakeBorder(resized_image, pad_top, pad_bottom, pad_left, pad_right, 
+    resized_image = cv2.resize(image, (resized_w, resized_h), interpolation=interp_codes[interpolation])
+    pad_top = (dst_height - resized_h) // 2
+    pad_bottom = (dst_height - resized_h) - pad_top
+    pad_left = (dst_width - resized_w) // 2
+    pad_right = (dst_width - resized_w) - pad_left
+    padded_image = cv2.copyMakeBorder(resized_image, pad_top, pad_bottom, pad_left, pad_right,
                                       cv2.BORDER_CONSTANT, value=border_value)
-    if not return_scale:
-        return padded_image
-    else:
-        return padded_image, scale, pad_left, pad_top
+    
+    lb_detail = LetterBoxDetail(
+        resized_w=resized_w,
+        resized_h=resized_h,
+        x_scale=resized_w / src_width,
+        y_scale=resized_h / src_height,
+        pad_top=pad_top,
+        pad_left=pad_left,
+        pad_bottom=pad_bottom,
+        pad_right=pad_right
+    )
+    return padded_image, lb_detail
         
 
 def letterbox_resize_image(image, dst_width, dst_height, border_value=0,
                            return_scale=False, interpolation='bilinear'):
     warnings.warn('letterbox_resize_image will be deprecated, use letterbox_image instead!')
-    return letterbox_image(image, dst_width, dst_height, border_value,
-                           return_scale, interpolation)
+    dst_image, lb_detail = letterbox_image(image, dst_width, dst_height, border_value, interpolation)
+    if not return_scale:
+        return dst_image
+    else:
+        return dst_image, lb_detail.x_scale, lb_detail.pad_top, lb_detail.pad_left
+    
