@@ -1,5 +1,4 @@
-from collections.abc import Sequence
-from typing import Tuple, Union
+from typing import Sequence, Tuple, Union
 
 import numpy as np
 
