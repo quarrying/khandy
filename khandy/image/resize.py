@@ -1,6 +1,6 @@
 import warnings
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Literal, Tuple
 
 import cv2
 import numpy as np
@@ -168,7 +168,13 @@ class LetterBoxDetail:
     pad_right: int
 
 
-def letterbox_image(image, dst_width, dst_height, border_value=0, interpolation='bilinear') -> Tuple[np.ndarray, LetterBoxDetail]:
+LetterBoxLoc = Literal['top left', 'top center', 'top right',
+                       'center left', 'center', 'center right', 
+                       'bottom left', 'bottom center', 'bottom right']
+
+
+def letterbox_image(image, dst_width, dst_height, border_value=0, interpolation='bilinear', 
+                    loc: LetterBoxLoc = 'center') -> Tuple[np.ndarray, LetterBoxDetail]:
     """Resize an image while preserving its aspect ratio and pad it to match the desired dimensions.
   
     Args:  
@@ -193,10 +199,23 @@ def letterbox_image(image, dst_width, dst_height, border_value=0, interpolation=
     resized_h = int(round(scale * src_height))
 
     resized_image = cv2.resize(image, (resized_w, resized_h), interpolation=interp_codes[interpolation])
-    pad_top = (dst_height - resized_h) // 2
-    pad_bottom = (dst_height - resized_h) - pad_top
-    pad_left = (dst_width - resized_w) // 2
-    pad_right = (dst_width - resized_w) - pad_left
+    
+    height_diff = dst_height - resized_h
+    width_diff = dst_width - resized_w
+    pad_top, pad_left = {
+        'top left': (0, 0),
+        'top center': (0, width_diff // 2),
+        'top right': (0, width_diff),
+        'center left': (height_diff // 2, 0),
+        'center': (height_diff // 2, width_diff // 2),
+        'center right': (height_diff // 2, width_diff),
+        'bottom left': (height_diff, 0),
+        'bottom center': (height_diff, width_diff // 2),
+        'bottom right': (height_diff, width_diff),
+    }[loc]
+    pad_bottom = height_diff - pad_top
+    pad_right = width_diff - pad_left
+    
     padded_image = cv2.copyMakeBorder(resized_image, pad_top, pad_bottom, pad_left, pad_right,
                                       cv2.BORDER_CONSTANT, value=border_value)
     
