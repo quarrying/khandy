@@ -4,7 +4,9 @@ import re
 import shutil
 import warnings
 from datetime import datetime
-from typing import Callable, List, Literal, Optional, Union
+from typing import Callable, List, Optional, Union
+
+from typing_extensions import Literal
 
 
 def get_path_stem(path: str) -> str:

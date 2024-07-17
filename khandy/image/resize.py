@@ -1,9 +1,10 @@
 import warnings
 from dataclasses import dataclass
-from typing import Literal, Tuple
+from typing import Tuple
 
 import cv2
 import numpy as np
+from typing_extensions import Literal
 
 import khandy
 

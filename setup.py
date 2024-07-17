@@ -28,7 +28,7 @@ setup(
     description='Handy Utilities for Computer Vision',
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
-    python_requires=">=3.8",
+    python_requires=">=3.7",
     keywords='computer vision',
     packages=find_packages(),
     classifiers=[
