@@ -3,7 +3,7 @@ import re
 from setuptools import find_packages, setup
 
 
-install_requires = ['numpy>=1.11.1', 'opencv-python', 'pillow', 'lxml', 'requests']
+install_requires = ['numpy>=1.11.1', 'opencv-python', 'pillow', 'lxml', 'requests', 'typing_extensions']
 
 
 def get_version() -> str:
