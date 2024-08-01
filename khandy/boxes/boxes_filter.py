@@ -78,8 +78,7 @@ def filter_small_boxes(boxes, min_width, min_height):
         mask &= (widths >= min_width)
     if min_height is not None:
         mask &= (heights >= min_height)
-    indices = np.nonzero(mask)[0]
-    return indices
+    return np.nonzero(mask)[0]
     
 
 def filter_boxes_outside(boxes, reference_box):

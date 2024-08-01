@@ -79,10 +79,10 @@ class DetObjects(khandy.EqLenSequences):
         assert isinstance(self.confs, np.ndarray)
         if isinstance(conf_thresh, (list, np.ndarray)):
             conf_thresh = np.array(conf_thresh)
-            keep = self.confs > conf_thresh[self.classes]
+            mask = self.confs > conf_thresh[self.classes]
         else:
-            keep = self.confs > conf_thresh
-        keep = keep.flatten()
+            mask = self.confs > conf_thresh
+        keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
 
     def nms(self, iou_thresh, inplace=False):
