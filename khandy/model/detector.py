@@ -85,9 +85,9 @@ class DetObjects(khandy.EqLenSequences):
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
 
-    def nms(self, iou_thresh, inplace=False):
+    def nms(self, iou_thresh, ratio_type='iou', inplace=False):
         assert isinstance(self.confs, np.ndarray)
-        keep = khandy.non_max_suppression(self.boxes, self.confs, iou_thresh, self.classes)
+        keep = khandy.non_max_suppression(self.boxes, self.confs, iou_thresh, self.classes, ratio_type)
         return self.filter(keep, inplace)
 
 
