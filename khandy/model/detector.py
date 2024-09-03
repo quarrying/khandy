@@ -1,14 +1,15 @@
-from abc import ABC, abstractmethod  
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Mapping, Optional, Union
+from enum import Enum, auto
+from typing import List, Tuple, Mapping, Optional, Union
 
 import numpy as np
 
 import khandy
 torch = khandy.import_torch()
 
-__all__ = ['DetObjectData', 'DetObjects', 'Detector', 'Index2LabelType',
-           'label_image_by_detector']
+__all__ = ['DetObjectData', 'DetObjectSortDir', 'DetObjectSortBy', 'DetObjects', 
+           'Detector', 'Index2LabelType', 'label_image_by_detector']
 
 
 @dataclass
@@ -22,6 +23,17 @@ class DetObjectData:
     class_name: str
     
     
+class DetObjectSortDir(Enum):
+    ASC = auto()
+    DESC = auto()
+
+
+class DetObjectSortBy(Enum):
+    BY_AREA = auto()
+    BY_CONF = auto()
+    BY_CLASS = auto()
+
+
 class DetObjects(khandy.EqLenSequences):
     boxes: khandy.KArray
     confs: khandy.KArray
@@ -107,12 +119,128 @@ class DetObjects(khandy.EqLenSequences):
         keep = khandy.non_max_suppression(self.boxes, self.confs, iou_thresh, self.classes, ratio_type)
         return self.filter(keep, inplace)
 
+    def sort(self, sort_by: DetObjectSortBy, direction:  DetObjectSortDir = DetObjectSortDir.DESC) :
+        if sort_by == DetObjectSortBy.BY_CONF:
+            sorted_inds = np.argsort(self.confs, axis=0)
+        elif sort_by == DetObjectSortBy.BY_AREA:
+            boxes = khandy.Boxes(self.boxes)
+            sorted_inds = np.argsort(boxes.areas, axis=0)
+        elif sort_by == DetObjectSortBy.BY_CLASS:
+            sorted_inds = np.argsort(self.classes, axis=0)
+        if direction == DetObjectSortDir.DESC:
+            sorted_inds = sorted_inds[::-1]
+        return self[sorted_inds]
+
 
 class Detector(ABC):
-    @abstractmethod
-    def __call__(self, image: khandy.KArray, **kwargs) -> DetObjects:
-        pass
+    def __init__(
+        self, 
+        num_classes: int = 1, 
+        conf_thresh: float = 0.5, 
+        min_width: Optional[Union[float, int]] = None, 
+        min_height: Optional[Union[float, int]] = None, 
+        min_area: Optional[Union[float, int]] = None, 
+        class_names: Optional[Union[List[str], Tuple[str]]] = None, 
+        sort_by: Optional[DetObjectSortBy] = None, 
+        sort_dir: Optional[DetObjectSortDir] = DetObjectSortDir.DESC
+    ):
+        self._num_classes = num_classes
+        self._conf_thresh = conf_thresh
+        self._min_width = min_width
+        self._min_height = min_height
+        self._min_area = min_area
+        self._class_names = class_names
+        self._sort_by = sort_by
+        self._sort_dir = sort_dir
 
+    @property
+    def num_classes(self) -> int:
+        return self._num_classes
+    
+    @property
+    def conf_thresh(self) -> Union[float, np.ndarray]:
+        return self._conf_thresh
+    
+    @conf_thresh.setter
+    def conf_thresh(self, value: Union[float, List, Tuple, np.ndarray]):
+        if isinstance(value, float):
+            pass
+        elif isinstance(value, (list, tuple)):
+            assert khandy.is_seq_of(value, float) and len(value) == self.num_classes
+            value = np.array(value)
+        elif isinstance(value, np.ndarray):
+            assert value.shape == (self.num_classes,) or value.shape == (self.num_classes, 1)
+        else:
+            raise TypeError(f'unsupported type, got {type(value)}')
+        self._conf_thresh = value
+    
+    @property
+    def min_width(self) -> Optional[Union[int, float]]:
+        return self._min_width
+    
+    @min_width.setter
+    def min_width(self, value: Optional[Union[int, float]]):
+        self._min_width = value
+        
+    @property
+    def min_height(self) -> Optional[Union[int, float]]:
+        return self._min_height
+    
+    @min_height.setter
+    def min_height(self, value: Optional[Union[int, float]]):
+        self._min_height = value
+        
+    @property
+    def min_area(self) -> Optional[Union[int, float]]:
+        return self._min_area
+    
+    @min_area.setter
+    def min_area(self, value: Optional[Union[int, float]]):
+        self._min_area = value
+        
+    @property
+    def class_names(self) -> Optional[List[str]]:
+        return self._class_names
+    
+    @class_names.setter
+    def class_names(self, value: Optional[Union[List[str], Tuple[str]]]):
+        if value is not None:
+            assert khandy.is_seq_of(value, str) and len(value) == self.num_classes
+            value = list(value)
+        self._class_names = value
+        
+    @property
+    def sort_by(self) -> Optional[DetObjectSortBy]:
+        return self._sort_by
+    
+    @sort_by.setter
+    def sort_by(self, value: Optional[DetObjectSortBy]):
+        self._sort_by = value
+        
+    @property
+    def sort_dir(self) -> DetObjectSortDir:
+        return self._sort_dir
+    
+    @sort_dir.setter
+    def sort_dir(self, value: Optional[DetObjectSortDir]):
+        self._sort_dir = value or DetObjectSortDir.DESC
+
+    @abstractmethod
+    def forward(self, image: khandy.KArray, **kwargs) -> DetObjects:
+        raise NotImplementedError
+    
+    def __call__(self, image: khandy.KArray, **kwargs) -> DetObjects:
+        det_objects = self.forward(image, **kwargs)
+        if self.min_width is not None or self.min_height is not None:
+            det_objects = det_objects.filter_by_min_size(self.min_width, self.min_height, inplace=True)
+        if self.min_area is not None:
+            det_objects = det_objects.filter_by_min_area(self.min_area, inplace=True)
+        if self.class_names is not None:
+            det_objects.class_names = [self.class_names[ind.item()] for ind in det_objects.classes]
+        if self.sort_by is not None:
+            det_objects = det_objects.sort(self.sort_by, self.sort_dir, inplace=True)
+        return det_objects
+    
 
 Index2LabelType = Mapping[Union[int, str], str]
 
