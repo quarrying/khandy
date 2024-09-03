@@ -498,9 +498,17 @@ def rename_file(src: str, dst: str, action_if_exist: Optional[Literal['ignore', 
 def _get_default_logger(logger_name):
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.INFO)
-    console = logging.StreamHandler()
-    console.setFormatter(logging.Formatter('%(message)s'))
-    logger.addHandler(console)
+
+    already_have = False
+    for handler in logger.handlers[:]:
+        if type(handler) == logging.StreamHandler:
+            already_have = True
+            break
+        
+    if not already_have:
+        console = logging.StreamHandler()
+        console.setFormatter(logging.Formatter('%(message)s'))
+        logger.addHandler(console)
     return logger
 
 
