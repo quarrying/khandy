@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod  
 from dataclasses import dataclass
-from typing import Mapping, Optional, Union
+from typing import List, Mapping, Optional, Union
 
 import numpy as np
 
@@ -17,30 +17,46 @@ class DetObjectData:
     y_min: float
     x_max: float
     y_max: float
-    class_index: int
     conf: float
+    class_index: int
+    class_name: str
     
     
 class DetObjects(khandy.EqLenSequences):
     boxes: khandy.KArray
     confs: khandy.KArray
     classes: khandy.KArray
-    
-    def __init__(self, boxes: khandy.KArray, confs: khandy.KArray, classes: Optional[khandy.KArray] = None, **kwargs):
+    class_names: List[str]
+
+    def __init__(self, boxes: khandy.KArray, confs: Optional[khandy.KArray] = None, 
+                 classes: Optional[khandy.KArray] = None, class_names: Optional[List[str]] = None, **kwargs):
+        if confs is None:
+            if torch is not None and isinstance(boxes, torch.Tensor):
+                confs = torch.ones_like(boxes, dtype=torch.float32)
+            elif isinstance(boxes, np.ndarray):
+                confs = np.ones_like(boxes, dtype=np.float32)
+            else:
+                raise TypeError(f'Unsupported type for confs, got {type(confs)}')
         if confs.ndim == 1:
             confs = confs.reshape((-1, 1))
+
         if classes is None:
-            if torch is not None and isinstance(confs, torch.Tensor):
-                classes = torch.zeros_like(confs, dtype=torch.int32)
-            elif isinstance(confs, np.ndarray):
-                classes = np.zeros_like(confs, dtype=np.int32)
+            if torch is not None and isinstance(boxes, torch.Tensor):
+                classes = torch.zeros_like(boxes, dtype=torch.int32)
+            elif isinstance(boxes, np.ndarray):
+                classes = np.zeros_like(boxes, dtype=np.int32)
             else:
-                raise
+                raise TypeError(f'Unsupported type for classes, got {type(classes)}')
         if classes.ndim == 1:
             classes = classes.reshape((-1, 1))
+
+        if class_names is None:
+            class_names = [f'unnamed_class#{class_ind}' for class_ind in classes]
+
         assert boxes.ndim == confs.ndim == classes.ndim == 2, f'{boxes.ndim} vs {confs.ndim} vs {classes.ndim}'
         assert boxes.shape[1] == 4 and confs.shape[1] == classes.shape[1] == 1
-        super().__init__(boxes=boxes, confs=confs, classes=classes, **kwargs)
+        assert khandy.is_seq_of(class_names, str)
+        super().__init__(boxes=boxes, confs=confs, classes=classes, class_names=class_names, **kwargs)
 
     def __getitem__(self, key: Union[int, slice]) -> Union["DetObjects", DetObjectData]:
         item = super().__getitem__(key)
@@ -50,8 +66,9 @@ class DetObjects(khandy.EqLenSequences):
                 y_min=item.boxes[0, 1],
                 x_max=item.boxes[0, 2],
                 y_max=item.boxes[0, 3],
-                class_index=item.classes[0].item(),
                 conf=item.confs[0].item(),
+                class_index=item.classes[0].item(),
+                class_name=item.class_names[0]
             )
         return item
     
