@@ -227,7 +227,7 @@ class Detector(ABC):
 
     @abstractmethod
     def forward(self, image: khandy.KArray, **kwargs) -> DetObjects:
-        raise NotImplementedError
+        pass
     
     def __call__(self, image: khandy.KArray, **kwargs) -> DetObjects:
         det_objects = self.forward(image, **kwargs)
