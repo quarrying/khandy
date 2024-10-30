@@ -231,6 +231,8 @@ class LabelmeShape:
     shape_type: str
     flags: Dict[str, bool] = field(default_factory=dict)
     group_id: Optional[int] = None
+    description: str = ''
+    mask: Optional[np.ndarray] = None
 
     def __post_init__(self):
         self.points = np.asarray(self.points)
@@ -270,15 +272,24 @@ class LabelmeHandler:
             height=labelme_record.imageHeight
         )
         for labelme_shape in labelme_record.shapes:
-            if labelme_shape.shape_type != 'rectangle':
+            if labelme_shape.shape_type == 'polygon':
+                ir_object = DetectIrObject(
+                    label=labelme_shape.label,
+                    x_min=np.min(labelme_shape.points[:, 0]),
+                    y_min=np.min(labelme_shape.points[:, 1]),
+                    x_max=np.max(labelme_shape.points[:, 0]),
+                    y_max=np.max(labelme_shape.points[:, 1]),
+                )
+            elif labelme_shape.shape_type == 'rectangle':
+                ir_object = DetectIrObject(
+                    label=labelme_shape.label,
+                    x_min=labelme_shape.points[0][0],
+                    y_min=labelme_shape.points[0][1],
+                    x_max=labelme_shape.points[1][0],
+                    y_max=labelme_shape.points[1][1],
+                )
+            else:
                 continue
-            ir_object = DetectIrObject(
-                label=labelme_shape.label,
-                x_min=labelme_shape.points[0][0],
-                y_min=labelme_shape.points[0][1],
-                x_max=labelme_shape.points[1][0],
-                y_max=labelme_shape.points[1][1],
-            )
             ir_record.objects.append(ir_object)
         return ir_record
 
