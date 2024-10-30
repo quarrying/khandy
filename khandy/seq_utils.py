@@ -257,7 +257,7 @@ class EqLenSequences:
         https://github.com/facebookresearch/detectron2/blob/main/detectron2/structures/instances.py
         https://github.com/open-mmlab/mmdetection/blob/master/mmdet/core/data_structures/instance_data.py
     """
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> None:
         """Initialize the class object with keyword arguments.
 
         Args:
@@ -295,7 +295,7 @@ class EqLenSequences:
             self._fields.add(name)
             super().__setattr__(name, value)
 
-    def __delattr__(self, name: str):
+    def __delattr__(self, name: str) -> None:
         """Override the default attribute deletion.
 
         Args:
@@ -333,25 +333,32 @@ class EqLenSequences:
         """
         return name in self._fields
 
-    def __getitem__(self, key: Union[int, slice]):
+    def __getitem__(self, key: Union[int, slice, List[int]]) -> "EqLenSequences":
         """Supports indexing and slicing to get a new object
         with sequences indexed or sliced by the given key.
 
         Args:
-            key (Union[int, slice]): Index or slice to use for getting sequences.
+            key (Union[int, slice, List[int]]): Index, slice, or list of indices to use for getting sequences.
 
         Returns:
-            A new object with sequences indexed or sliced according to the key.
+            A new object of the same class with sequences indexed or sliced according to the key.
 
         Raises:
-            IndexError: If the index or slice is out of range.
+            IndexError: If the index, slice, or any index in the list is out of range.
         """
         if type(key) is int:
             if key >= len(self) or key < -len(self):
                 raise IndexError(f"{self.__class__.__name__} index out of range!")
             else:
                 key = slice(key, None, len(self))
-        kwargs = {name: getattr(self, name)[key] for name in self._fields}
+                
+        kwargs = {}
+        for name in self._fields:
+            try:
+                kwargs[name] = getattr(self, name)[key]
+            except:
+                kwargs[name] = [getattr(self, name)[i] for i in key]
+        
         ret = self.__class__(**kwargs)
         return ret
 
@@ -376,29 +383,46 @@ class EqLenSequences:
         """
         return self._fields
 
-    def filter_(self, index: Union[int, slice]):
-        """Filter the object by indexing the stored sequences using the provided index.
+    def filter_(self, index: Union[int, slice, List[int]]) -> "EqLenSequences":
+        """Filter the EqLenSequences object by indexing the stored sequences using the provided index.
+
+        This method allows you to filter the sequences stored in the EqLenSequences object by
+        specifying an integer, slice, or list of integers as the index. Depending on the type of
+        index provided, the corresponding elements or slices will be retained in the object.
 
         Args:
-            index (Union[int, slice]): The index or slice to use for filtering.
+            index (Union[int, slice, List[int]]): The index or slice to use for filtering.
+                - If an integer is provided, it should be within the valid range of the object's length.
+                - If a slice is provided, it will be used to slice the sequences.
+                - If a list of integers is provided, the sequences at the specified indices will be retained.
 
         Returns:
-            EqLenSequences: The filtered EqLenSequences object.
+            EqLenSequences: The filtered EqLenSequences object with the selected sequences.
 
         Raises:
-            IndexError: If the provided index is out of range.
+            IndexError: If the provided index is out of range (i.e., an integer index is greater than
+                        or equal to the length of the object, or less than negative the length of the object).
         """
         if type(index) is int:
             if index >= len(self) or index < -len(self):
                 raise IndexError("EqLenSequences index out of range!")
             else:
                 index = slice(index, None, len(self))
+
         for name in self._fields:
-            super().__setattr__(name, getattr(self, name)[index])
+            value = getattr(self, name)
+            try:
+                super().__setattr__(name, value[index])
+            except:
+                # NB: used to avoid the following errors:
+                # TypeError: only integer scalar arrays can be converted to a scalar index
+                # TypeError: list indices must be integers or slices, not list
+                super().__setattr__(name, [value[i] for i in index])
         return self
     
-    def filter(self, index: Union[int, slice], inplace):
+    def filter(self, index: Union[int, slice], inplace) -> "EqLenSequences":
         if inplace:
             return self.filter_(index)
         else:
             return self[index]
+        
