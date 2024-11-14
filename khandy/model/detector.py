@@ -89,7 +89,8 @@ class DetObjects(khandy.EqLenSequences):
         mask = np.zeros((len(self.classes),), dtype=bool)
         for class_ind in interested_class_inds:
             mask = np.logical_or(mask, self.classes[:, 0] == class_ind)
-        return self.filter(mask, inplace)
+        keep = np.nonzero(mask)[0]
+        return self.filter(keep, inplace)
 
     def filter_by_min_area(self, min_area, inplace=False):
         assert isinstance(self.confs, np.ndarray)
