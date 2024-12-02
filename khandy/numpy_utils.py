@@ -200,7 +200,7 @@ def top_k(x, k, axis=-1, largest=True, sorted=True):
     return topk_values, topk_indices
     
     
-def sum_by_indices_list(x: np.ndarray, indices_list: List[List[int]] = None, axis=-1):
+def sum_by_indices_list(x: np.ndarray, indices_list: List[List[int]], axis=-1):
     """Sums of array elements according to a given list of index lists over a given axis.
 
     Args:
