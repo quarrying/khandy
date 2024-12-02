@@ -44,9 +44,9 @@ class DetObjects(khandy.EqLenSequences):
                  classes: Optional[khandy.KArray] = None, class_names: Optional[List[str]] = None, **kwargs):
         if confs is None:
             if torch is not None and isinstance(boxes, torch.Tensor):
-                confs = torch.ones_like(boxes, dtype=torch.float32)
+                confs = torch.ones((boxes.shape[0], 1), dtype=torch.float32, device=boxes.device)
             elif isinstance(boxes, np.ndarray):
-                confs = np.ones_like(boxes, dtype=np.float32)
+                confs = np.ones((boxes.shape[0], 1), dtype=np.float32)
             else:
                 raise TypeError(f'Unsupported type for confs, got {type(confs)}')
         if confs.ndim == 1:
@@ -54,9 +54,9 @@ class DetObjects(khandy.EqLenSequences):
 
         if classes is None:
             if torch is not None and isinstance(boxes, torch.Tensor):
-                classes = torch.zeros_like(boxes, dtype=torch.int32)
+                classes = torch.zeros((boxes.shape[0], 1), dtype=torch.int32, device=boxes.device)
             elif isinstance(boxes, np.ndarray):
-                classes = np.zeros_like(boxes, dtype=np.int32)
+                classes = np.zeros((boxes.shape[0], 1), dtype=np.int32)
             else:
                 raise TypeError(f'Unsupported type for classes, got {type(classes)}')
         if classes.ndim == 1:
