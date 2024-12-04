@@ -255,7 +255,10 @@ class DownloadStatusCode(Enum):
 
 
 class DownloadError(Exception):
-    def __init__(self, status_code: DownloadStatusCode, extra_str: str=None):
+    def __init__(self, status_code: DownloadStatusCode, extra_str: Optional[str] = None):
+        self.status_code = status_code
+        self.extra_str = extra_str
+        
         self.name = status_code.name
         self.code = status_code.code
         if extra_str is None:
