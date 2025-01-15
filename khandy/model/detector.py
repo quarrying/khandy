@@ -9,7 +9,7 @@ import khandy
 torch = khandy.import_torch()
 
 __all__ = ['DetObjectData', 'DetObjectSortDir', 'DetObjectSortBy', 'DetObjects', 
-           'Detector', 'Index2LabelType', 'label_image_by_detector']
+           'BaseDetector', 'Index2LabelType', 'label_image_by_detector']
 
 
 @dataclass
@@ -133,7 +133,7 @@ class DetObjects(khandy.EqLenSequences):
         return self[sorted_inds]
 
 
-class Detector(ABC):
+class BaseDetector(ABC):
     def __init__(
         self, 
         num_classes: int = 1, 
@@ -246,7 +246,7 @@ class Detector(ABC):
 Index2LabelType = Mapping[Union[int, str], str]
 
 
-def label_image_by_detector(detector: Detector, image: np.ndarray,
+def label_image_by_detector(detector: BaseDetector, image: np.ndarray,
                             index2label: Optional[Index2LabelType] = None,
                             **detector_args) -> khandy.label.DetectIrRecord:
     image_height, image_width = image.shape[:2]

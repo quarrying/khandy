@@ -12,7 +12,7 @@ __all__ = ['extract_feature']
 
 def extract_feature(image: np.ndarray, extractor: Extractor, 
                     det_objects: Optional[DetObjects] = None,
-                    detector: Optional[Detector] = None,
+                    detector: Optional[BaseDetector] = None,
                     **detector_kwargs) -> DetObjects:
     if det_objects is not None:
         pass
