@@ -2,6 +2,7 @@ from typing import Optional
 
 import numpy as np
 
+from .classifier import *
 from .detector import *
 from .extractor import *
 
