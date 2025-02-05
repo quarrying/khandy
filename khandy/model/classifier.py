@@ -10,15 +10,15 @@ torch = khandy.import_torch()
 
 __all__ = ['ClassifierResultItem', 'ClassifierResults', 'BaseTopKClassifier',
            'BaseClassifier', 'ClassCollectionItem', 'BaseCollectionsClassifier',
-           'Gallery', 'find_topk_in_gallery']
+           'Gallery', 'find_topk', 'find_topk_in_gallery']
 
 
 def find_topk(inputs, indices_list: Optional[List[List[int]]] = None, 
               k: int = 3, do_softmax: bool = False) -> Tuple[np.ndarray, np.ndarray]:
     if indices_list is not None:
         if do_softmax:
-            valid_class_inds = list(set(sum(indices_list, [])))
-            inputs = khandy.softmax(inputs, axis=-1, valid_indices=valid_class_inds)
+            valid_indices = list(set(sum(indices_list, [])))
+            inputs = khandy.softmax(inputs, axis=-1, valid_indices=valid_indices)
         probs = khandy.sum_by_indices_list(inputs, indices_list, axis=-1)
     elif do_softmax:
         probs = khandy.softmax(inputs, axis=-1)
@@ -88,7 +88,7 @@ class BaseTopKClassifier(ABC):
         self, 
         num_classes: int, 
         top_k: int = 3, 
-        has_softmax=False, 
+        has_softmax: bool = False, 
         class_names: Optional[List[str]] = None,
         class_extras: Optional[List] = None
     ):
