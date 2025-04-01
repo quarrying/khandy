@@ -63,7 +63,7 @@ class DetObjects(khandy.EqLenSequences):
             classes = classes.reshape((-1, 1))
 
         if class_names is None:
-            class_names = [f'unnamed_class#{class_ind}' for class_ind in classes]
+            class_names = [f'unnamed_class#{class_ind}' for class_ind in classes.flatten()]
 
         assert boxes.ndim == confs.ndim == classes.ndim == 2, f'{boxes.ndim} vs {confs.ndim} vs {classes.ndim}'
         assert boxes.shape[1] == 4 and confs.shape[1] == classes.shape[1] == 1
