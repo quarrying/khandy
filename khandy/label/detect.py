@@ -495,6 +495,99 @@ class CocoHandler:
         return [cate_item['name'] for cate_item in categories]
 
 
+@dataclass
+class LabelBeeObject:
+    id: str
+    sourceID: str
+    order: int
+    textAttribute: str
+    attribute: str
+    x: float
+    y: float
+    width: float
+    height: float
+    valid: bool = True
+    
+
+@dataclass
+class LabelBeeStep:
+    toolName: str = 'rectTool'
+    dataSourceStep: int = 0
+    result: List[LabelBeeObject] = field(default_factory=list)
+    
+    def __post_init__(self):
+        self.result = [LabelBeeObject(**item) for item in self.result]
+
+
+@dataclass
+class LabelBeeRecord:
+    width: int
+    height: int
+    rotate: int = 0
+    valid: bool = True
+    step_1: LabelBeeStep = LabelBeeStep()
+    
+    def __post_init__(self):
+        if isinstance(self.step_1, dict):
+            self.step_1 = LabelBeeStep(**self.step_1)
+
+
+class LabelBeeHandler:
+    """
+    Notes: 
+        Only support one step and its toolName must be `rectTool`
+    """
+    @staticmethod
+    def load(filename, **kwargs) -> LabelBeeRecord:
+        json_content = khandy.load_json(filename)
+        return LabelBeeRecord(**json_content)
+
+    @staticmethod
+    def save(filename, labelbee_record: LabelBeeRecord):
+        json_content = dataclasses.asdict(labelbee_record)
+        khandy.save_json(filename, json_content, cls=_NumpyEncoder)
+
+    @staticmethod
+    def to_ir(labelbee_record: LabelBeeRecord) -> DetectIrRecord:
+        ir_record = DetectIrRecord(
+            filename='',
+            width=labelbee_record.width,
+            height=labelbee_record.height
+        )
+        for labelbee_object in labelbee_record.step_1.result:
+            ir_object = DetectIrObject(
+                label=labelbee_object.attribute,
+                x_min=labelbee_object.x,
+                y_min=labelbee_object.y,
+                x_max=labelbee_object.x + labelbee_object.width,
+                y_max=labelbee_object.y + labelbee_object.height,
+            )
+            ir_record.objects.append(ir_object)
+        return ir_record
+        
+    @staticmethod
+    def from_ir(ir_record: DetectIrRecord) -> LabelBeeRecord:
+        labelbee_record = LabelBeeRecord(
+            width=ir_record.width,
+            height=ir_record.height,
+            step_1=LabelBeeStep() # must keep this line
+        )
+        for k, ir_object in enumerate(ir_record.objects):
+            labelbee_object = LabelBeeObject(
+                id=f'{ir_object.label}#{k}',
+                sourceID='',
+                order=k,
+                textAttribute='',
+                attribute=ir_object.label,
+                x=ir_object.x_min,
+                y=ir_object.y_min,
+                width=ir_object.x_max - ir_object.x_min,
+                height=ir_object.y_max - ir_object.y_min
+            )
+            labelbee_record.step_1.result.append(labelbee_object)
+        return labelbee_record
+
+
 def load_detect(filename, fmt, **kwargs) -> Union[DetectIrRecord, List[DetectIrRecord]]:
     if fmt == 'labelme':
         labelme_record = LabelmeHandler.load(filename, **kwargs)
@@ -508,6 +601,9 @@ def load_detect(filename, fmt, **kwargs) -> Union[DetectIrRecord, List[DetectIrR
     elif fmt == 'coco':
         coco_records = CocoHandler.load(filename, **kwargs)
         ir_record = [CocoHandler.to_ir(coco_record) for coco_record in coco_records]
+    elif fmt == 'labelbee':
+        labelbee_record = LabelBeeHandler.load(filename, **kwargs)
+        ir_record = LabelBeeHandler.to_ir(labelbee_record)
     else:
         raise ValueError(f"Unsupported detect label fmt. Got {fmt}")
     return ir_record
@@ -526,6 +622,9 @@ def save_detect(filename, ir_record: DetectIrRecord, out_fmt):
         PascalVocHandler.save(filename, pascal_voc_record)
     elif out_fmt == 'coco':
         raise ValueError("Unsupported for `coco` now!")
+    elif out_fmt == 'labelbee':
+        labelbee_record = LabelBeeHandler.from_ir(ir_record)
+        LabelBeeHandler.save(filename, labelbee_record)
     else:
         raise ValueError(f"Unsupported detect label fmt. Got {out_fmt}")
 
@@ -539,6 +638,8 @@ def _get_format(record):
         return ('voc', 'pascal', 'pascal_voc')
     elif isinstance(record, CocoRecord):
         return ('coco',)
+    elif isinstance(record, LabelBeeRecord):
+        return ('labelbee',)
     elif isinstance(record, DetectIrRecord):
         return ('ir', 'detect_ir')
     else:
@@ -546,7 +647,8 @@ def _get_format(record):
 
 
 def convert_detect(record, out_fmt):
-    allowed_fmts = ('labelme', 'yolo', 'voc', 'coco', 'pascal', 'pascal_voc', 'ir', 'detect_ir')
+    allowed_fmts = ('labelme', 'yolo', 'voc', 'coco', 'pascal', 'pascal_voc', 
+                    'labelbee', 'ir', 'detect_ir')
     if out_fmt not in allowed_fmts:
         raise ValueError("Unsupported label format conversions for given out_fmt")
     if out_fmt in _get_format(record):
@@ -560,6 +662,8 @@ def convert_detect(record, out_fmt):
         ir_record = PascalVocHandler.to_ir(record)
     elif isinstance(record, CocoRecord):
         ir_record = CocoHandler.to_ir(record)
+    elif isinstance(record, LabelBeeRecord):
+        ir_record = LabelBeeHandler.to_ir(record)
     elif isinstance(record, DetectIrRecord):
         ir_record = record
     else:
@@ -575,6 +679,8 @@ def convert_detect(record, out_fmt):
         dst_record = PascalVocHandler.from_ir(ir_record)
     elif out_fmt == 'coco':
         dst_record = CocoHandler.from_ir(ir_record)
+    elif out_fmt == 'labelbee':
+        dst_record = LabelBeeHandler.from_ir(ir_record)
     return dst_record
 
 
