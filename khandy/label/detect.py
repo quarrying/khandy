@@ -516,7 +516,15 @@ class LabelBeeStep:
     result: List[LabelBeeObject] = field(default_factory=list)
     
     def __post_init__(self):
-        self.result = [LabelBeeObject(**item) for item in self.result]
+        dst_result = []
+        for item in self.result:
+            new_item = {}
+            for item_key in item:
+                if item_key in LabelBeeObject.__annotations__:
+                    new_item[item_key] = item[item_key]
+            dst_result.append(LabelBeeObject(**new_item))
+        self.result = dst_result
+        # self.result = [LabelBeeObject(**item) for item in self.result]
 
 
 @dataclass
