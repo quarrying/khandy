@@ -84,24 +84,24 @@ class DetObjects(khandy.EqLenSequences):
             )
         return item
     
-    def filter_by_class_index(self, interested_class_inds, inplace=False):
-        assert isinstance(self.confs, np.ndarray)
+    def filter_by_class_index(self, interested_class_inds, inplace=False) -> "DetObjects":
+        assert isinstance(self.classes, np.ndarray)
         mask = np.zeros((len(self.classes),), dtype=bool)
         for class_ind in interested_class_inds:
             mask = np.logical_or(mask, self.classes[:, 0] == class_ind)
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
 
-    def filter_by_min_area(self, min_area, inplace=False):
-        assert isinstance(self.confs, np.ndarray)
+    def filter_by_min_area(self, min_area, inplace=False) -> "DetObjects":
+        assert isinstance(self.boxes, np.ndarray)
         widths = self.boxes[:, 2] - self.boxes[:, 0]
         heights = self.boxes[:, 3] - self.boxes[:, 1] 
         mask = widths * heights >= min_area
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
 
-    def filter_by_min_size(self, min_width, min_height, inplace=False):
-        assert isinstance(self.confs, np.ndarray)
+    def filter_by_min_size(self, min_width, min_height, inplace=False) -> "DetObjects":
+        assert isinstance(self.boxes, np.ndarray)
         keep = khandy.filter_small_boxes(self.boxes, min_width, min_height)
         return self.filter(keep, inplace)
 
@@ -115,12 +115,13 @@ class DetObjects(khandy.EqLenSequences):
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
 
-    def nms(self, iou_thresh, ratio_type='iou', inplace=False):
+    def nms(self, iou_thresh, ratio_type='iou', inplace=False) -> "DetObjects":
         assert isinstance(self.confs, np.ndarray)
         keep = khandy.non_max_suppression(self.boxes, self.confs, iou_thresh, self.classes, ratio_type)
         return self.filter(keep, inplace)
 
-    def sort(self, sort_by: DetObjectSortBy, direction:  DetObjectSortDir = DetObjectSortDir.DESC) :
+    def sort(self, sort_by: DetObjectSortBy, direction:  DetObjectSortDir = DetObjectSortDir.DESC) -> "DetObjects":
+        assert isinstance(self.confs, np.ndarray)
         if sort_by == DetObjectSortBy.BY_CONF:
             sorted_inds = np.argsort(self.confs, axis=0)
         elif sort_by == DetObjectSortBy.BY_AREA:
