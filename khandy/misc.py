@@ -368,16 +368,27 @@ def get_git_repo_root(path: Optional[str] = None) -> Optional[str]:
     if path is None:
         path = os.getcwd()
     try:
-        # Show the absolute path of the top-level directory of the working tree.
-        output = os.popen(f'git -C "{path}" rev-parse --show-toplevel').read().strip()
-        if output:
-            return output
-        else:
-            return None
+        # Save the current working directory
+        original_cwd = os.getcwd()
+        # Change to the target directory
+        os.chdir(path)
+        # Execute the Git command
+        output = subprocess.check_output(
+            ['git', 'rev-parse', '--show-toplevel'],
+            text=True,
+            stderr=subprocess.DEVNULL  # Suppress error messages
+        ).strip()
+        return output if output else None
+    except subprocess.CalledProcessError:
+        # Handle cases where the command fails (e.g., not a Git repo)
+        return None
     except Exception as e:
         print(f"Error occurred while getting Git repo root: {e}")
         return None
-    
+    finally:
+        # Restore the original working directory
+        os.chdir(original_cwd)
+
 
 def get_gpu_count() -> int:
     """Return the count of GPUs available on the system.
