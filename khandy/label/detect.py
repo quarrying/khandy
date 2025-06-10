@@ -533,7 +533,7 @@ class LabelBeeRecord:
     height: int
     rotate: int = 0
     valid: bool = True
-    step_1: LabelBeeStep = LabelBeeStep()
+    step_1: LabelBeeStep = field(default_factory=LabelBeeStep)
     
     def __post_init__(self):
         if isinstance(self.step_1, dict):
