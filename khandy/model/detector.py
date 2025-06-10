@@ -137,13 +137,13 @@ class DetObjects(khandy.EqLenSequences):
 class BaseDetector(ABC):
     def __init__(
         self, 
-        num_classes: int = 1, 
-        conf_thresh: float = 0.5, 
-        min_width: Optional[Union[float, int]] = None, 
-        min_height: Optional[Union[float, int]] = None, 
-        min_area: Optional[Union[float, int]] = None, 
-        class_names: Optional[Union[List[str], Tuple[str]]] = None, 
-        sort_by: Optional[DetObjectSortBy] = None, 
+        num_classes: Optional[int] = None,
+        conf_thresh: Optional[Union[float, List[float], Tuple[float], np.ndarray]] = None,
+        min_width: Optional[Union[int, float]] = None,
+        min_height: Optional[Union[int, float]] = None,
+        min_area: Optional[Union[int, float]] = None,
+        class_names: Optional[Union[List[str], Tuple[str]]] = None,
+        sort_by: Optional[DetObjectSortBy] = None,
         sort_dir: Optional[DetObjectSortDir] = DetObjectSortDir.DESC
     ):
         self._num_classes = num_classes
@@ -156,22 +156,23 @@ class BaseDetector(ABC):
         self._sort_dir = sort_dir
 
     @property
-    def num_classes(self) -> int:
+    def num_classes(self) -> Optional[int]:
         return self._num_classes
     
     @property
-    def conf_thresh(self) -> Union[float, np.ndarray]:
+    def conf_thresh(self) -> Optional[Union[float, np.ndarray]]:
         return self._conf_thresh
     
     @conf_thresh.setter
-    def conf_thresh(self, value: Union[float, List, Tuple, np.ndarray]):
-        if isinstance(value, float):
+    def conf_thresh(self, value: Optional[Union[float, List[float], Tuple[float], np.ndarray]]):
+        if value is None or isinstance(value, float):
             pass
         elif isinstance(value, (list, tuple)):
             assert khandy.is_seq_of(value, float) and len(value) == self.num_classes
             value = np.array(value)
         elif isinstance(value, np.ndarray):
             assert value.shape == (self.num_classes,) or value.shape == (self.num_classes, 1)
+            value = value.flatten()
         else:
             raise TypeError(f'unsupported type, got {type(value)}')
         self._conf_thresh = value
@@ -233,6 +234,8 @@ class BaseDetector(ABC):
     
     def __call__(self, image: khandy.KArray, **kwargs) -> DetObjects:
         det_objects = self.forward(image, **kwargs)
+        if self.conf_thresh is not None:
+            det_objects = det_objects.filter_by_conf(self.conf_thresh, inplace=True)
         if self.min_width is not None or self.min_height is not None:
             det_objects = det_objects.filter_by_min_size(self.min_width, self.min_height, inplace=True)
         if self.min_area is not None:
