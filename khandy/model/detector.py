@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List, Tuple, Mapping, Optional, Union
+from typing import Any, List, Tuple, Mapping, Optional, Union
 
 import numpy as np
 
@@ -40,8 +40,17 @@ class DetObjects(khandy.EqLenSequences):
     classes: khandy.KArray
     class_names: List[str]
 
-    def __init__(self, boxes: khandy.KArray, confs: Optional[khandy.KArray] = None, 
-                 classes: Optional[khandy.KArray] = None, class_names: Optional[List[str]] = None, **kwargs):
+    def __init__(
+        self,
+        boxes: Optional[khandy.KArray] = None,
+        confs: Optional[khandy.KArray] = None,
+        classes: Optional[khandy.KArray] = None,
+        class_names: Optional[List[str]] = None,
+        **kwargs
+    ):
+        if boxes is None:
+            boxes = np.empty((0, 4), dtype=np.float32)
+ 
         if confs is None:
             if torch is not None and isinstance(boxes, torch.Tensor):
                 confs = torch.ones((boxes.shape[0], 1), dtype=torch.float32, device=boxes.device)
