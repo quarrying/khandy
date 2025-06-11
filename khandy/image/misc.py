@@ -147,7 +147,7 @@ def imread(file_or_buffer, flags=-1):
             # support type: file or str or Path
             return cv2.imdecode(np.fromfile(file_or_buffer, dtype=np.uint8), flags)
     except Exception as e:
-        print(e)
+        warnings.warn(f'{e}')
         return None
     
 
@@ -191,7 +191,7 @@ def imread_pil(file_or_buffer, to_mode=None):
                     image = image.convert(to_mode)
         return image
     except Exception as e:
-        print(e)
+        warnings.warn(f'{e}')
         return None
         
         

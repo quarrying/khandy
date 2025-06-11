@@ -1,3 +1,4 @@
+import warnings
 from typing import Union
 
 import numpy as np
@@ -31,5 +32,5 @@ def import_torch():
         import torch
         return torch
     except ImportError as e:
-        # print(f"PyTorch is not installed. Please install PyTorch to continue. Error: {e}")
+        warnings.warn(f"PyTorch is not installed: {e}")
         return None
