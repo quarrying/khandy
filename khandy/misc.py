@@ -404,7 +404,11 @@ def get_gpu_count() -> int:
     try:
         output = subprocess.check_output(['nvidia-smi', '--list-gpus'], text=True)
         return output.count('UUID')
-    except subprocess.CalledProcessError:
+    except FileNotFoundError:
+        warnings.warn("nvidia-smi command not found.")
+        return 0
+    except subprocess.CalledProcessError as e:
+        warnings.warn(f"Error occurred while getting gpu count: {e}")
         return 0
     
     
