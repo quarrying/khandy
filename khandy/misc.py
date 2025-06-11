@@ -367,27 +367,29 @@ def get_git_repo_root(path: Optional[str] = None) -> Optional[str]:
     """
     if path is None:
         path = os.getcwd()
+        
+    if not os.path.isdir(path):
+        warnings.warn(f"The specified path '{path}' is not a valid directory.")
+        return None
+    
     try:
-        # Save the current working directory
-        original_cwd = os.getcwd()
-        # Change to the target directory
-        os.chdir(path)
-        # Execute the Git command
         output = subprocess.check_output(
             ['git', 'rev-parse', '--show-toplevel'],
             text=True,
-            stderr=subprocess.DEVNULL  # Suppress error messages
+            cwd=path
         ).strip()
-        return output if output else None
-    except subprocess.CalledProcessError:
-        # Handle cases where the command fails (e.g., not a Git repo)
+        if not output:
+            return None
+        return os.path.normpath(os.path.realpath(output))
+    except FileNotFoundError:
+        warnings.warn("Git command not found. Ensure Git is installed and accessible in your PATH.")
+        return None
+    except subprocess.CalledProcessError as e:
+        warnings.warn(f"Failed to execute Git command: {e}.")
         return None
     except Exception as e:
-        print(f"Error occurred while getting Git repo root: {e}")
+        warnings.warn(f"Error occurred while getting Git repo root: {e}")
         return None
-    finally:
-        # Restore the original working directory
-        os.chdir(original_cwd)
 
 
 def get_gpu_count() -> int:
