@@ -187,6 +187,7 @@ class BaseDetector(ABC):
         self, 
         num_classes: Optional[int] = None,
         conf_thresh: Optional[Union[float, List[float], Tuple[float], np.ndarray]] = None,
+        iou_thresh: Optional[float] = None,
         min_width: Optional[Union[int, float]] = None,
         min_height: Optional[Union[int, float]] = None,
         min_area: Optional[Union[int, float]] = None,
@@ -196,6 +197,7 @@ class BaseDetector(ABC):
     ):
         self._num_classes = num_classes
         self._conf_thresh = conf_thresh
+        self._iou_thresh = iou_thresh
         self._min_width = min_width
         self._min_height = min_height
         self._min_area = min_area
@@ -222,15 +224,27 @@ class BaseDetector(ABC):
             assert value.shape == (self.num_classes,) or value.shape == (self.num_classes, 1)
             value = value.flatten()
         else:
-            raise TypeError(f'unsupported type, got {type(value)}')
+            raise TypeError(f'Unsupported type for conf_thresh, got {type(value)}')
         self._conf_thresh = value
     
+    @property
+    def iou_thresh(self) -> Optional[float]:
+        return self._iou_thresh
+    
+    @iou_thresh.setter
+    def iou_thresh(self, value: Optional[float]):
+        assert value is None or isinstance(value, float), f'Unsupported type for iou_thresh, got {type(value)}'
+        assert value is None or (0 < value < 1), f'iou_thresh must be in (0, 1), got {value}'
+        self._iou_thresh = value
+        
     @property
     def min_width(self) -> Optional[Union[int, float]]:
         return self._min_width
     
     @min_width.setter
     def min_width(self, value: Optional[Union[int, float]]):
+        assert value is None or isinstance(value, (int, float)), f'Unsupported type for min_width, got {type(value)}'
+        assert value is None or value >= 0, f'min_width must be >= 0, got {value}'
         self._min_width = value
         
     @property
@@ -239,6 +253,8 @@ class BaseDetector(ABC):
     
     @min_height.setter
     def min_height(self, value: Optional[Union[int, float]]):
+        assert value is None or isinstance(value, (int, float)), f'Unsupported type for min_height, got {type(value)}'
+        assert value is None or value >= 0, f'min_height must be >= 0, got {value}'
         self._min_height = value
         
     @property
@@ -247,6 +263,8 @@ class BaseDetector(ABC):
     
     @min_area.setter
     def min_area(self, value: Optional[Union[int, float]]):
+        assert value is None or isinstance(value, (int, float)), f'Unsupported type for min_area, got {type(value)}'
+        assert value is None or value >= 0, f'min_area must be >= 0, got {value}'
         self._min_area = value
         
     @property
@@ -280,14 +298,28 @@ class BaseDetector(ABC):
     def forward(self, image: khandy.KArray, **kwargs) -> DetObjects:
         pass
     
+    def filter_by_conf(self, det_objects: DetObjects) -> DetObjects:
+        if self.conf_thresh is not None:
+            return det_objects.filter_by_conf(self.conf_thresh, inplace=True)
+        return det_objects
+    
+    def filter_by_min_size(self, det_objects: DetObjects) -> DetObjects:
+        if self.min_width is not None or self.min_height is not None:
+            return det_objects.filter_by_min_size(self.min_width, self.min_height, inplace=True)
+        return det_objects
+    
+    def filter_by_min_area(self, det_objects: DetObjects) -> DetObjects:
+        if self.min_area is not None:
+            return det_objects.filter_by_min_area(self.min_area, inplace=True)
+        return det_objects
+    
+    def nms(self, det_objects: DetObjects, ratio_type: str = 'iou') -> DetObjects:
+        if self.iou_thresh is not None:
+            return det_objects.nms(self.iou_thresh, ratio_type, inplace=True)
+        return det_objects
+    
     def __call__(self, image: khandy.KArray, **kwargs) -> DetObjects:
         det_objects = self.forward(image, **kwargs)
-        if self.conf_thresh is not None:
-            det_objects = det_objects.filter_by_conf(self.conf_thresh, inplace=True)
-        if self.min_width is not None or self.min_height is not None:
-            det_objects = det_objects.filter_by_min_size(self.min_width, self.min_height, inplace=True)
-        if self.min_area is not None:
-            det_objects = det_objects.filter_by_min_area(self.min_area, inplace=True)
         if self.class_names is not None:
             det_objects.class_names = [self.class_names[ind.item()] for ind in det_objects.classes]
         if self.sort_by is not None:
