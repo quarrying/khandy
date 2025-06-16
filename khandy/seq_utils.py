@@ -287,10 +287,12 @@ class EqLenSequences:
             else:
                 raise AttributeError(f'{name} has been used as a private attribute, which is immutable.')
         else:
+            # colllections.abc.Sequence is not used here to avoid issues with
+            # np.ndarray and torch.Tensor which is not a Sequence
             assert hasattr(value, '__len__'), 'value must contain `__len__` attribute'
             assert hasattr(value, '__getitem__'), 'value must contain `__getitem__` attribute'
             if len(self._fields) > 0:
-                msg = f'len(value) is not consistent with len(self), {len(value)} vs {len(self)}'
+                msg = f'{name} len is not consistent with len(self), {len(value)} vs {len(self)}'
                 assert len(value) == len(self), msg
             self._fields.add(name)
             super().__setattr__(name, value)

@@ -47,38 +47,77 @@ class DetObjects(khandy.EqLenSequences):
         classes: Optional[khandy.KArray] = None,
         class_names: Optional[List[str]] = None,
         **kwargs
-    ):
+    ) -> None:
+        super().__init__(
+            boxes=boxes, 
+            confs=confs, 
+            classes=classes, 
+            class_names=class_names, 
+            **kwargs
+        )
+    
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name == 'boxes':
+            value = self._setup_boxes(value)
+        elif name == 'confs':
+            value = self._setup_confs(value)
+        elif name == 'classes':
+            value = self._setup_classes(value)
+        elif name == 'class_names':
+            value = self._setup_class_names(value)
+        super().__setattr__(name, value)
+        
+    def _setup_boxes(self, boxes: Optional[khandy.KArray] = None) -> khandy.KArray:
         if boxes is None:
-            boxes = np.empty((0, 4), dtype=np.float32)
+            boxes = np.empty((len(self), 4), dtype=np.float32)
+        if torch is not None and isinstance(boxes, torch.Tensor):
+            pass
+        elif isinstance(boxes, np.ndarray):
+            pass
+        else:
+            raise TypeError(f'Unsupported type for boxes, got {type(boxes)}')
+            
+        assert boxes.ndim == 2, f'boxes ndim is not 2, got {boxes.ndim}'
+        assert boxes.shape[1] == 4, f'boxes last axis size is not 4, got {boxes.shape[1]}'
+        return boxes
  
+    def _setup_confs(self, confs: Optional[khandy.KArray] = None) -> khandy.KArray:
         if confs is None:
-            if torch is not None and isinstance(boxes, torch.Tensor):
-                confs = torch.ones((boxes.shape[0], 1), dtype=torch.float32, device=boxes.device)
-            elif isinstance(boxes, np.ndarray):
-                confs = np.ones((boxes.shape[0], 1), dtype=np.float32)
+            if torch is not None and isinstance(self.boxes, torch.Tensor):
+                confs = torch.ones((len(self), 1), dtype=torch.float32, device=self.boxes.device)
+            elif isinstance(self.boxes, np.ndarray):
+                confs = np.ones((len(self), 1), dtype=np.float32)
             else:
                 raise TypeError(f'Unsupported type for confs, got {type(confs)}')
         if confs.ndim == 1:
             confs = confs.reshape((-1, 1))
+            
+        assert confs.ndim == 2, f'confs ndim is not 2, got {confs.ndim}'
+        assert confs.shape[1] == 1, f'confs last axis size is not 1, got {confs.shape[1]}'
+        return confs
 
+    def _setup_classes(self, classes: Optional[khandy.KArray] = None) -> khandy.KArray:
         if classes is None:
-            if torch is not None and isinstance(boxes, torch.Tensor):
-                classes = torch.zeros((boxes.shape[0], 1), dtype=torch.int32, device=boxes.device)
-            elif isinstance(boxes, np.ndarray):
-                classes = np.zeros((boxes.shape[0], 1), dtype=np.int32)
+            if torch is not None and isinstance(self.boxes, torch.Tensor):
+                classes = torch.zeros((len(self), 1), dtype=torch.int32, device=self.boxes.device)
+            elif isinstance(self.boxes, np.ndarray):
+                classes = np.zeros((len(self), 1), dtype=np.int32)
             else:
                 raise TypeError(f'Unsupported type for classes, got {type(classes)}')
         if classes.ndim == 1:
             classes = classes.reshape((-1, 1))
+        
+        assert classes.ndim == 2, f'classes ndim is not 2, got {classes.ndim}'
+        assert classes.shape[1] == 1, f'classes last axis size is not 1, got {classes.shape[1]}'
+        return classes
 
+    def _setup_class_names(self, class_names: Optional[List[str]] = None) -> List[str]:
         if class_names is None:
-            class_names = [f'unnamed_class#{class_ind}' for class_ind in classes.flatten()]
-
-        assert boxes.ndim == confs.ndim == classes.ndim == 2, f'{boxes.ndim} vs {confs.ndim} vs {classes.ndim}'
-        assert boxes.shape[1] == 4 and confs.shape[1] == classes.shape[1] == 1
-        assert khandy.is_seq_of(class_names, str)
-        super().__init__(boxes=boxes, confs=confs, classes=classes, class_names=class_names, **kwargs)
-
+            class_names = [f'unnamed_class#{class_ind}' for class_ind in self.classes.flatten()]
+            
+        assert khandy.is_seq_of(class_names, str), f'class_names must be list of str'
+        return class_names
+    
     def __getitem__(self, key: Union[int, slice]) -> Union["DetObjects", DetObjectData]:
         item = super().__getitem__(key)
         if type(key) == int:
