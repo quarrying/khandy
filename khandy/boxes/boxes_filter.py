@@ -1,3 +1,4 @@
+from typing import Optional, Union
 import numpy as np
 
 
@@ -45,16 +46,20 @@ def sort_boxes_by_area(boxes, reverse=False):
         return np.argsort(areas)[::-1]
     
 
-def filter_small_boxes(boxes, min_width, min_height):
+def filter_small_boxes(
+    boxes: np.ndarray, 
+    min_width: Optional[Union[int, float]] = None, 
+    min_height: Optional[Union[int, float]] = None
+) -> np.ndarray:
     """Filter bounding boxes based on minimum width and height requirements.
 
     Args:
         boxes (numpy array): A 2D numpy array of shape (N, 4) representing a group of bounding boxes. 
             Each row in the array represents a bounding box with the coordinates of the top-left and 
             bottom-right corners.
-        min_width (float or None): The minimum allowed width of the bounding boxes. If set to None, 
+        min_width (int, float or None): The minimum allowed width of the bounding boxes. If set to None, 
             no width requirement will be enforced.
-        min_height (float or None): The minimum allowed height of the bounding boxes. If set to None, 
+        min_height (int, float or None): The minimum allowed height of the bounding boxes. If set to None, 
             no height requirement will be enforced.
     
     Returns:
@@ -71,12 +76,12 @@ def filter_small_boxes(boxes, min_width, min_height):
         `structures.Boxes.nonempty` in detectron2
         `ops.boxes.remove_small_boxes` in torchvision
     """
-    widths = boxes[:, 2] - boxes[:, 0]
-    heights = boxes[:, 3] - boxes[:, 1]
-    mask = np.ones_like(widths, dtype=bool)
+    mask = np.ones((len(boxes),), dtype=bool)
     if min_width is not None:
+        widths = boxes[:, 2] - boxes[:, 0]
         mask &= (widths >= min_width)
     if min_height is not None:
+        heights = boxes[:, 3] - boxes[:, 1]
         mask &= (heights >= min_height)
     return np.nonzero(mask)[0]
     
