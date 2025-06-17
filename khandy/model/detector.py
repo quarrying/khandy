@@ -8,12 +8,12 @@ import numpy as np
 import khandy
 torch = khandy.import_torch()
 
-__all__ = ['DetObjectData', 'DetObjectSortDir', 'DetObjectSortBy', 'DetObjects', 
+__all__ = ['DetObjectItem', 'DetObjectSortDir', 'DetObjectSortBy', 'DetObjects', 
            'BaseDetector', 'Index2LabelType', 'label_image_by_detector']
 
 
 @dataclass
-class DetObjectData:
+class DetObjectItem:
     x_min: float
     y_min: float
     x_max: float
@@ -22,7 +22,11 @@ class DetObjectData:
     class_index: int
     class_name: str
     
-    
+    @property
+    def area(self) -> float:
+        return (self.x_max - self.x_min) * (self.y_max - self.y_min)
+
+
 class DetObjectSortDir(Enum):
     ASC = auto()
     DESC = auto()
@@ -118,10 +122,10 @@ class DetObjects(khandy.EqLenSequences):
         assert khandy.is_seq_of(class_names, str), f'class_names must be list of str'
         return class_names
     
-    def __getitem__(self, key: Union[int, slice]) -> Union["DetObjects", DetObjectData]:
+    def __getitem__(self, key: Union[int, slice]) -> Union["DetObjects", DetObjectItem]:
         item = super().__getitem__(key)
         if type(key) == int:
-            return DetObjectData(
+            return DetObjectItem(
                 x_min=item.boxes[0, 0],
                 y_min=item.boxes[0, 1],
                 x_max=item.boxes[0, 2],
