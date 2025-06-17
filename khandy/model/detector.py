@@ -1,3 +1,4 @@
+import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -137,10 +138,56 @@ class DetObjects(khandy.EqLenSequences):
         return item
     
     def filter_by_class_index(self, interested_class_inds, inplace=False) -> "DetObjects":
+        warnings.warn(
+            "filter_by_class_index is deprecated, use filter_by_class_indices instead.",
+            DeprecationWarning
+        )
         assert isinstance(self.classes, np.ndarray)
         mask = np.zeros((len(self.classes),), dtype=bool)
         for class_ind in interested_class_inds:
             mask = np.logical_or(mask, self.classes[:, 0] == class_ind)
+        keep = np.nonzero(mask)[0]
+        return self.filter(keep, inplace)
+
+    def filter_by_class_indices(
+        self,
+        interested: Optional[Union[Tuple[int], List[int]]] = None,
+        ignored: Optional[Union[Tuple[int], List[int]]] = None,
+        inplace: bool = False
+    ) -> "DetObjects":
+        if interested is not None and ignored is not None:
+            raise ValueError("You cannot specify both 'interested' and 'ignored' at the same time.")
+        if interested is None and ignored is None:
+            raise ValueError("You must specify either 'interested' or 'ignored'.")
+        
+        mask = np.empty((len(self.classes),), dtype=bool)
+        for k, class_ind in enumerate(self.classes):
+            if ignored is not None:
+                mask[k] = class_ind not in ignored
+            elif interested is not None:
+                mask[k] = class_ind in interested
+
+        keep = np.nonzero(mask)[0]
+        return self.filter(keep, inplace)
+    
+    def filter_by_class_names(
+        self, 
+        interested: Optional[Union[Tuple[str], List[str]]] = None,
+        ignored: Optional[Union[Tuple[str], List[str]]] = None, 
+        inplace: bool = False
+    ) -> "DetObjects":
+        if interested is not None and ignored is not None:
+            raise ValueError("You cannot specify both 'interested' and 'ignored' at the same time.")
+        if interested is None and ignored is None:
+            raise ValueError("You must specify either 'interested' or 'ignored'.")
+        
+        mask = np.empty((len(self.class_names),), dtype=bool)
+        for k, class_name in enumerate(self.class_names):
+            if ignored is not None:
+                mask[k] = class_name not in ignored
+            elif interested is not None:
+                mask[k] = (class_name in interested)
+
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
 
