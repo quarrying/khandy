@@ -1,16 +1,20 @@
+import itertools
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any, List, Tuple, Mapping, Optional, Union
+from typing import Any, List, Mapping, Optional, Tuple, Union
 
 import numpy as np
 
 import khandy
+
 torch = khandy.import_torch()
 
 __all__ = ['DetObjectItem', 'DetObjectSortDir', 'DetObjectSortBy', 'DetObjects', 
-           'BaseDetector', 'Index2LabelType', 'label_image_by_detector']
+           'BaseDetector', 'Index2LabelType', 'label_image_by_detector',
+           'concat_det_objects', 'detect_in_det_objects']
 
 
 @dataclass
@@ -381,21 +385,77 @@ class BaseDetector(ABC):
 Index2LabelType = Mapping[Union[int, str], str]
 
 
-def label_image_by_detector(detector: BaseDetector, image: np.ndarray,
-                            index2label: Optional[Index2LabelType] = None,
-                            **detector_args) -> khandy.label.DetectIrRecord:
+def label_image_by_detector(
+    detector: BaseDetector,
+    image: np.ndarray,
+    index2label: Optional[Index2LabelType] = None,
+    **detector_kwargs
+) -> khandy.label.DetectIrRecord:
     image_height, image_width = image.shape[:2]
     ir_record = khandy.label.DetectIrRecord('', image_width, image_height)
-    detect_objs = detector(image, **detector_args)
-    for detect_obj in detect_objs:
+    det_objects = detector(image, **detector_kwargs)
+    for det_object in det_objects:
         if index2label is None:
-            label = f'{detect_obj.class_index}'
+            label = f'{det_object.class_index}'
         else:
-            label = index2label.get(detect_obj.class_index)
+            label = index2label.get(det_object.class_index)
         if label is None:
             continue
-        ir_object = khandy.label.DetectIrObject(label, detect_obj.x_min, detect_obj.y_min, 
-                                                detect_obj.x_max, detect_obj.y_max)
+        ir_object = khandy.label.DetectIrObject(label, det_object.x_min, det_object.y_min, 
+                                                det_object.x_max, det_object.y_max)
         ir_record.objects.append(ir_object)
 
     return ir_record
+
+
+def _concatenate_arrays_or_sequences(
+    arrays_or_sequences: Union[List[khandy.KArray], List[Sequence]]
+) -> Union[khandy.KArray, Sequence]:
+    assert len(arrays_or_sequences) > 0
+    if khandy.is_list_of(arrays_or_sequences, torch.Tensor):
+        return torch.vstack(arrays_or_sequences)
+    elif khandy.is_list_of(arrays_or_sequences, np.ndarray):
+        return np.vstack(arrays_or_sequences)
+    elif khandy.is_list_of(arrays_or_sequences, Sequence):
+        first_type = type(arrays_or_sequences[0])
+        return first_type(itertools.chain.from_iterable(arrays_or_sequences))
+    else:
+        raise TypeError('Unsupported type!')
+    
+    
+def concat_det_objects(det_objects_list: List[DetObjects]) -> DetObjects:
+    name_to_list = {}
+    for det_objects in det_objects_list:
+        for name in det_objects.get_fields():
+            name_to_list.setdefault(name, []).append(getattr(det_objects, name))
+    name_to_sequence = {}
+    for name, values in name_to_list.items():
+        name_to_sequence[name] = _concatenate_arrays_or_sequences(values)
+    return DetObjects(**name_to_sequence)
+
+
+def detect_in_det_objects(
+    detector: BaseDetector, 
+    image: np.ndarray, 
+    det_objects: DetObjects, 
+    min_area: Optional[Union[int, float]] = None,
+    **detector_kwargs
+) -> DetObjects:
+    dst_det_objects_list = []
+    for det_object in det_objects:
+        if min_area is not None and det_object.area < min_area:
+            continue
+        
+        x_min = round(det_object.x_min)
+        y_min = round(det_object.y_min)
+        x_max = round(det_object.x_max)
+        y_max = round(det_object.y_max)
+        cropped = khandy.crop_image(image, x_min, y_min, x_max, y_max)
+        objects_in_object = detector(cropped, **detector_kwargs)
+        objects_in_object.boxes[:, 0] += det_object.x_min
+        objects_in_object.boxes[:, 1] += det_object.y_min
+        objects_in_object.boxes[:, 2] += det_object.x_min
+        objects_in_object.boxes[:, 3] += det_object.y_min
+        dst_det_objects_list.append(objects_in_object)
+    return concat_det_objects(dst_det_objects_list)
+
