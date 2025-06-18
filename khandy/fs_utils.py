@@ -20,7 +20,7 @@ def replace_path_stem(path: str, new_stem: Union[str, Callable[[str], str]]) -> 
     stem, extension = os.path.splitext(basename)
     if isinstance(new_stem, str):
         return os.path.join(dirname, new_stem + extension)
-    elif hasattr(new_stem, '__call__'):
+    elif callable(new_stem):
         return os.path.join(dirname, new_stem(stem) + extension)
     else:
         raise TypeError('Unsupported Type!')
@@ -134,7 +134,7 @@ def upsert_prefix_into_path_stem(filename: str, prefix: str, validator: Optional
     Raises:
         AssertionError: If the validator is not None and is not callable.
     """
-    assert validator is None or hasattr(validator, '__call__')
+    assert validator is None or callable(validator)
     dirname, basename = os.path.split(filename)
     stem, extension = os.path.splitext(basename)
     if stem.startswith('.') and extension == '':
@@ -174,7 +174,7 @@ def upsert_suffix_into_path_stem(filename: str, suffix: str, validator: Optional
     Raises:
         AssertionError: If the validator is not None and is not callable.
     """
-    assert validator is None or hasattr(validator, '__call__')
+    assert validator is None or callable(validator)
     dirname, basename = os.path.split(filename)
     stem, extension = os.path.splitext(basename)
     if stem.startswith('.') and extension == '':

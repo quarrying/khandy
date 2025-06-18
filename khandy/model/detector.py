@@ -13,7 +13,8 @@ import khandy
 torch = khandy.import_torch()
 
 __all__ = ['DetObjectItem', 'DetObjectSortDir', 'DetObjectSortBy', 'DetObjects', 
-           'BaseDetector', 'convert_det_objects_to_detect_ir_record', 'convert_detect_ir_record_to_det_objects',
+           'BaseDetector', 'convert_det_objects_to_detect_ir_record', 
+           'convert_detect_ir_record_to_det_objects',
            'concat_det_objects', 'detect_in_det_objects']
 
 
