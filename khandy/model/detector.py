@@ -13,7 +13,7 @@ import khandy
 torch = khandy.import_torch()
 
 __all__ = ['DetObjectItem', 'DetObjectSortDir', 'DetObjectSortBy', 'DetObjects', 
-           'BaseDetector', 'Index2LabelType', 'label_image_by_detector',
+           'BaseDetector', 'convert_det_objects_to_detect_ir_record', 'convert_detect_ir_record_to_det_objects',
            'concat_det_objects', 'detect_in_det_objects']
 
 
@@ -387,30 +387,47 @@ class BaseDetector(ABC):
         return det_objects
     
 
-Index2LabelType = Mapping[Union[int, str], str]
-
-
-def label_image_by_detector(
-    detector: BaseDetector,
-    image: np.ndarray,
-    index2label: Optional[Index2LabelType] = None,
-    **detector_kwargs
+def convert_det_objects_to_detect_ir_record(
+    det_objects: DetObjects, 
+    image_width: int, 
+    image_height: int,
+    filename: str = ''
 ) -> khandy.label.DetectIrRecord:
-    image_height, image_width = image.shape[:2]
-    ir_record = khandy.label.DetectIrRecord('', image_width, image_height)
-    det_objects = detector(image, **detector_kwargs)
+    ir_record = khandy.label.DetectIrRecord(
+        filename=filename, 
+        width=image_width, 
+        height=image_height
+    )
     for det_object in det_objects:
-        if index2label is None:
-            label = f'{det_object.class_index}'
-        else:
-            label = index2label.get(det_object.class_index)
-        if label is None:
-            continue
-        ir_object = khandy.label.DetectIrObject(label, det_object.x_min, det_object.y_min, 
-                                                det_object.x_max, det_object.y_max)
+        ir_object = khandy.label.DetectIrObject(
+            label=det_object.class_name, 
+            x_min=det_object.x_min, 
+            y_min=det_object.y_min, 
+            x_max=det_object.x_max, 
+            y_max=det_object.y_max)
         ir_record.objects.append(ir_object)
-
     return ir_record
+
+
+def convert_detect_ir_record_to_det_objects(
+    ir_record: khandy.label.DetectIrRecord,
+    label2index: Mapping[str, int] = None
+) -> DetObjects:
+    class_names, boxes = [], []
+    for ir_object in ir_record.objects:
+        class_names.append(ir_object.label)
+        boxes.append([ir_object.x_min, ir_object.y_min, 
+                      ir_object.x_max, ir_object.y_max])
+    if label2index is not None:
+        class_indices = [label2index[name] for name in class_names]
+    else:
+        class_indices = [-1 for _ in class_names]
+    det_objects = DetObjects(
+        boxes=boxes, 
+        class_names=class_names,
+        class_indices=class_indices
+    )
+    return det_objects
 
 
 def _concatenate_arrays_or_sequences(
