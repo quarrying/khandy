@@ -84,8 +84,11 @@ class DetObjects(khandy.EqLenSequences):
         elif isinstance(boxes, np.ndarray):
             pass
         else:
-            raise TypeError(f'Unsupported type for boxes, got {type(boxes)}')
-            
+            if len(boxes) == 0:
+                boxes = np.empty((0, 4), dtype=np.float32)
+            else:
+                boxes = np.asarray(boxes, dtype=np.float32)
+
         assert boxes.ndim == 2, f'boxes ndim is not 2, got {boxes.ndim}'
         assert boxes.shape[1] == 4, f'boxes last axis size is not 4, got {boxes.shape[1]}'
         return boxes
@@ -96,8 +99,9 @@ class DetObjects(khandy.EqLenSequences):
                 confs = torch.ones((len(self), 1), dtype=torch.float32, device=self.boxes.device)
             elif isinstance(self.boxes, np.ndarray):
                 confs = np.ones((len(self), 1), dtype=np.float32)
-            else:
-                raise TypeError(f'Unsupported type for confs, got {type(confs)}')
+        else:
+            confs = np.asarray(confs, dtype=np.float32)
+            
         if confs.ndim == 1:
             confs = confs.reshape((-1, 1))
             
@@ -111,8 +115,9 @@ class DetObjects(khandy.EqLenSequences):
                 classes = torch.zeros((len(self), 1), dtype=torch.int32, device=self.boxes.device)
             elif isinstance(self.boxes, np.ndarray):
                 classes = np.zeros((len(self), 1), dtype=np.int32)
-            else:
-                raise TypeError(f'Unsupported type for classes, got {type(classes)}')
+        else:
+            classes = np.asarray(classes, dtype=np.float32)
+            
         if classes.ndim == 1:
             classes = classes.reshape((-1, 1))
         
