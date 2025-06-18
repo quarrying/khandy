@@ -118,7 +118,7 @@ class DetObjects(khandy.EqLenSequences):
             elif isinstance(self.boxes, np.ndarray):
                 classes = np.zeros((len(self), 1), dtype=np.int32)
         else:
-            classes = np.asarray(classes, dtype=np.float32)
+            classes = np.asarray(classes, dtype=np.int32)
             
         if classes.ndim == 1:
             classes = classes.reshape((-1, 1))
