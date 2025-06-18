@@ -7,7 +7,7 @@ import warnings
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Union
 
 import lxml
 import lxml.builder
@@ -761,15 +761,22 @@ def crop_detect(ir_record: DetectIrRecord, x_min, y_min, x_max, y_max, min_area_
     return dst_ir_record
 
 
-def fliter_detect_by_label(ir_record: DetectIrRecord, labels: Union[str, List[str]]) -> DetectIrRecord:
-    labels = khandy.to_list(labels)
+def fliter_detect_by_label(
+    ir_record: DetectIrRecord, 
+    labels: Union[str, List[str], Callable[[str], bool]]
+) -> DetectIrRecord:
+    if not callable(labels):
+        labels = khandy.to_list(labels)
+        label_checker = lambda x: x in labels
+    else:
+        label_checker = labels
+        
     dst_ir_record = DetectIrRecord(
         filename=ir_record.filename,
         width=ir_record.width,
         height=ir_record.height
     )
     for obj in ir_record.objects:
-        if obj.label in labels:
+        if label_checker(obj.label):
             dst_ir_record.objects.append(obj)
     return dst_ir_record
-
