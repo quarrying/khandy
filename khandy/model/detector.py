@@ -1,3 +1,4 @@
+import copy
 import itertools
 import warnings
 from abc import ABC, abstractmethod
@@ -161,42 +162,38 @@ class DetObjects(khandy.EqLenSequences):
 
     def filter_by_class_indices(
         self,
-        interested: Optional[Union[Tuple[int], List[int]]] = None,
-        ignored: Optional[Union[Tuple[int], List[int]]] = None,
+        interested: Optional[Union[Tuple[int, ...], List[int]]] = None,
+        ignored: Optional[Union[Tuple[int, ...], List[int]]] = None,
         inplace: bool = False
     ) -> "DetObjects":
         if interested is not None and ignored is not None:
             raise ValueError("You cannot specify both 'interested' and 'ignored' at the same time.")
         if interested is None and ignored is None:
-            raise ValueError("You must specify either 'interested' or 'ignored'.")
+            return self if inplace else copy.deepcopy(self)
         
-        mask = np.empty((len(self.classes),), dtype=bool)
-        for k, class_ind in enumerate(self.classes):
-            if ignored is not None:
-                mask[k] = class_ind not in ignored
-            elif interested is not None:
-                mask[k] = class_ind in interested
+        if ignored is not None:
+            mask = np.array([class_ind not in ignored for class_ind in self.classes], dtype=bool)
+        elif interested is not None:
+            mask = np.array([class_ind in interested for class_ind in self.classes], dtype=bool)
 
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
     
     def filter_by_class_names(
         self, 
-        interested: Optional[Union[Tuple[str], List[str]]] = None,
-        ignored: Optional[Union[Tuple[str], List[str]]] = None, 
+        interested: Optional[Union[Tuple[str, ...], List[str]]] = None,
+        ignored: Optional[Union[Tuple[str, ...], List[str]]] = None, 
         inplace: bool = False
     ) -> "DetObjects":
         if interested is not None and ignored is not None:
             raise ValueError("You cannot specify both 'interested' and 'ignored' at the same time.")
         if interested is None and ignored is None:
-            raise ValueError("You must specify either 'interested' or 'ignored'.")
+            return self if inplace else copy.deepcopy(self)
         
-        mask = np.empty((len(self.class_names),), dtype=bool)
-        for k, class_name in enumerate(self.class_names):
-            if ignored is not None:
-                mask[k] = class_name not in ignored
-            elif interested is not None:
-                mask[k] = (class_name in interested)
+        if ignored is not None:
+            mask = np.array([class_name not in ignored for class_name in self.class_names], dtype=bool)
+        elif interested is not None:
+            mask = np.array([class_name in interested for class_name in self.class_names], dtype=bool)
 
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
