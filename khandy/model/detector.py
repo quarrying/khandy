@@ -172,9 +172,9 @@ class DetObjects(khandy.EqLenSequences):
             return self if inplace else copy.deepcopy(self)
         
         if ignored is not None:
-            mask = np.array([class_ind not in ignored for class_ind in self.classes], dtype=bool)
+            mask = np.isin(self.classes, ignored, invert=True)
         elif interested is not None:
-            mask = np.array([class_ind in interested for class_ind in self.classes], dtype=bool)
+            mask = np.isin(self.classes, interested)
 
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
@@ -191,9 +191,9 @@ class DetObjects(khandy.EqLenSequences):
             return self if inplace else copy.deepcopy(self)
         
         if ignored is not None:
-            mask = np.array([class_name not in ignored for class_name in self.class_names], dtype=bool)
+            mask = np.isin(self.class_names, ignored, invert=True)
         elif interested is not None:
-            mask = np.array([class_name in interested for class_name in self.class_names], dtype=bool)
+            mask = np.isin(self.class_names, interested)
 
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
