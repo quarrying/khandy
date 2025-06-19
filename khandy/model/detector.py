@@ -32,15 +32,18 @@ class DetObjectItem:
 
     def __post_init__(self) -> None:
         for name, value in self._extra_fields.items():
+            assert name not in self.__annotations__, f'Extra field {name} conflicts with existing field'
             assert len(value) == 1, f'Extra field {name} must have length 1, got {len(value)}'
             
     def __getattr__(self, name: str) -> Any:
         if name not in self.__annotations__:
             return self._extra_fields[name]
-        return super().__getattr__(name)
+        # NB: use super().__getattribute__ instead of super().__getattr__
+        # type object 'object' has no attribute '__getattr__'
+        return super().__getattribute__(name)
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if name not in self.__annotations__:
+        if name not in self.__annotations__ and name not in ['area']:
             assert len(value) == 1, f'Extra field {name} must have length 1, got {len(value)}'
             self._extra_fields[name] = value
         else:
@@ -124,14 +127,17 @@ class DetObjects(khandy.EqLenSequences):
         return boxes
  
     def _setup_confs(self, confs: Optional[khandy.KArray] = None) -> khandy.KArray:
-        if confs is None:
-            if torch is not None and isinstance(self.boxes, torch.Tensor):
-                confs = torch.ones((len(self), 1), dtype=torch.float32, device=self.boxes.device)
-            elif isinstance(self.boxes, np.ndarray):
+        if isinstance(self.boxes, np.ndarray):
+            if confs is None:
                 confs = np.ones((len(self), 1), dtype=np.float32)
+            else:
+                confs = np.asarray(confs, dtype=np.float32)
         else:
-            confs = np.asarray(confs, dtype=np.float32)
-            
+            if confs is None:
+                confs = torch.ones((len(self), 1), dtype=torch.float32, device=self.boxes.device)
+            else:
+                confs = torch.as_tensor(confs, dtype=torch.float32, device=self.boxes.device)
+
         if confs.ndim == 1:
             confs = confs.reshape((-1, 1))
             
@@ -140,14 +146,17 @@ class DetObjects(khandy.EqLenSequences):
         return confs
 
     def _setup_classes(self, classes: Optional[khandy.KArray] = None) -> khandy.KArray:
-        if classes is None:
-            if torch is not None and isinstance(self.boxes, torch.Tensor):
-                classes = torch.zeros((len(self), 1), dtype=torch.int32, device=self.boxes.device)
-            elif isinstance(self.boxes, np.ndarray):
+        if isinstance(self.boxes, np.ndarray):
+            if classes is None:
                 classes = np.zeros((len(self), 1), dtype=np.int32)
+            else:
+                classes = np.asarray(classes, dtype=np.int32)
         else:
-            classes = np.asarray(classes, dtype=np.int32)
-            
+            if classes is None:
+                classes = torch.zeros((len(self), 1), dtype=torch.int32, device=self.boxes.device)
+            else:
+                classes = torch.as_tensor(classes, dtype=torch.int32, device=self.boxes.device)
+
         if classes.ndim == 1:
             classes = classes.reshape((-1, 1))
         
@@ -242,7 +251,7 @@ class DetObjects(khandy.EqLenSequences):
         keep = khandy.filter_small_boxes(self.boxes, min_width, min_height)
         return self.filter(keep, inplace)
 
-    def filter_by_conf(self, conf_thresh, inplace=False):
+    def filter_by_conf(self, conf_thresh, inplace=False) -> "DetObjects":
         assert isinstance(self.confs, np.ndarray)
         if isinstance(conf_thresh, (list, np.ndarray)):
             conf_thresh = np.array(conf_thresh)
@@ -440,7 +449,7 @@ def convert_det_objects_to_detect_ir_record(
 
 def convert_detect_ir_record_to_det_objects(
     ir_record: khandy.label.DetectIrRecord,
-    label2index: Mapping[str, int] = None
+    label2index: Optional[Mapping[str, int]] = None
 ) -> DetObjects:
     class_names, boxes = [], []
     for ir_object in ir_record.objects:
@@ -463,7 +472,7 @@ def _concatenate_arrays_or_sequences(
     arrays_or_sequences: Union[List[khandy.KArray], List[Sequence]]
 ) -> Union[khandy.KArray, Sequence]:
     assert len(arrays_or_sequences) > 0
-    if khandy.is_list_of(arrays_or_sequences, torch.Tensor):
+    if khandy.is_torch_available() and khandy.is_list_of(arrays_or_sequences, torch.Tensor):
         return torch.vstack(arrays_or_sequences)
     elif khandy.is_list_of(arrays_or_sequences, np.ndarray):
         return np.vstack(arrays_or_sequences)

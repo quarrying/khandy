@@ -6,21 +6,18 @@ import numpy as np
 try:
     import torch
     T = torch.Tensor
-    _torch_available = True
 except:
-    T = object
-    _torch_available = False
-    
-
+    torch = None
+    T = np.ndarray
 KArray = Union[np.ndarray, T]
 
 
-def is_torch_available():
-    return _torch_available
+def is_torch_available() -> bool:
+    return torch is not None
 
 
 def is_torch_tensor(x) -> bool:
-    return is_torch_available() and isinstance(x, torch.Tensor)
+    return (torch is not None) and isinstance(x, torch.Tensor)
 
 
 def import_torch():
