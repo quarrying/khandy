@@ -3,9 +3,9 @@ import itertools
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import numpy as np
 
@@ -28,12 +28,40 @@ class DetObjectItem:
     conf: float
     class_index: int
     class_name: str
-    
+    _extra_fields: Dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        for name, value in self._extra_fields.items():
+            assert len(value) == 1, f'Extra field {name} must have length 1, got {len(value)}'
+            
+    def __getattr__(self, name: str) -> Any:
+        if name not in self.__annotations__:
+            return self._extra_fields[name]
+        return super().__getattr__(name)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name not in self.__annotations__:
+            assert len(value) == 1, f'Extra field {name} must have length 1, got {len(value)}'
+            self._extra_fields[name] = value
+        else:
+            super().__setattr__(name, value)
+            
     @property
     def area(self) -> float:
         return (self.x_max - self.x_min) * (self.y_max - self.y_min)
 
-
+    def to_det_objects(self) -> "DetObjects":
+        box = [self.x_min, self.y_min, self.x_max, self.y_max]
+        kwargs = {
+            'boxes': [box],
+            'confs': [self.conf],
+            'classes': [self.class_index],
+            'class_names': [self.class_name],
+            **self._extra_fields
+        }
+        return DetObjects(**kwargs)
+    
+    
 class DetObjectSortDir(Enum):
     ASC = auto()
     DESC = auto()
@@ -137,6 +165,8 @@ class DetObjects(khandy.EqLenSequences):
     def __getitem__(self, key: Union[int, slice]) -> Union["DetObjects", DetObjectItem]:
         item = super().__getitem__(key)
         if type(key) == int:
+            _extra_fields = {name: getattr(self, name) for name in self._fields 
+                            if name not in ['boxes', 'confs', 'classes', 'class_names']}
             return DetObjectItem(
                 x_min=item.boxes[0, 0],
                 y_min=item.boxes[0, 1],
@@ -144,7 +174,8 @@ class DetObjects(khandy.EqLenSequences):
                 y_max=item.boxes[0, 3],
                 conf=item.confs[0].item(),
                 class_index=item.classes[0].item(),
-                class_name=item.class_names[0]
+                class_name=item.class_names[0],
+                _extra_fields=_extra_fields
             )
         return item
     
