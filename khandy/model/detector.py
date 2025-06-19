@@ -16,6 +16,7 @@ torch = khandy.import_torch()
 __all__ = ['DetObjectItem', 'DetObjectSortDir', 'DetObjectSortBy', 'DetObjects', 
            'BaseDetector', 'convert_det_objects_to_detect_ir_record', 
            'convert_detect_ir_record_to_det_objects',
+           'convert_det_objects_to_detect_ir', 'convert_detect_ir_to_det_objects',
            'concat_det_objects', 'detect_in_det_objects']
 
 
@@ -431,6 +432,10 @@ def convert_det_objects_to_detect_ir_record(
     image_height: int,
     filename: str = ''
 ) -> khandy.label.DetectIrRecord:
+    warnings.warn(
+        "convert_det_objects_to_detect_ir_record is deprecated, use convert_det_objects_to_detect_ir instead.",
+        DeprecationWarning
+    )
     ir_record = khandy.label.DetectIrRecord(
         filename=filename, 
         width=image_width, 
@@ -451,8 +456,57 @@ def convert_detect_ir_record_to_det_objects(
     ir_record: khandy.label.DetectIrRecord,
     label2index: Optional[Mapping[str, int]] = None
 ) -> DetObjects:
+    warnings.warn(
+        "convert_detect_ir_record_to_det_objects is deprecated, use convert_detect_ir_to_det_objects instead.",
+        DeprecationWarning
+    )
     class_names, boxes = [], []
     for ir_object in ir_record.objects:
+        class_names.append(ir_object.label)
+        boxes.append([ir_object.x_min, ir_object.y_min, 
+                      ir_object.x_max, ir_object.y_max])
+    if label2index is not None:
+        class_indices = [label2index[name] for name in class_names]
+    else:
+        class_indices = [-1 for _ in class_names]
+    det_objects = DetObjects(
+        boxes=boxes, 
+        class_names=class_names,
+        class_indices=class_indices
+    )
+    return det_objects
+
+
+def convert_det_objects_to_detect_ir(
+    det_objects: DetObjects, 
+) -> List[khandy.label.DetectIrObject]:
+    ir_objects = []
+    for det_object in det_objects:
+        ir_object = khandy.label.DetectIrObject(
+            label=det_object.class_name, 
+            x_min=det_object.x_min, 
+            y_min=det_object.y_min, 
+            x_max=det_object.x_max, 
+            y_max=det_object.y_max)
+        ir_objects.append(ir_object)
+    return ir_objects
+
+
+def convert_detect_ir_to_det_objects(
+    detect_ir: Union[khandy.label.DetectIrRecord, 
+                     khandy.label.DetectIrObject, 
+                     List[khandy.label.DetectIrObject]],
+    label2index: Optional[Mapping[str, int]] = None
+) -> DetObjects:
+    if isinstance(detect_ir, khandy.label.DetectIrRecord):
+        ir_objects = detect_ir.objects
+    elif isinstance(detect_ir, khandy.label.DetectIrObject):
+        ir_objects = [detect_ir]
+    else:
+        ir_objects = detect_ir
+        
+    class_names, boxes = [], []
+    for ir_object in ir_objects:
         class_names.append(ir_object.label)
         boxes.append([ir_object.x_min, ir_object.y_min, 
                       ir_object.x_max, ir_object.y_max])
