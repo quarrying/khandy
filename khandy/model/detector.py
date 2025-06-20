@@ -37,11 +37,12 @@ class DetObjectItem:
             assert len(value) == 1, f'Extra field {name} must have length 1, got {len(value)}'
             
     def __getattr__(self, name: str) -> Any:
-        if name not in self.__annotations__:
+        try:
             return self._extra_fields[name]
-        # NB: use super().__getattribute__ instead of super().__getattr__
-        # type object 'object' has no attribute '__getattr__'
-        return super().__getattribute__(name)
+        except KeyError:
+            # NB: use super().__getattribute__ instead of super().__getattr__
+            # type object 'object' has no attribute '__getattr__'
+            return super().__getattribute__(name)
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name not in self.__annotations__ and name not in ['area']:
