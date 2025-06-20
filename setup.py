@@ -30,7 +30,7 @@ setup(
     long_description_content_type="text/markdown",
     python_requires=">=3.8",
     keywords='computer vision',
-    packages=find_packages(),
+    packages=find_packages(exclude=['tests']),
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',

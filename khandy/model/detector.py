@@ -131,44 +131,40 @@ class DetObjects(khandy.EqLenSequences):
     def _setup_confs(self, confs: Optional[khandy.KArray] = None) -> khandy.KArray:
         if isinstance(self.boxes, np.ndarray):
             if confs is None:
-                confs = np.ones((len(self), 1), dtype=np.float32)
+                confs = np.ones((len(self),), dtype=np.float32)
             else:
                 confs = np.asarray(confs, dtype=np.float32)
         else:
             if confs is None:
-                confs = torch.ones((len(self), 1), dtype=torch.float32, device=self.boxes.device)
+                confs = torch.ones((len(self),), dtype=torch.float32, device=self.boxes.device)
             else:
                 confs = torch.as_tensor(confs, dtype=torch.float32, device=self.boxes.device)
 
-        if confs.ndim == 1:
-            confs = confs.reshape((-1, 1))
-            
-        assert confs.ndim == 2, f'confs ndim is not 2, got {confs.ndim}'
-        assert confs.shape[1] == 1, f'confs last axis size is not 1, got {confs.shape[1]}'
+        if confs.ndim == 2 and confs.shape[-1] == 1:
+            confs = confs.squeeze(1)
+        assert confs.ndim == 1, f'confs ndim is not 1, got {confs.ndim}'
         return confs
 
     def _setup_classes(self, classes: Optional[khandy.KArray] = None) -> khandy.KArray:
         if isinstance(self.boxes, np.ndarray):
             if classes is None:
-                classes = np.zeros((len(self), 1), dtype=np.int32)
+                classes = np.zeros((len(self),), dtype=np.int32)
             else:
                 classes = np.asarray(classes, dtype=np.int32)
         else:
             if classes is None:
-                classes = torch.zeros((len(self), 1), dtype=torch.int32, device=self.boxes.device)
+                classes = torch.zeros((len(self),), dtype=torch.int32, device=self.boxes.device)
             else:
                 classes = torch.as_tensor(classes, dtype=torch.int32, device=self.boxes.device)
 
-        if classes.ndim == 1:
-            classes = classes.reshape((-1, 1))
-        
-        assert classes.ndim == 2, f'classes ndim is not 2, got {classes.ndim}'
-        assert classes.shape[1] == 1, f'classes last axis size is not 1, got {classes.shape[1]}'
+        if classes.ndim == 2 and classes.shape[-1] == 1:
+            classes = classes.squeeze(1)
+        assert classes.ndim == 1, f'classes ndim is not 1, got {classes.ndim}'
         return classes
 
     def _setup_class_names(self, class_names: Optional[List[str]] = None) -> List[str]:
         if class_names is None:
-            class_names = [f'unnamed_class#{class_ind}' for class_ind in self.classes.flatten()]
+            class_names = [f'unnamed_class#{class_ind}' for class_ind in self.classes]
             
         assert khandy.is_seq_of(class_names, str), f'class_names must be list of str'
         return class_names
@@ -179,10 +175,10 @@ class DetObjects(khandy.EqLenSequences):
             _extra_fields = {name: getattr(self, name) for name in self._fields 
                             if name not in ['boxes', 'confs', 'classes', 'class_names']}
             return DetObjectItem(
-                x_min=item.boxes[0, 0],
-                y_min=item.boxes[0, 1],
-                x_max=item.boxes[0, 2],
-                y_max=item.boxes[0, 3],
+                x_min=item.boxes[0, 0].item(),
+                y_min=item.boxes[0, 1].item(),
+                x_max=item.boxes[0, 2].item(),
+                y_max=item.boxes[0, 3].item(),
                 conf=item.confs[0].item(),
                 class_index=item.classes[0].item(),
                 class_name=item.class_names[0],
@@ -198,7 +194,7 @@ class DetObjects(khandy.EqLenSequences):
         assert isinstance(self.classes, np.ndarray)
         mask = np.zeros((len(self.classes),), dtype=bool)
         for class_ind in interested_class_inds:
-            mask = np.logical_or(mask, self.classes[:, 0] == class_ind)
+            mask = np.logical_or(mask, self.classes == class_ind)
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
 
@@ -240,7 +236,11 @@ class DetObjects(khandy.EqLenSequences):
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
 
-    def filter_by_min_area(self, min_area, inplace=False) -> "DetObjects":
+    def filter_by_min_area(
+        self, 
+        min_area: Union[int, float], 
+        inplace: bool = False
+    ) -> "DetObjects":
         assert isinstance(self.boxes, np.ndarray)
         widths = self.boxes[:, 2] - self.boxes[:, 0]
         heights = self.boxes[:, 3] - self.boxes[:, 1] 
@@ -248,7 +248,12 @@ class DetObjects(khandy.EqLenSequences):
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
 
-    def filter_by_min_size(self, min_width, min_height, inplace=False) -> "DetObjects":
+    def filter_by_min_size(
+        self, 
+        min_width: Optional[Union[int, float]] = None, 
+        min_height: Optional[Union[int, float]] = None,
+        inplace: bool = False
+    ) -> "DetObjects":
         assert isinstance(self.boxes, np.ndarray)
         keep = khandy.filter_small_boxes(self.boxes, min_width, min_height)
         return self.filter(keep, inplace)
@@ -528,9 +533,9 @@ def _concatenate_arrays_or_sequences(
 ) -> Union[khandy.KArray, Sequence]:
     assert len(arrays_or_sequences) > 0
     if khandy.is_torch_available() and khandy.is_list_of(arrays_or_sequences, torch.Tensor):
-        return torch.vstack(arrays_or_sequences)
+        return torch.cat(arrays_or_sequences, dim=0)
     elif khandy.is_list_of(arrays_or_sequences, np.ndarray):
-        return np.vstack(arrays_or_sequences)
+        return np.concatenate(arrays_or_sequences, axis=0)
     elif khandy.is_list_of(arrays_or_sequences, Sequence):
         first_type = type(arrays_or_sequences[0])
         return first_type(itertools.chain.from_iterable(arrays_or_sequences))
