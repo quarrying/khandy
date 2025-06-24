@@ -35,6 +35,28 @@ class TestFliterDetectByLabel(unittest.TestCase):
         self.assertEqual(result, [])
 
 
+class TestDetectIrObject(unittest.TestCase):
+    def test_initialization(self):
+        obj =  khandy.label.DetectIrObject(label="test", x_min=1.0, y_min=1.0, x_max=2.0, y_max=2.0)
+        self.assertEqual(obj.label, "test")
+        self.assertEqual(obj.x_min, 1.0)
+        self.assertEqual(obj.y_min, 1.0)
+        self.assertEqual(obj.x_max, 2.0)
+        self.assertEqual(obj.y_max, 2.0)
+
+    def test_area(self):
+        obj =  khandy.label.DetectIrObject(label="test", x_min=1.0, y_min=1.0, x_max=3.0, y_max=4.0)
+        self.assertEqual(obj.area, 6.0)
+
+    def test_swapping_values(self):
+        with self.assertWarns(Warning):
+            obj =  khandy.label.DetectIrObject(label="test", x_min=3.0, y_min=4.0, x_max=1.0, y_max=2.0)
+        self.assertEqual(obj.x_min, 1.0)
+        self.assertEqual(obj.x_max, 3.0)
+        self.assertEqual(obj.y_min, 2.0)
+        self.assertEqual(obj.y_max, 4.0)
+
+ 
 if __name__ == '__main__':
     unittest.main()
     

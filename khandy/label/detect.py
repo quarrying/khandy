@@ -31,6 +31,19 @@ class DetectIrObject:
     x_max: float
     y_max: float
 
+    def __post_init__(self):
+        if self.x_min > self.x_max:
+            warnings.warn("Warning: x_min is greater than x_max, swapping values.")
+            self.x_min, self.x_max = self.x_max, self.x_min
+        if self.y_min > self.y_max:
+            warnings.warn("Warning: y_min is greater than y_max, swapping values.")
+            self.y_min, self.y_max = self.y_max, self.y_min
+    
+    @property
+    def area(self) -> float:
+        """Calculate the area of the bounding box."""
+        return (self.x_max - self.x_min) * (self.y_max - self.y_min)
+
 
 @dataclass
 class DetectIrRecord:
