@@ -2,6 +2,9 @@ import time
 import logging
 import numbers
 import datetime
+from typing import Callable, Any, Dict, Tuple, Optional
+
+import numpy as np
 
 
 def _to_timestamp(val, multiplier=1, rounded=False):
@@ -98,4 +101,42 @@ class ContextTimer(object):
     def enter(self):
         """Manually trigger enter"""
         self.__enter__()
+
+
+def benchmark(
+    func: Callable[..., Any], 
+    args: tuple = (),
+    kwargs: Dict[str, Any] = {},
+    num_repeats: int = 100,
+    num_repeats_burn_in: int = 2,
+    display_interval: Optional[int] = None,
+    display_desc: str = 'benchmark'
+) -> Tuple[Any, Dict[str, float]]:
+    """Run func several times to obtain the timing stats.
+    
+    References:
+        tutorials/image/alexnet/alexnet_benchmark.py in tensorflow-models
+    """
+    assert isinstance(num_repeats, int) and num_repeats > 0
+    assert isinstance(num_repeats_burn_in, int) and num_repeats_burn_in >= 0
+    assert display_interval is None or isinstance(display_interval, int)
+
+    duration_list = []
+    for i in range(num_repeats + num_repeats_burn_in):
+        start_time = time.time()
+        output = func(*args, **kwargs)
+        duration = time.time() - start_time
+        if i >= num_repeats_burn_in:
+            duration_list.append(duration)
+            actual_step = i - num_repeats_burn_in + 1
+            if display_interval is not None and actual_step % display_interval == 0:
+                print(f'[{display_desc}][{actual_step}/{num_repeats}] {duration:.3f}s')
+    
+    summary = {
+        'mean': np.mean(duration_list).item(),
+        'stddev': np.std(duration_list).item(),
+        'max': np.max(duration_list).item(),
+        'min': np.min(duration_list).item(),
+    }
+    return output, summary
 
