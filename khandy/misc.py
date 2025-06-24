@@ -1,22 +1,32 @@
 import argparse
 import builtins
+import functools
 import json
 import logging
+import multiprocessing
+import multiprocessing.managers
+import multiprocessing.pool
 import numbers
 import os
+import queue
 import socket
 import subprocess
 import warnings
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Any, Callable, Dict, Iterable
 
 import requests
 
 
-def is_number_between(value: numbers.Real, 
-                      lower: Optional[numbers.Real], upper: Optional[numbers.Real], 
-                      lower_close: bool = True, upper_close: bool = False) -> bool:
+def is_number_between(
+    value: numbers.Real, 
+    lower: Optional[numbers.Real],
+    upper: Optional[numbers.Real], 
+    lower_close: bool = True,
+    upper_close: bool = False
+) -> bool:
     """Compares a value to upper and lower bounds, considering the bounds are closed or open.
     
     Args:
@@ -464,3 +474,70 @@ def get_sw_slices(length: int, window_size: int, stride: Optional[int] = None,
             slices.append((min_index, max_index))
         min_index = min_index + stride
     return slices
+
+
+class QueuedTaskExecutor:
+    def __init__(
+        self, 
+        original_func: Callable, 
+        _queue: multiprocessing.managers.SyncManager.Queue
+    ) -> None:
+        self.original_func = original_func
+        self._queue = _queue
+
+    def __call__(self, item, *args, **kwargs):
+        try:
+            ret = self.original_func(item, *args, **kwargs)
+        except Exception as e:
+            self._queue.put((item, None, os.getpid()))
+            raise e
+        self._queue.put((item, ret, os.getpid()))
+        return ret
+    
+
+def default_error_callback(e):
+    print(f'Error: {e}')
+
+
+def default_progress_callback(total: int, current: int, pid: int, item: Any, ret: Any):
+    print(f'{datetime.now()} [{current}/{total}]<{pid}> {item}')
+    
+    
+def map_async_ex(
+    func: Callable, 
+    iterable: Iterable, 
+    extra_args: Tuple = (),
+    extra_kwargs: Dict[str, Any] = {}, 
+    chunksize: Optional[int] = None, 
+    num_workers: Optional[int] = None,
+    callback=None,
+    error_callback: Optional[Callable[[BaseException], object]] = default_error_callback,
+    progress_callback: Optional[Callable[[int, int, int, Any, Any], None]] = default_progress_callback
+)-> multiprocessing.pool.MapResult:
+    manager = multiprocessing.Manager()
+    q = manager.Queue()
+    func_with_queue = QueuedTaskExecutor(func, q)
+    partial_func = functools.partial(func_with_queue, *extra_args, **extra_kwargs)
+    
+    if num_workers is None:
+        num_workers = os.cpu_count()
+    if chunksize is None:
+        chunksize = (len(iterable) + num_workers - 1) // num_workers
+    pool = multiprocessing.pool.Pool(processes=num_workers)
+    async_results = pool.map_async(partial_func, iterable, chunksize=chunksize, 
+                                   callback=callback, error_callback=error_callback)
+    pool.close()
+
+    num_completed = 0
+    while True:
+        try:
+            if num_completed == len(iterable):
+                break
+            item, ret, pid = q.get_nowait()
+            num_completed += 1
+            if progress_callback is not None:
+                progress_callback(len(iterable), num_completed, pid, item, ret)
+        except queue.Empty:
+            pass
+    pool.join()
+    return async_results
