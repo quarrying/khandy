@@ -17,7 +17,8 @@ import khandy
 
 __all__ = ['DetectIrObject', 'DetectIrRecord', 'load_detect',
            'save_detect', 'convert_detect', 'replace_detect_label',
-           'load_coco_class_names', 'crop_detect', 'fliter_detect_by_label']
+           'load_coco_class_names', 'crop_detect', 'fliter_detect', 
+           'fliter_detect_by_label']
 
 
 @dataclass
@@ -761,22 +762,31 @@ def crop_detect(ir_record: DetectIrRecord, x_min, y_min, x_max, y_max, min_area_
     return dst_ir_record
 
 
+def fliter_detect(
+    detect_ir: Union[DetectIrRecord, List[DetectIrObject]], 
+    func: Callable[[DetectIrObject], bool]
+) -> Union[DetectIrRecord, List[DetectIrObject]]:
+    if isinstance(detect_ir, DetectIrRecord):
+        return DetectIrRecord(
+            filename=detect_ir.filename,
+            width=detect_ir.width,
+            height=detect_ir.height,
+            objects=list(filter(func, detect_ir.objects))
+        )
+    elif khandy.is_list_of(detect_ir, DetectIrObject):
+        return list(filter(func, detect_ir))
+    else:
+        raise TypeError('detect_ir must be DetectIrRecord or list of DetectIrObject')
+    
+    
 def fliter_detect_by_label(
-    ir_record: DetectIrRecord, 
+    detect_ir: Union[DetectIrRecord, List[DetectIrObject]], 
     labels: Union[str, List[str], Callable[[str], bool]]
-) -> DetectIrRecord:
+) -> Union[DetectIrRecord, List[DetectIrObject]]:
     if not callable(labels):
         labels = khandy.to_list(labels)
         label_checker = lambda x: x in labels
     else:
         label_checker = labels
-        
-    dst_ir_record = DetectIrRecord(
-        filename=ir_record.filename,
-        width=ir_record.width,
-        height=ir_record.height
-    )
-    for obj in ir_record.objects:
-        if label_checker(obj.label):
-            dst_ir_record.objects.append(obj)
-    return dst_ir_record
+    return fliter_detect(detect_ir, lambda obj: label_checker(obj.label))
+
