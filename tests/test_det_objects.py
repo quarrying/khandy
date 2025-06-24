@@ -81,6 +81,29 @@ class TestDetObjects(unittest.TestCase):
         self._assert_equal(det_objects.filter_by_min_area(2500), 
                            det_objects[boxes.areas[:, 0] >= 2500])
         
+    def test_filter_by_func(self):
+        det_objects = khandy.model.DetObjects(
+            boxes=np.array([[0, 0, 1, 1], [1, 1, 2, 2]]),
+            confs=np.array([0.8, 0.9]),
+            classes=np.array([0, 1]),
+            class_names=["class_0", "class_1"]
+        )
+        
+        def func(item: khandy.model.DetObjectItem) -> bool:
+            return item.conf > 0.85
+        
+        filtered_objects = det_objects.filter_by_func(func)
+        self.assertEqual(len(filtered_objects), 1)
+        self.assertAlmostEqual(filtered_objects.confs[0], 0.9)
+        self.assertEqual(len(det_objects), 2)
+        self.assertAlmostEqual(det_objects.confs[0], 0.8)
+        
+        det_objects.filter_by_func(func, inplace=True)
+        self.assertEqual(len(filtered_objects), 1)
+        self.assertAlmostEqual(filtered_objects.confs[0], 0.9)
+        self.assertEqual(len(det_objects), 1)
+        self.assertAlmostEqual(det_objects.confs[0], 0.9)
+        
 
 class TestConcatDetObjects(unittest.TestCase):
     def setUp(self):

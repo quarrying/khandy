@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union, Callable
 
 import numpy as np
 
@@ -258,13 +258,27 @@ class DetObjects(khandy.EqLenSequences):
         keep = khandy.filter_small_boxes(self.boxes, min_width, min_height)
         return self.filter(keep, inplace)
 
-    def filter_by_conf(self, conf_thresh, inplace=False) -> "DetObjects":
+    def filter_by_conf(
+        self, 
+        conf_thresh: Optional[Union[float, List[float], Tuple[float], np.ndarray]], 
+        inplace: bool = False
+    ) -> "DetObjects":
         assert isinstance(self.confs, np.ndarray)
-        if isinstance(conf_thresh, (list, np.ndarray)):
+        if isinstance(conf_thresh, (list, tuple, np.ndarray)):
             conf_thresh = np.array(conf_thresh)
             mask = self.confs > conf_thresh[self.classes]
         else:
             mask = self.confs > conf_thresh
+        keep = np.nonzero(mask)[0]
+        return self.filter(keep, inplace)
+
+    def filter_by_func(
+        self, 
+        func: Callable[[DetObjectItem], bool], 
+        inplace: bool = False
+    ) -> "DetObjects":
+        assert isinstance(self.boxes, np.ndarray)
+        mask = np.array([func(det_object) for det_object in self], dtype=bool)
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
 
