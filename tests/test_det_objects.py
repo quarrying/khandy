@@ -74,11 +74,11 @@ class TestDetObjects(unittest.TestCase):
         boxes = khandy.Boxes(det_objects.boxes)
         self._assert_equal(det_objects.filter_by_conf(0.5), 
                            det_objects[det_objects.confs > 0.5])
-        self._assert_equal(det_objects.filter_by_min_size(min_width=50), 
+        self._assert_equal(det_objects.filter_by_size(min_width=50), 
                            det_objects[boxes.widths[:, 0] >= 50])
-        self._assert_equal(det_objects.filter_by_min_size(min_height=50), 
+        self._assert_equal(det_objects.filter_by_size(min_height=50), 
                            det_objects[boxes.heights[:, 0] >= 50])
-        self._assert_equal(det_objects.filter_by_min_area(2500), 
+        self._assert_equal(det_objects.filter_by_area(2500), 
                            det_objects[boxes.areas[:, 0] >= 2500])
         
     def test_filter_by_func(self):

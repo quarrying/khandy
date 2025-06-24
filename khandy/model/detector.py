@@ -236,7 +236,7 @@ class DetObjects(khandy.EqLenSequences):
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
 
-    def filter_by_min_area(
+    def filter_by_area(
         self, 
         min_area: Union[int, float], 
         inplace: bool = False
@@ -247,8 +247,19 @@ class DetObjects(khandy.EqLenSequences):
         mask = widths * heights >= min_area
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
+    
+    def filter_by_min_area(
+        self, 
+        min_area: Union[int, float], 
+        inplace: bool = False
+    ) -> "DetObjects":
+        warnings.warn(
+            "filter_by_min_area is deprecated, use filter_by_area instead.",
+            DeprecationWarning
+        )
+        return self.filter_by_area(min_area, inplace)
 
-    def filter_by_min_size(
+    def filter_by_size(
         self, 
         min_width: Optional[Union[int, float]] = None, 
         min_height: Optional[Union[int, float]] = None,
@@ -258,6 +269,18 @@ class DetObjects(khandy.EqLenSequences):
         keep = khandy.filter_small_boxes(self.boxes, min_width, min_height)
         return self.filter(keep, inplace)
 
+    def filter_by_min_size(
+        self, 
+        min_width: Optional[Union[int, float]] = None, 
+        min_height: Optional[Union[int, float]] = None,
+        inplace: bool = False
+    ) -> "DetObjects":
+        warnings.warn(
+            "filter_by_min_size is deprecated, use filter_by_size instead.",
+            DeprecationWarning
+        )
+        return self.filter_by_size(min_width, min_height, inplace)
+    
     def filter_by_conf(
         self, 
         conf_thresh: Optional[Union[float, List[float], Tuple[float], np.ndarray]], 
@@ -422,14 +445,14 @@ class BaseDetector(ABC):
             return det_objects.filter_by_conf(self.conf_thresh, inplace=True)
         return det_objects
     
-    def filter_by_min_size(self, det_objects: DetObjects) -> DetObjects:
+    def filter_by_size(self, det_objects: DetObjects) -> DetObjects:
         if self.min_width is not None or self.min_height is not None:
-            return det_objects.filter_by_min_size(self.min_width, self.min_height, inplace=True)
+            return det_objects.filter_by_size(self.min_width, self.min_height, inplace=True)
         return det_objects
     
-    def filter_by_min_area(self, det_objects: DetObjects) -> DetObjects:
+    def filter_by_area(self, det_objects: DetObjects) -> DetObjects:
         if self.min_area is not None:
-            return det_objects.filter_by_min_area(self.min_area, inplace=True)
+            return det_objects.filter_by_area(self.min_area, inplace=True)
         return det_objects
     
     def nms(self, det_objects: DetObjects, ratio_type: str = 'iou') -> DetObjects:
