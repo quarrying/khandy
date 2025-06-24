@@ -82,6 +82,31 @@ class TestDetObjects(unittest.TestCase):
                            det_objects[boxes.areas[:, 0] >= 2500])
         
 
+class TestConcatDetObjects(unittest.TestCase):
+    def setUp(self):
+        self.boxes1 = np.random.randn(3, 4)
+        self.boxes2 = np.random.randn(3, 4)
+        self.boxes3 = np.random.randn(3, 4)
+        self.det_objects1 = khandy.model.DetObjects(boxes=self.boxes1)
+        self.det_objects2 = khandy.model.DetObjects(boxes=self.boxes2)
+        self.det_objects3 = khandy.model.DetObjects(boxes=self.boxes3, extras=[1, 2, 5])
+    
+    def test_concat_all_fields(self):
+        result = khandy.model.concat_det_objects([self.det_objects1, self.det_objects2])
+        self.assertTrue(np.array_equal(result.boxes, np.concatenate([self.boxes1, self.boxes2])))
+    
+    def test_concat_common_fields(self):
+        result = khandy.model.concat_det_objects([self.det_objects1, self.det_objects2, self.det_objects3], only_common_fields=True)
+        self.assertTrue(np.array_equal(result.boxes, np.concatenate([self.boxes1, self.boxes2, self.boxes3])))
+    
+    def test_empty_list(self):
+        print(khandy.model.concat_det_objects([]))
+
+    def test_different_fields(self):
+        with self.assertRaises(ValueError):
+            khandy.model.concat_det_objects([self.det_objects1, self.det_objects2, self.det_objects3], only_common_fields=False)
+
+
 if __name__ == '__main__':
     unittest.main()
     

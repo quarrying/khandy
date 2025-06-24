@@ -543,10 +543,33 @@ def _concatenate_arrays_or_sequences(
         raise TypeError('Unsupported type!')
     
     
-def concat_det_objects(det_objects_list: List[DetObjects]) -> DetObjects:
+def concat_det_objects(det_objects_list: List[DetObjects], only_common_fields: bool = False) -> DetObjects:
+    """Concatenates a list of DetObjects into a single DetObjects instance.
+    Args:
+        det_objects_list (List[DetObjects]): A list of DetObjects instances to concatenate.
+        only_common_fields (bool, optional): If True, only the fields common to all DetObjects will be concatenated.
+            If False, all DetObjects must have exactly the same fields. Defaults to False.
+
+    Returns:
+        DetObjects: A new DetObjects instance with concatenated fields.
+
+    Raises:
+        ValueError: If only_common_fields is False and the DetObjects do not have identical fields.
+    """
+    if len(det_objects_list) == 0:
+        common_fields = set()
+    else:
+        all_fields = [set(det_objects.get_fields()) for det_objects in det_objects_list]
+        if only_common_fields:
+            common_fields = set.intersection(*all_fields)
+        else:
+            if not all(fields == all_fields[0] for fields in all_fields):
+                raise ValueError("All DetObjects must have the same fields when only_common_fields is False.")
+            common_fields = all_fields[0]
+    
     name_to_list = {}
     for det_objects in det_objects_list:
-        for name in det_objects.get_fields():
+        for name in common_fields:
             name_to_list.setdefault(name, []).append(getattr(det_objects, name))
     name_to_sequence = {}
     for name, values in name_to_list.items():
