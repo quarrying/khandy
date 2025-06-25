@@ -30,6 +30,10 @@ class TestEqLenSequences(unittest.TestCase):
         self._assert_equal(self.data[np.array([1, 2, 3])], khandy.EqLenSequences(
             confs=self.confs[np.array([1, 2, 3])], class_names=self.class_names[1:4]))
         
+        self._assert_equal(self.data[[1, 2, 4]], khandy.EqLenSequences(
+            confs=self.confs[[1, 2, 4]], class_names=['1', '2', '4']))
+        
+
         mask = self.data.confs > 0.5
         self._assert_equal(self.data[mask], khandy.EqLenSequences(
             confs=self.confs[mask], class_names=['6', '7', '8', '9']))

@@ -172,7 +172,7 @@ class DetObjects(khandy.EqLenSequences):
     def __getitem__(self, key: Union[int, slice]) -> Union["DetObjects", DetObjectItem]:
         item = super().__getitem__(key)
         if type(key) == int:
-            _extra_fields = {name: getattr(self, name) for name in self._fields 
+            _extra_fields = {name: getattr(item, name) for name in self._fields 
                             if name not in ['boxes', 'confs', 'classes', 'class_names']}
             return DetObjectItem(
                 x_min=item.boxes[0, 0].item(),

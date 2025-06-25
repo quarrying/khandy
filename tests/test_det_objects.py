@@ -25,9 +25,27 @@ class TestDetObjects(unittest.TestCase):
             boxes=random_boxes(0, 0, 10, 10, num_boxes=10),
             classes=np.array([0, 1, 1, 3, 3, 5, 6, 7, 8, 9]),
             confs=np.linspace(0.1, 1.0, 10),
-            class_names=['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
+            class_names=['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'],
+            extras=np.arange(10)
         )
 
+    def test_getitem(self):
+        # Test single index
+        item = self.det_objects[0]
+        self.assertEqual(item.class_index, self.det_objects.classes[0])
+        self.assertAlmostEqual(item.conf, self.det_objects.confs[0])
+        self.assertEqual(item.class_name, self.det_objects.class_names[0])
+        self.assertEqual(item.extras, [self.det_objects.extras[0]])
+        
+        # Test slice
+        sliced = self.det_objects[:3]
+        self.assertEqual(len(sliced), 3)
+        self.assertTrue(np.array_equal(sliced.boxes, self.det_objects.boxes[:3]))
+        self.assertTrue(np.array_equal(sliced.classes, self.det_objects.classes[:3]))
+        self.assertTrue(np.array_equal(sliced.confs, self.det_objects.confs[:3]))
+        self.assertEqual(sliced.class_names, self.det_objects.class_names[:3])
+        self.assertTrue(np.array_equal(sliced.extras, self.det_objects.extras[:3]))
+        
     def test_filter_by_class_names(self):
         result1 = self.det_objects.filter_by_class_names(inplace=False)
         self.assertEqual(result1.class_names, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'])
