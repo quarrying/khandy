@@ -288,7 +288,7 @@ class DetObjects(khandy.EqLenSequences):
     ) -> "DetObjects":
         assert isinstance(self.confs, np.ndarray)
         if isinstance(conf_thresh, (list, tuple, np.ndarray)):
-            conf_thresh = np.array(conf_thresh)
+            conf_thresh = np.asarray(conf_thresh)
             mask = self.confs > conf_thresh[self.classes]
         else:
             mask = self.confs > conf_thresh
@@ -337,15 +337,18 @@ class BaseDetector(ABC):
         sort_by: Optional[DetObjectSortBy] = None,
         sort_dir: Optional[DetObjectSortDir] = DetObjectSortDir.DESC
     ):
+        if num_classes is not None:
+            assert isinstance(num_classes, int) and num_classes > 0, f'num_classes must be a positive integer, got {num_classes}'
         self._num_classes = num_classes
-        self._conf_thresh = conf_thresh
-        self._iou_thresh = iou_thresh
-        self._min_width = min_width
-        self._min_height = min_height
-        self._min_area = min_area
-        self._class_names = class_names
-        self._sort_by = sort_by
-        self._sort_dir = sort_dir
+
+        self.conf_thresh = conf_thresh
+        self.iou_thresh = iou_thresh
+        self.min_width = min_width
+        self.min_height = min_height
+        self.min_area = min_area
+        self.class_names = class_names
+        self.sort_by = sort_by
+        self.sort_dir = sort_dir
 
     @property
     def num_classes(self) -> Optional[int]:
@@ -360,10 +363,13 @@ class BaseDetector(ABC):
         if value is None or isinstance(value, float):
             pass
         elif isinstance(value, (list, tuple)):
-            assert khandy.is_seq_of(value, float) and len(value) == self.num_classes
+            assert khandy.is_seq_of(value, float) and len(value) == self.num_classes, \
+                f'conf_thresh must be a list or tuple of floats with length {self.num_classes}, got {value}'
             value = np.array(value)
         elif isinstance(value, np.ndarray):
-            assert value.shape == (self.num_classes,) or value.shape == (self.num_classes, 1)
+            assert self.num_classes is not None, 'num_classes must be set before setting conf_thresh'
+            assert value.shape == (self.num_classes,) or value.shape == (self.num_classes, 1),\
+                f'conf_thresh shape must be ({self.num_classes},) or ({self.num_classes}, 1), got {value.shape}'
             value = value.flatten()
         else:
             raise TypeError(f'Unsupported type for conf_thresh, got {type(value)}')
@@ -376,7 +382,7 @@ class BaseDetector(ABC):
     @iou_thresh.setter
     def iou_thresh(self, value: Optional[float]):
         assert value is None or isinstance(value, float), f'Unsupported type for iou_thresh, got {type(value)}'
-        assert value is None or (0 < value < 1), f'iou_thresh must be in (0, 1), got {value}'
+        assert value is None or (0 <= value <= 1), f'iou_thresh must be in [0, 1], got {value}'
         self._iou_thresh = value
         
     @property
@@ -416,8 +422,10 @@ class BaseDetector(ABC):
     @class_names.setter
     def class_names(self, value: Optional[Union[List[str], Tuple[str]]]):
         if value is not None:
-            assert khandy.is_seq_of(value, str) and len(value) == self.num_classes
-            value = list(value)
+            assert self.num_classes is not None, 'num_classes must be set before setting class_names'
+            assert khandy.is_seq_of(value, str) and len(value) == self.num_classes, \
+                f'class_names must be a list or tuple of strings with length {self.num_classes}, got {value}'
+            value = list(value)  # Ensure it's a list
         self._class_names = value
         
     @property
@@ -426,6 +434,7 @@ class BaseDetector(ABC):
     
     @sort_by.setter
     def sort_by(self, value: Optional[DetObjectSortBy]):
+        assert value is None or isinstance(value, DetObjectSortBy), f'Unsupported type for sort_by, got {type(value)}'
         self._sort_by = value
         
     @property
@@ -434,30 +443,31 @@ class BaseDetector(ABC):
     
     @sort_dir.setter
     def sort_dir(self, value: Optional[DetObjectSortDir]):
+        assert value is None or isinstance(value, DetObjectSortDir), f'Unsupported type for sort_dir, got {type(value)}'
         self._sort_dir = value or DetObjectSortDir.DESC
 
     @abstractmethod
     def forward(self, image: khandy.KArray, **kwargs) -> DetObjects:
         pass
     
-    def filter_by_conf(self, det_objects: DetObjects) -> DetObjects:
+    def filter_by_conf(self, det_objects: DetObjects, inplace: bool = False) -> DetObjects:
         if self.conf_thresh is not None:
-            return det_objects.filter_by_conf(self.conf_thresh, inplace=True)
+            return det_objects.filter_by_conf(self.conf_thresh, inplace=inplace)
         return det_objects
     
-    def filter_by_size(self, det_objects: DetObjects) -> DetObjects:
+    def filter_by_size(self, det_objects: DetObjects, inplace: bool = False) -> DetObjects:
         if self.min_width is not None or self.min_height is not None:
-            return det_objects.filter_by_size(self.min_width, self.min_height, inplace=True)
+            return det_objects.filter_by_size(self.min_width, self.min_height, inplace=inplace)
         return det_objects
     
-    def filter_by_area(self, det_objects: DetObjects) -> DetObjects:
+    def filter_by_area(self, det_objects: DetObjects, inplace: bool = False) -> DetObjects:
         if self.min_area is not None:
-            return det_objects.filter_by_area(self.min_area, inplace=True)
+            return det_objects.filter_by_area(self.min_area, inplace=inplace)
         return det_objects
     
-    def nms(self, det_objects: DetObjects, ratio_type: str = 'iou') -> DetObjects:
+    def nms(self, det_objects: DetObjects, ratio_type: str = 'iou', inplace: bool = False) -> DetObjects:
         if self.iou_thresh is not None:
-            return det_objects.nms(self.iou_thresh, ratio_type, inplace=True)
+            return det_objects.nms(self.iou_thresh, ratio_type, inplace=inplace)
         return det_objects
     
     def __call__(self, image: khandy.KArray, **kwargs) -> DetObjects:
@@ -465,7 +475,7 @@ class BaseDetector(ABC):
         if self.class_names is not None:
             det_objects.class_names = [self.class_names[ind.item()] for ind in det_objects.classes]
         if self.sort_by is not None:
-            det_objects = det_objects.sort(self.sort_by, self.sort_dir, inplace=True)
+            det_objects = det_objects.sort(self.sort_by, self.sort_dir)
         return det_objects
     
 
