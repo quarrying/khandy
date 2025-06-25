@@ -2,6 +2,7 @@ import time
 import logging
 import numbers
 import datetime
+from dataclasses import dataclass
 from typing import Callable, Any, Dict, Tuple, Optional
 
 import numpy as np
@@ -103,6 +104,36 @@ class ContextTimer(object):
         self.__enter__()
 
 
+@dataclass
+class BenchmarkStats:
+    avg: float
+    std: float
+    min: float
+    max: float
+    sum: float
+    cnt: int = 0
+    
+    @property
+    def mean(self) -> float:
+        """Alias for mean"""
+        return self.avg
+    
+    @property
+    def stddev(self) -> float:
+        """Alias for std"""
+        return self.std
+
+    @property
+    def total(self) -> float:
+        """Alias for sum"""
+        return self.sum
+    
+    @property
+    def num_repeats(self) -> int:
+        """Alias for cnt"""
+        return self.cnt
+    
+    
 def benchmark(
     func: Callable[..., Any], 
     args: tuple = (),
@@ -111,7 +142,7 @@ def benchmark(
     num_repeats_burn_in: int = 2,
     display_interval: Optional[int] = None,
     display_desc: str = 'benchmark'
-) -> Tuple[Any, Dict[str, float]]:
+) -> Tuple[Any, BenchmarkStats]:
     """Run func several times to obtain the timing stats.
     
     References:
@@ -132,11 +163,13 @@ def benchmark(
             if display_interval is not None and actual_step % display_interval == 0:
                 print(f'[{display_desc}][{actual_step}/{num_repeats}] {duration:.3f}s')
     
-    summary = {
-        'mean': np.mean(duration_list).item(),
-        'stddev': np.std(duration_list).item(),
-        'max': np.max(duration_list).item(),
-        'min': np.min(duration_list).item(),
-    }
-    return output, summary
+    stats = BenchmarkStats(
+        avg=np.mean(duration_list).item(),
+        std=np.std(duration_list).item(),
+        max=np.max(duration_list).item(),
+        min=np.min(duration_list).item(),
+        sum=np.sum(duration_list).item(),
+        cnt=len(duration_list)
+    )
+    return output, stats
 

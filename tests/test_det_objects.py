@@ -1,4 +1,6 @@
 import unittest
+import warnings
+
 import khandy
 import numpy as np
 
@@ -66,6 +68,8 @@ class TestDetObjects(unittest.TestCase):
         self.assertEqual(a.class_names, b.class_names)
 
     def test_filter_misc(self):
+        warnings.filterwarnings("ignore", category=UserWarning)
+        
         num_objects = 100
         det_objects = khandy.model.DetObjects(
             boxes=random_boxes(0, 0, 100, 100, num_boxes=num_objects),
@@ -123,7 +127,7 @@ class TestConcatDetObjects(unittest.TestCase):
         self.assertTrue(np.array_equal(result.boxes, np.concatenate([self.boxes1, self.boxes2, self.boxes3])))
     
     def test_empty_list(self):
-        print(khandy.model.concat_det_objects([]))
+        self.assertTrue(len(khandy.model.concat_det_objects([])) == 0)
 
     def test_different_fields(self):
         with self.assertRaises(ValueError):
