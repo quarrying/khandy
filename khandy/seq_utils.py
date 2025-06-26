@@ -3,7 +3,7 @@ import itertools
 import numbers
 import random
 import warnings
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Union, Tuple
 
 import numpy as np
 
@@ -207,24 +207,38 @@ def to_4tuple(x):
     return to_ntuple(x, 4)
 
 
-def is_seq_of(seq, item_type, seq_type=None) -> bool:
-    """Check whether it is a sequence of some type.
+def is_seq_of(
+    seq: Any, 
+    item_type: Union[type, Tuple[type, ...]], 
+    seq_type: Optional[Union[type, Tuple[type, ...]]] = None
+) -> bool:
+    """Checks if the provided sequence is of a specified item type and optionally of a specified sequence type.
 
     Args:
-        seq (Sequence): The sequence to be checked.
-        item_type (type): Expected type of sequence items.
-        seq_type (type, optional): Expected sequence type.
+        seq (Any): The sequence to check.
+        item_type (Union[type, Tuple[type, ...]]): The expected type(s) of items in the sequence.
+        seq_type (Optional[Union[type, Tuple[type, ...]]]): The expected type(s) of the sequence itself. 
+            If None, defaults to collections.abc.Sequence.
 
     Returns:
-        bool: Whether the sequence is valid.
-
+        bool: True if the sequence is of the specified item type and sequence type, False otherwise.
+    
+    Raises:
+        AssertionError: If seq_type is provided and is not a subclass of collections.abc.Sequence.
+        
     References:
         mmcv
     """
     if seq_type is None:
         exp_seq_type = collections.abc.Sequence
     else:
-        assert issubclass(seq_type, collections.abc.Sequence)
+        if isinstance(seq_type, tuple):
+            for item in seq_type:
+                assert issubclass(item, collections.abc.Sequence), \
+                    f'{item} is not a subclass of collections.abc.Sequence'
+        else:
+            assert issubclass(seq_type, collections.abc.Sequence), \
+                f'{seq_type} is not a subclass of collections.abc.Sequence'
         exp_seq_type = seq_type
     if not isinstance(seq, exp_seq_type):
         return False
