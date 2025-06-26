@@ -25,19 +25,19 @@ class TestDetObjectItem(unittest.TestCase):
             
     def test_post_init(self):
         with self.assertRaises(AssertionError):
-            self.item = khandy.model.DetObjectItem(
+            khandy.model.DetObjectItem(
                 x_min=10.0, y_min=20.0, x_max=30.0, y_max=40.0,
                 conf=0.95, class_index=1, class_name="person",
                 _extra_fields={"class_name": ["red"]}
             )
         with self.assertRaises(AssertionError):
-            self.item = khandy.model.DetObjectItem(
+            khandy.model.DetObjectItem(
                 x_min=10.0, y_min=20.0, x_max=30.0, y_max=40.0,
                 conf=0.95, class_index=1, class_name="person",
                 _extra_fields={"colors": "red"}
             )
         with self.assertRaises(AssertionError):
-            self.item = khandy.model.DetObjectItem(
+            khandy.model.DetObjectItem(
                 x_min=10.0, y_min=20.0, x_max=30.0, y_max=40.0,
                 conf=0.95, class_index=1, class_name="person",
                 _extra_fields={"colors": ["red", 'green']}
@@ -62,11 +62,20 @@ class TestDetObjectItem(unittest.TestCase):
         self.assertEqual(len(det_objects), 1)
         self.assertIsInstance(det_objects[0], khandy.model.DetObjectItem)
 
-    def test_area_property(self):
-        self.assertAlmostEqual(self.item.area, 400.0)
+    def test_properties(self):
+        item = khandy.model.DetObjectItem(
+            x_min=10.0, y_min=10.0, x_max=30.0, y_max=40.0,
+            conf=0.95, class_index=1, class_name="person"
+        )
+        self.assertAlmostEqual(item.area, 600.0)
+        self.assertAlmostEqual(item.width, 20.0)
+        self.assertAlmostEqual(item.height, 30.0)
+        self.assertAlmostEqual(item.x_center, 20.0)
+        self.assertAlmostEqual(item.y_center, 25.0)
         with self.assertRaises(AttributeError):
             # AttributeError: can't set attribute
-            self.item.area = 100.0
+            item.area = 100.0
+
 
 
 if __name__ == '__main__':

@@ -52,6 +52,22 @@ class DetObjectItem:
             super().__setattr__(name, value)
             
     @property
+    def x_center(self) -> float:
+        return (self.x_min + self.x_max) / 2.0
+    
+    @property
+    def y_center(self) -> float:
+        return (self.y_min + self.y_max) / 2.0
+    
+    @property
+    def width(self) -> float:
+        return self.x_max - self.x_min
+    
+    @property
+    def height(self) -> float:
+        return self.y_max - self.y_min
+
+    @property
     def area(self) -> float:
         return (self.x_max - self.x_min) * (self.y_max - self.y_min)
 

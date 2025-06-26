@@ -38,7 +38,27 @@ class DetectIrObject:
         if self.y_min > self.y_max:
             warnings.warn("Warning: y_min is greater than y_max, swapping values.")
             self.y_min, self.y_max = self.y_max, self.y_min
+            
+    @property
+    def x_center(self) -> float:
+        """Calculate the x center of the bounding box."""
+        return (self.x_min + self.x_max) / 2.0
     
+    @property
+    def y_center(self) -> float:
+        """Calculate the y center of the bounding box."""
+        return (self.y_min + self.y_max) / 2.0
+    
+    @property
+    def width(self) -> float:
+        """Calculate the width of the bounding box."""
+        return self.x_max - self.x_min
+    
+    @property
+    def height(self) -> float:
+        """Calculate the height of the bounding box."""
+        return self.y_max - self.y_min
+
     @property
     def area(self) -> float:
         """Calculate the area of the bounding box."""

@@ -56,7 +56,15 @@ class TestDetectIrObject(unittest.TestCase):
         self.assertEqual(obj.y_min, 2.0)
         self.assertEqual(obj.y_max, 4.0)
 
- 
+    def test_properties(self):
+        obj =  khandy.label.DetectIrObject(label="test", x_min=1.0, y_min=1.0, x_max=3.0, y_max=4.0)
+        self.assertAlmostEqual(obj.width, 2.0)
+        self.assertAlmostEqual(obj.height, 3.0)
+        self.assertAlmostEqual(obj.x_center, 2.0)
+        self.assertAlmostEqual(obj.y_center, 2.5)
+        self.assertAlmostEqual(obj.area, 6.0)
+
+
 if __name__ == '__main__':
     unittest.main()
     
