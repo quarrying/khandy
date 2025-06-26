@@ -23,11 +23,60 @@ class TestBaseDetector(unittest.TestCase):
         self.image = np.zeros((20, 20, 3), dtype=np.uint8)
 
     def test_initialization(self):
-        with self.assertRaises(AssertionError):
+        # test num_classes initialization
+        with self.assertRaisesRegex(AssertionError, 'num_classes must be a positive integer*'):
+            DummyDetector(num_classes=0.5)
+        with self.assertRaisesRegex(AssertionError, 'num_classes must be a positive integer*'):
             DummyDetector(num_classes=0)
-        with self.assertRaises(AssertionError):
+        
+        # test class_names initialization
+        DummyDetector(num_classes=2, class_names=['a', 'b'])
+        DummyDetector(num_classes=2, class_names=('a', 'b'))
+        with self.assertRaises(TypeError):
+            DummyDetector(num_classes=2, class_names='a')
+        with self.assertRaisesRegex(AssertionError, 'num_classes must be set before*'):
+            DummyDetector(num_classes=None, class_names=['a', 'b'])
+        with self.assertRaisesRegex(AssertionError, 'class_names must be a list or tuple of strings*'):
+            DummyDetector(num_classes=2, class_names=['a', 0])
+        with self.assertRaisesRegex(AssertionError, 'class_names must have length*'):
             DummyDetector(num_classes=2, class_names=['a'])
 
+        # test conf_thresh initialization
+        DummyDetector(num_classes=2, conf_thresh=0.5)
+        DummyDetector(num_classes=2, conf_thresh=[0.5, 0.5])
+        DummyDetector(num_classes=2, conf_thresh=(0.5, 0.5))
+        DummyDetector(num_classes=2, conf_thresh=np.array([0.5, 0.5]))
+        DummyDetector(num_classes=2, conf_thresh=np.array([[0.5], [0.5]]))
+        with self.assertRaises(TypeError):
+            DummyDetector(num_classes=2, conf_thresh='0.5')
+        with self.assertRaisesRegex(AssertionError, 'num_classes must be set before*'):
+            DummyDetector(num_classes=None, conf_thresh=[0.5, 0.5])
+        with self.assertRaisesRegex(AssertionError, 'conf_thresh must be a list or tuple of floats*'):
+            DummyDetector(num_classes=2, conf_thresh=[0.5, '0.5'])
+        with self.assertRaisesRegex(AssertionError, 'conf_thresh must have length*'):
+            DummyDetector(num_classes=2, conf_thresh=[0.5])
+            
+        with self.assertRaisesRegex(AssertionError, 'num_classes must be set before*'):
+            DummyDetector(num_classes=None, conf_thresh=np.array([0.5, 0.5]))
+        with self.assertRaisesRegex(AssertionError, 'conf_thresh must be a numpy array of floats*'):
+            DummyDetector(num_classes=2, conf_thresh=np.array([True, False]))
+        with self.assertRaisesRegex(AssertionError, 'conf_thresh shape must be*'):
+            DummyDetector(num_classes=2, conf_thresh=np.array([0.5, 0.5, 0.5]))
+
+        with self.assertRaisesRegex(AssertionError, 'conf_thresh must be >= 0*'):
+            DummyDetector(num_classes=2, conf_thresh=-0.5)
+        with self.assertRaisesRegex(AssertionError, 'conf_thresh must be >= 0*'):
+            DummyDetector(num_classes=2, conf_thresh=[-0.5, 0.5])
+        with self.assertRaisesRegex(AssertionError, 'conf_thresh must be >= 0*'):
+            DummyDetector(num_classes=2, conf_thresh=np.array([-0.5, 0.5]))
+            
+        with self.assertRaisesRegex(AssertionError, 'conf_thresh must be <= 1*'):
+            DummyDetector(num_classes=2, conf_thresh=1.5)
+        with self.assertRaisesRegex(AssertionError, 'conf_thresh must be <= 1*'):
+            DummyDetector(num_classes=2, conf_thresh=[1.5, 0.5])
+        with self.assertRaisesRegex(AssertionError, 'conf_thresh must be <= 1*'):
+            DummyDetector(num_classes=2, conf_thresh=np.array([1.5, 0.5]))
+            
     def test_property_setters(self):
         self.detector.conf_thresh = 0.5
         self.assertEqual(self.detector.conf_thresh, 0.5)

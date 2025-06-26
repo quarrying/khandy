@@ -310,7 +310,7 @@ class DetObjects(khandy.EqLenSequences):
         keep = khandy.non_max_suppression(self.boxes, self.confs, iou_thresh, self.classes, ratio_type)
         return self.filter(keep, inplace)
 
-    def sort(self, sort_by: DetObjectSortBy, direction:  DetObjectSortDir = DetObjectSortDir.DESC) -> "DetObjects":
+    def sort(self, sort_by: DetObjectSortBy, direction: DetObjectSortDir = DetObjectSortDir.DESC) -> "DetObjects":
         assert isinstance(self.confs, np.ndarray)
         if sort_by == DetObjectSortBy.BY_CONF:
             sorted_inds = np.argsort(self.confs, axis=0)
@@ -363,16 +363,23 @@ class BaseDetector(ABC):
         if value is None or isinstance(value, float):
             pass
         elif isinstance(value, (list, tuple)):
-            assert khandy.is_seq_of(value, float) and len(value) == self.num_classes, \
-                f'conf_thresh must be a list or tuple of floats with length {self.num_classes}, got {value}'
+            assert self.num_classes is not None, 'num_classes must be set before setting conf_thresh'
+            assert khandy.is_seq_of(value, float), f'conf_thresh must be a list or tuple of floats, got {type(value)}'
+            assert len(value) == self.num_classes, f'conf_thresh must have length {self.num_classes}, got {len(value)}'
             value = np.array(value)
         elif isinstance(value, np.ndarray):
             assert self.num_classes is not None, 'num_classes must be set before setting conf_thresh'
+            assert value.dtype in [np.float32, np.float64], f'conf_thresh must be a numpy array of floats, got {value.dtype}'
             assert value.shape == (self.num_classes,) or value.shape == (self.num_classes, 1),\
                 f'conf_thresh shape must be ({self.num_classes},) or ({self.num_classes}, 1), got {value.shape}'
             value = value.flatten()
         else:
             raise TypeError(f'Unsupported type for conf_thresh, got {type(value)}')
+        
+        if value is not None:
+            assert np.min(value) >= 0, f'conf_thresh must be >= 0, got {np.min(value)}'
+            assert np.max(value) <= 1, f'conf_thresh must be <= 1, got {np.max(value)}'
+            
         self._conf_thresh = value
     
     @property
@@ -421,11 +428,15 @@ class BaseDetector(ABC):
     
     @class_names.setter
     def class_names(self, value: Optional[Union[List[str], Tuple[str]]]):
-        if value is not None:
+        if value is None:
+            pass
+        elif isinstance(value, (list, tuple)):
             assert self.num_classes is not None, 'num_classes must be set before setting class_names'
-            assert khandy.is_seq_of(value, str) and len(value) == self.num_classes, \
-                f'class_names must be a list or tuple of strings with length {self.num_classes}, got {value}'
-            value = list(value)  # Ensure it's a list
+            assert khandy.is_seq_of(value, str), f'class_names must be a list or tuple of strings, got {type(value)}'
+            assert len(value) == self.num_classes, f'class_names must have length {self.num_classes}, got {len(value)}'
+            value = list(value)
+        else:
+            raise TypeError(f'Unsupported type for class_names, got {type(value)}')
         self._class_names = value
         
     @property
