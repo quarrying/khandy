@@ -50,7 +50,7 @@ class DetObjectItem:
             self._extra_fields[name] = value
         else:
             super().__setattr__(name, value)
-            
+
     @property
     def x_center(self) -> float:
         return (self.x_min + self.x_max) / 2.0
@@ -655,18 +655,28 @@ def detect_in_det_objects(
     detector: BaseDetector, 
     image: np.ndarray, 
     det_objects: DetObjects, 
-    min_area: Optional[Union[int, float]] = None,
+    min_width: Optional[Union[int, float]] = None,
+    min_height: Optional[Union[int, float]] = None,
     **detector_kwargs
 ) -> DetObjects:
     dst_det_objects_list = []
     for det_object in det_objects:
-        if min_area is not None and det_object.area < min_area:
+        if min_width is not None and det_object.width < min_width:
             continue
-        
+        if min_height is not None and det_object.height < min_height:
+            continue
+
         x_min = round(det_object.x_min)
         y_min = round(det_object.y_min)
         x_max = round(det_object.x_max)
         y_max = round(det_object.y_max)
+        if x_min >= x_max or y_min >= y_max:
+            warnings.warn(
+                f"Skipping detection in object {det_object.class_name} with invalid coordinates: "
+                f"({x_min}, {y_min}, {x_max}, {y_max})",
+                UserWarning
+            )
+            continue
         cropped = khandy.crop_image(image, x_min, y_min, x_max, y_max)
         objects_in_object = detector(cropped, **detector_kwargs)
         objects_in_object.boxes[:, 0] += det_object.x_min
