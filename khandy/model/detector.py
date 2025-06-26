@@ -299,7 +299,7 @@ class DetObjects(khandy.EqLenSequences):
     
     def filter_by_conf(
         self, 
-        conf_thresh: Optional[Union[float, List[float], Tuple[float], np.ndarray]], 
+        conf_thresh: Optional[Union[float, List[float], Tuple[float, ...], np.ndarray]], 
         inplace: bool = False
     ) -> "DetObjects":
         assert isinstance(self.confs, np.ndarray)
@@ -344,12 +344,12 @@ class BaseDetector(ABC):
     def __init__(
         self, 
         num_classes: Optional[int] = None,
-        conf_thresh: Optional[Union[float, List[float], Tuple[float], np.ndarray]] = None,
+        conf_thresh: Optional[Union[float, List[float], Tuple[float, ...], np.ndarray]] = None,
         iou_thresh: Optional[float] = None,
         min_width: Optional[Union[int, float]] = None,
         min_height: Optional[Union[int, float]] = None,
         min_area: Optional[Union[int, float]] = None,
-        class_names: Optional[Union[List[str], Tuple[str]]] = None,
+        class_names: Optional[Union[List[str], Tuple[str, ...]]] = None,
         sort_by: Optional[DetObjectSortBy] = None,
         sort_dir: Optional[DetObjectSortDir] = DetObjectSortDir.DESC
     ):
@@ -375,7 +375,7 @@ class BaseDetector(ABC):
         return self._conf_thresh
     
     @conf_thresh.setter
-    def conf_thresh(self, value: Optional[Union[float, List[float], Tuple[float], np.ndarray]]):
+    def conf_thresh(self, value: Optional[Union[float, List[float], Tuple[float, ...], np.ndarray]]):
         if value is None or isinstance(value, float):
             pass
         elif isinstance(value, (list, tuple)):
@@ -443,7 +443,7 @@ class BaseDetector(ABC):
         return self._class_names
     
     @class_names.setter
-    def class_names(self, value: Optional[Union[List[str], Tuple[str]]]):
+    def class_names(self, value: Optional[Union[List[str], Tuple[str, ...]]]):
         if value is None:
             pass
         elif isinstance(value, (list, tuple)):
