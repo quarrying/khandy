@@ -15,8 +15,9 @@ interp_codes = {
     'lanczos': cv2.INTER_LANCZOS4
 }
 
+InterpolationType = Literal['nearest', 'bilinear', 'bicubic', 'area', 'lanczos']
 
-def scale_image(image, x_scale, y_scale, return_scale=False, interpolation='bilinear'):
+def scale_image(image, x_scale, y_scale, return_scale=False, interpolation: InterpolationType = 'bilinear'):
     """Scale image.
     
     Reference:
@@ -37,7 +38,7 @@ def scale_image(image, x_scale, y_scale, return_scale=False, interpolation='bili
         return resized_image, x_scale, y_scale
 
 
-def resize_image(image, dst_width, dst_height, return_scale=False, interpolation='bilinear'):
+def resize_image(image, dst_width, dst_height, return_scale=False, interpolation: InterpolationType = 'bilinear'):
     """Resize image to a given size.
 
     Args:
@@ -66,7 +67,7 @@ def resize_image(image, dst_width, dst_height, return_scale=False, interpolation
         return resized_image, x_scale, y_scale
     
     
-def resize_image_short(image, dst_size, return_scale=False, interpolation='bilinear'):
+def resize_image_short(image, dst_size, return_scale=False, interpolation: InterpolationType = 'bilinear'):
     """Resize an image so that the length of shorter side is dst_size while 
     preserving the original aspect ratio.
     
@@ -89,7 +90,7 @@ def resize_image_short(image, dst_size, return_scale=False, interpolation='bilin
         return resized_image, x_scale, y_scale
     
     
-def resize_image_long(image, dst_size, return_scale=False, interpolation='bilinear'):
+def resize_image_long(image, dst_size, return_scale=False, interpolation: InterpolationType = 'bilinear'):
     """Resize an image so that the length of longer side is dst_size while 
     preserving the original aspect ratio.
     
@@ -112,7 +113,7 @@ def resize_image_long(image, dst_size, return_scale=False, interpolation='biline
         return resized_image, x_scale, y_scale
         
         
-def resize_image_to_range(image, min_length, max_length, return_scale=False, interpolation='bilinear'):
+def resize_image_to_range(image, min_length, max_length, return_scale=False, interpolation: InterpolationType = 'bilinear'):
     """Resizes an image so its dimensions are within the provided value.
     
     Rescale the shortest side of the image up to `min_length` pixels 
@@ -173,8 +174,14 @@ LetterBoxLoc = Literal['top left', 'top center', 'top right',
                        'bottom left', 'bottom center', 'bottom right']
 
 
-def letterbox_image(image, dst_width, dst_height, border_value=0, interpolation='bilinear', 
-                    loc: LetterBoxLoc = 'center') -> Tuple[np.ndarray, LetterBoxDetail]:
+def letterbox_image(
+    image,
+    dst_width,
+    dst_height,
+    border_value=0, 
+    interpolation: InterpolationType = 'bilinear', 
+    loc: LetterBoxLoc = 'center'
+) -> Tuple[np.ndarray, LetterBoxDetail]:
     """Resize an image while preserving its aspect ratio and pad it to match the desired dimensions.
   
     Args:  
@@ -233,7 +240,7 @@ def letterbox_image(image, dst_width, dst_height, border_value=0, interpolation=
         
 
 def letterbox_resize_image(image, dst_width, dst_height, border_value=0,
-                           return_scale=False, interpolation='bilinear'):
+                           return_scale=False, interpolation: InterpolationType = 'bilinear'):
     warnings.warn('letterbox_resize_image will be deprecated, use letterbox_image instead!')
     dst_image, lb_detail = letterbox_image(image, dst_width, dst_height, border_value, interpolation)
     if not return_scale:
