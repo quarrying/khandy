@@ -276,6 +276,24 @@ class DetObjects(khandy.EqLenSequences):
         )
         return self.filter_by_area(min_area, inplace)
 
+    def filter_by_ar(
+        self,
+        min_ar: Optional[Union[int, float]] = None, 
+        max_ar: Optional[Union[int, float]] = None, 
+        inplace: bool = False
+    )-> "DetObjects":
+        widths = self.boxes[:, 2] - self.boxes[:, 0]
+        heights = self.boxes[:, 3] - self.boxes[:, 1]
+        mask = heights > 0
+        ar = np.zeros_like(widths, dtype=float)
+        ar[mask] = widths[mask] / heights[mask]
+        if min_ar is not None:
+            mask &= (ar >= min_ar)
+        if max_ar is not None:
+            mask &= (ar <= max_ar)
+        keep = np.nonzero(mask)[0]
+        return self.filter(keep, inplace)
+
     def filter_by_size(
         self, 
         min_width: Optional[Union[int, float]] = None, 

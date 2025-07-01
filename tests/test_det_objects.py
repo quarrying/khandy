@@ -126,6 +126,73 @@ class TestDetObjects(unittest.TestCase):
         self.assertEqual(len(det_objects), 1)
         self.assertAlmostEqual(det_objects.confs[0], 0.9)
         
+    def test_filter_by_ar(self):
+        boxes = np.array([
+            [0, 0, 10, 10],   # ar = 1.0
+            [0, 0, 20, 10],   # ar = 2.0
+            [0, 0, 10, 20],   # ar = 0.5
+            [0, 0, 0, 10],    # ar = 0.0 (width=0)
+            [0, 0, 10, 0],    # ar = inf (height=0, will be filtered out)
+        ])
+        det_objects = khandy.model.DetObjects(
+            boxes=boxes,
+            confs=np.ones(5),
+            classes=np.arange(5),
+            class_names=[str(i) for i in range(5)]
+        )
+        filtered = det_objects.filter_by_ar(min_ar=0.8, max_ar=1.5)
+        self.assertEqual(len(filtered), 1)
+        self.assertTrue(np.allclose(filtered.boxes, [[0, 0, 10, 10]]))
+
+        filtered = det_objects.filter_by_ar(min_ar=0.5, max_ar=2.0)
+        self.assertEqual(len(filtered), 3)
+        self.assertTrue(np.allclose(filtered.boxes, boxes[[0,1,2]]))
+
+        det_objects2 = khandy.model.DetObjects(
+            boxes=boxes,
+            confs=np.ones(5),
+            classes=np.arange(5),
+            class_names=[str(i) for i in range(5)]
+        )
+        det_objects2.filter_by_ar(min_ar=1.8, inplace=True)
+        self.assertEqual(len(det_objects2), 1)
+        self.assertTrue(np.allclose(det_objects2.boxes, [[0, 0, 20, 10]]))
+
+    def test_filter_with_empty_det_objects(self):
+        def func(item: khandy.model.DetObjectItem) -> bool:
+            return item.conf > 0.85
+
+        det_objects = khandy.model.DetObjects()
+        det_objects2 = det_objects.filter_by_conf(conf_thresh=0.5)
+        self.assertTrue(len(det_objects2) == 0)
+        det_objects2 = det_objects.filter_by_area(min_area=10)
+        self.assertTrue(len(det_objects2) == 0)
+        det_objects2 = det_objects.filter_by_size(min_width=10, min_height=10)
+        self.assertTrue(len(det_objects2) == 0)
+        det_objects2 = det_objects.filter_by_ar(min_ar=1.8)
+        self.assertEqual(len(det_objects2), 0)
+        det_objects2 = det_objects.filter_by_class_names(ignored=['car'])
+        self.assertTrue(len(det_objects2) == 0)
+        det_objects2 = det_objects.filter_by_class_indices(ignored=[0])
+        self.assertTrue(len(det_objects2) == 0)
+        det_objects2 = det_objects.filter_by_func(func)
+        self.assertTrue(len(det_objects2) == 0)
+
+        det_objects2 = det_objects.filter_by_conf(conf_thresh=0.5, inplace=True)
+        self.assertTrue(len(det_objects2) == 0)
+        det_objects2 = det_objects.filter_by_area(min_area=10, inplace=True)
+        self.assertTrue(len(det_objects2) == 0)
+        det_objects2 = det_objects.filter_by_size(min_width=10, min_height=10, inplace=True)
+        self.assertTrue(len(det_objects2) == 0)
+        det_objects2 = det_objects.filter_by_ar(min_ar=1.8, inplace=True)
+        self.assertEqual(len(det_objects2), 0)
+        det_objects2 = det_objects.filter_by_class_names(ignored=['car'], inplace=True)
+        self.assertTrue(len(det_objects2) == 0)
+        det_objects2 = det_objects.filter_by_class_indices(ignored=[0], inplace=True)
+        self.assertTrue(len(det_objects2) == 0)
+        det_objects2 = det_objects.filter_by_func(func, inplace=True)
+        self.assertTrue(len(det_objects2) == 0)
+
 
 class TestConcatDetObjects(unittest.TestCase):
     def setUp(self):
@@ -146,6 +213,8 @@ class TestConcatDetObjects(unittest.TestCase):
     
     def test_empty_list(self):
         self.assertTrue(len(khandy.model.concat_det_objects([])) == 0)
+        self.assertTrue(len(khandy.model.concat_det_objects([khandy.model.DetObjects()])) == 0)
+        self.assertTrue(len(khandy.model.concat_det_objects([khandy.model.DetObjects(), khandy.model.DetObjects()])) == 0)
 
     def test_different_fields(self):
         with self.assertRaises(ValueError):
