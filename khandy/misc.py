@@ -476,6 +476,18 @@ def get_sw_slices(length: int, window_size: int, stride: Optional[int] = None,
     return slices
 
 
+@dataclass
+class MapExcuteInfo:
+    item: Any 
+    ret: Any
+    pid: int
+    exception: BaseException
+    
+    
+class MapReturnPlaceholder:
+    pass
+
+
 class QueuedTaskExecutor:
     def __init__(
         self, 
@@ -488,10 +500,11 @@ class QueuedTaskExecutor:
     def __call__(self, item, *args, **kwargs):
         try:
             ret = self.original_func(item, *args, **kwargs)
+            map_item_status = MapExcuteInfo(item, ret, os.getpid(), None)
         except Exception as e:
-            self._queue.put((item, None, os.getpid()))
-            raise e
-        self._queue.put((item, ret, os.getpid()))
+            ret = MapReturnPlaceholder()
+            map_item_status = MapExcuteInfo(item, ret, os.getpid(), e)
+        self._queue.put(map_item_status)
         return ret
     
 
@@ -499,9 +512,9 @@ def default_error_callback(e):
     print(f'Error: {e}')
 
 
-def default_progress_callback(total: int, current: int, pid: int, item: Any, ret: Any):
-    print(f'{datetime.now()} [{current}/{total}]<{pid}> {item}')
-    
+def default_progress_callback(total: int, current: int, map_item_status: MapExcuteInfo):
+    print(f'{datetime.now()} [{current}/{total}]<{map_item_status.pid}> {map_item_status.item}')
+
     
 def map_async_ex(
     func: Callable, 
@@ -510,9 +523,9 @@ def map_async_ex(
     extra_kwargs: Dict[str, Any] = {}, 
     chunksize: Optional[int] = None, 
     num_workers: Optional[int] = None,
-    callback=None,
+    callback: Optional[Callable] = None,
     error_callback: Optional[Callable[[BaseException], object]] = default_error_callback,
-    progress_callback: Optional[Callable[[int, int, int, Any, Any], None]] = default_progress_callback
+    progress_callback: Optional[Callable[[int, int, MapExcuteInfo], None]] = default_progress_callback
 )-> multiprocessing.pool.MapResult:
     manager = multiprocessing.Manager()
     q = manager.Queue()
@@ -521,23 +534,29 @@ def map_async_ex(
     
     if num_workers is None:
         num_workers = os.cpu_count()
+    if not hasattr(iterable, '__len__'):
+        iterable = list(iterable)
     if chunksize is None:
         chunksize = (len(iterable) + num_workers - 1) // num_workers
-    pool = multiprocessing.pool.Pool(processes=num_workers)
-    async_results = pool.map_async(partial_func, iterable, chunksize=chunksize, 
-                                   callback=callback, error_callback=error_callback)
-    pool.close()
 
-    num_completed = 0
-    while True:
-        try:
-            if num_completed == len(iterable):
-                break
-            item, ret, pid = q.get_nowait()
-            num_completed += 1
-            if progress_callback is not None:
-                progress_callback(len(iterable), num_completed, pid, item, ret)
-        except queue.Empty:
-            pass
-    pool.join()
-    return async_results
+    with multiprocessing.pool.Pool(processes=num_workers) as pool:
+        async_results = pool.map_async(partial_func, iterable, chunksize=chunksize, callback=callback)
+        pool.close()
+        
+        num_completed = 0
+        while num_completed < len(iterable):
+            try:
+                # TODO: use q.get(timeout=xxx)
+                map_item_status = q.get_nowait()
+                num_completed += 1
+                if progress_callback is not None:
+                    progress_callback(len(iterable), num_completed, map_item_status)
+                if map_item_status.exception is not None:
+                    if error_callback is not None:
+                        error_callback(map_item_status.exception)
+                    else:
+                        raise map_item_status.exception
+            except queue.Empty:
+                pass
+        pool.join()
+        return async_results
