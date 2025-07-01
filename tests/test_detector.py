@@ -116,6 +116,25 @@ class TestBaseDetector(unittest.TestCase):
         det_objects = self.detector(self.image)
         self.assertTrue(np.all(np.diff(det_objects.confs) >= 0))
 
+    def test_detect_in_det_objects(self):
+        # 构造一个包含两个目标的 DetObjects
+        det_objects = khandy.model.DetObjects(
+            boxes=np.array([[1, 2, 11, 12], [5, 5, 15, 15]]),
+            confs=np.array([0.9, 0.8]),
+            classes=np.array([0, 1]),
+            class_names=['a', 'b']
+        )
+        image = np.ones((20, 20, 3), dtype=np.uint8)
+        detector = DummyDetector(num_classes=2)
+
+        result = khandy.model.detect_in_det_objects(detector, image, det_objects)
+        self.assertIsInstance(result, khandy.model.DetObjects)
+        self.assertEqual(len(result), 4)
+        self.assertTrue(np.all(result.boxes[:2, 0] >= 1))
+        self.assertTrue(np.all(result.boxes[:2, 1] >= 2))
+        self.assertTrue(np.all(result.boxes[2:, 0] >= 5))
+        self.assertTrue(np.all(result.boxes[2:, 1] >= 5))
+
 
 if __name__ == '__main__':
     unittest.main()

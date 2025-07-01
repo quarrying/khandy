@@ -1,4 +1,5 @@
 import copy
+import math
 import itertools
 import warnings
 from abc import ABC, abstractmethod
@@ -661,15 +662,16 @@ def detect_in_det_objects(
 ) -> DetObjects:
     dst_det_objects_list = []
     for det_object in det_objects:
+        # TODO: remove min_width and min_height, can use DetObjects.filter_by_size.
         if min_width is not None and det_object.width < min_width:
             continue
         if min_height is not None and det_object.height < min_height:
             continue
 
-        x_min = round(det_object.x_min)
-        y_min = round(det_object.y_min)
-        x_max = round(det_object.x_max)
-        y_max = round(det_object.y_max)
+        x_min = math.floor(det_object.x_min)
+        y_min = math.floor(det_object.y_min)
+        x_max = math.ceil(det_object.x_max)
+        y_max = math.ceil(det_object.y_max)
         if x_min >= x_max or y_min >= y_max:
             warnings.warn(
                 f"Skipping detection in object {det_object.class_name} with invalid coordinates: "
@@ -679,10 +681,10 @@ def detect_in_det_objects(
             continue
         cropped = khandy.crop_image(image, x_min, y_min, x_max, y_max)
         objects_in_object = detector(cropped, **detector_kwargs)
-        objects_in_object.boxes[:, 0] += det_object.x_min
-        objects_in_object.boxes[:, 1] += det_object.y_min
-        objects_in_object.boxes[:, 2] += det_object.x_min
-        objects_in_object.boxes[:, 3] += det_object.y_min
+        objects_in_object.boxes[:, 0] += x_min
+        objects_in_object.boxes[:, 1] += y_min
+        objects_in_object.boxes[:, 2] += x_min
+        objects_in_object.boxes[:, 3] += y_min
         dst_det_objects_list.append(objects_in_object)
     return concat_det_objects(dst_det_objects_list)
 
