@@ -500,6 +500,10 @@ class BaseDetector(ABC):
     
     def __call__(self, image: khandy.KArray, **kwargs) -> DetObjects:
         det_objects = self.forward(image, **kwargs)
+        if self.num_classes is not None:
+            max_class_index = np.max(det_objects.classes)
+            assert max_class_index < self.num_classes, \
+                f'max of det_objects.classes must be < self.num_classes ({self.num_classes}), got {max_class_index}'
         if self.class_names is not None:
             det_objects.class_names = [self.class_names[ind.item()] for ind in det_objects.classes]
         if self.sort_by is not None:

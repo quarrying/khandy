@@ -135,6 +135,11 @@ class TestBaseDetector(unittest.TestCase):
         self.assertTrue(np.all(result.boxes[2:, 0] >= 5))
         self.assertTrue(np.all(result.boxes[2:, 1] >= 5))
 
+    def test_max_class_index(self):
+        detector = DummyDetector(num_classes=1)
+        with self.assertRaisesRegex(AssertionError, 'max of det_objects.classes must be*'):
+            detector(self.image)
+
 
 if __name__ == '__main__':
     unittest.main()
