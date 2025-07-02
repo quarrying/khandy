@@ -150,13 +150,13 @@ def benchmark(
     """
     assert isinstance(num_repeats, int) and num_repeats > 0
     assert isinstance(num_repeats_burn_in, int) and num_repeats_burn_in >= 0
-    assert display_interval is None or isinstance(display_interval, int)
+    assert display_interval is None or (isinstance(display_interval, int) and display_interval > 0)
 
     duration_list = []
     for i in range(num_repeats + num_repeats_burn_in):
-        start_time = time.time()
+        start_time = time.perf_counter()
         output = func(*args, **kwargs)
-        duration = time.time() - start_time
+        duration = time.perf_counter() - start_time
         if i >= num_repeats_burn_in:
             duration_list.append(duration)
             actual_step = i - num_repeats_burn_in + 1
