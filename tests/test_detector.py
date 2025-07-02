@@ -8,7 +8,6 @@ class DummyDetector(khandy.model.BaseDetector):
         super().__init__(**kwargs)
 
     def forward(self, image, **kwargs):
-        # 返回一个简单的DetObjects实例
         return khandy.model.DetObjects(
             boxes=np.array([[0, 0, 10, 10], [5, 5, 15, 15]]),
             confs=np.array([0.8, 0.6]),
@@ -17,6 +16,13 @@ class DummyDetector(khandy.model.BaseDetector):
         )
 
 
+class EmptyDetector(khandy.model.BaseDetector):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def forward(self, image, **kwargs):
+        return khandy.model.DetObjects()
+            
 class TestBaseDetector(unittest.TestCase):
     def setUp(self):
         self.detector = DummyDetector(num_classes=2)
@@ -140,6 +146,12 @@ class TestBaseDetector(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, 'max of det_objects.classes must be*'):
             detector(self.image)
 
+        detector = DummyDetector(num_classes=2)
+        self.assertTrue(len(detector(self.image)) ==2)
+
+        detector = EmptyDetector(num_classes=1)
+        self.assertTrue(len(detector(self.image)) == 0)
+        
 
 if __name__ == '__main__':
     unittest.main()
