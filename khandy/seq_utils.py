@@ -3,7 +3,7 @@ import itertools
 import numbers
 import random
 import warnings
-from typing import Any, List, Optional, Union, Tuple
+from typing import Any, List, Optional, Union, Tuple, Iterable
 
 import numpy as np
 
@@ -87,19 +87,22 @@ def transpose_table(table):
     return tuple(zip(*table))
 
 
-def concat_list(in_list):
-    """Concatenate a list of list into a single list.
+def concat_list(input_data: List[Iterable[Any]]) -> List[Any]:
+    """Concatenate a list of iterables into a single flat list.
 
     Args:
-        in_list (list): The list of list to be merged.
+        input_data (List[Iterable[Any]]): A list containing iterable objects to be concatenated.
 
     Returns:
-        list: The concatenated flat list.
+        List[Any]: A single flat list containing all elements from the input iterables.
 
+    Raises:
+        TypeError: If input_data is not a list or its elements are not iterable.
+        
     References:
         mmcv.concat_list
     """
-    return list(itertools.chain(*in_list))
+    return list(itertools.chain.from_iterable(input_data))
 
 
 def split_by_num(x, num_splits, strict=True):
