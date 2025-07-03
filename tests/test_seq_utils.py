@@ -44,6 +44,37 @@ class TestConcatList(unittest.TestCase):
             khandy.concat_list([1, 2, 3])
 
 
+class TestToTuple(unittest.TestCase):
+    def test_scalar(self):
+        self.assertEqual(khandy.to_ntuple(5, 3), (5, 5, 5))
+        self.assertEqual(khandy.to_ntuple('a', 2), ('a', 'a'))
+
+    def test_sequence(self):
+        self.assertEqual(khandy.to_ntuple([1, 2, 3], 3), (1, 2, 3))
+        self.assertEqual(khandy.to_ntuple((4, 5), 2), (4, 5))
+        self.assertEqual(khandy.to_ntuple('xy', 2), ('xy', 'xy'))  # string is not treated as sequence
+
+    def test_invalid_length(self):
+        with self.assertRaises(AssertionError):
+            khandy.to_ntuple([1, 2], 3)
+        with self.assertRaises(AssertionError):
+            khandy.to_ntuple((1, 2, 3, 4), 3)
+
+    def test_invalid_n(self):
+        with self.assertRaises(ValueError):
+            khandy.to_ntuple(1, 0)
+        with self.assertRaises(ValueError):
+            khandy.to_ntuple(1, -1)
+        with self.assertRaises(ValueError):
+            khandy.to_ntuple(1, 1.5)
+
+    def test_to_xtuple(self):
+        self.assertEqual(khandy.to_1tuple(1), (1,))
+        self.assertEqual(khandy.to_2tuple(1), (1, 1))
+        self.assertEqual(khandy.to_3tuple(1), (1, 1, 1))
+        self.assertEqual(khandy.to_4tuple(1), (1, 1, 1, 1))
+
+
 class TestIsSeqOf(unittest.TestCase):
     def test_valid_sequences(self):
         self.assertTrue(khandy.is_seq_of([1, 2, 3], int))
