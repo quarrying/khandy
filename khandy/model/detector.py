@@ -18,7 +18,7 @@ __all__ = ['DetObjectItem', 'DetObjectSortDir', 'DetObjectSortBy', 'DetObjects',
            'BaseDetector', 'convert_det_objects_to_detect_ir_record', 
            'convert_detect_ir_record_to_det_objects',
            'convert_det_objects_to_detect_ir', 'convert_detect_ir_to_det_objects',
-           'concat_det_objects', 'detect_in_det_objects']
+           'concat_det_objects', 'detect_in_det_objects', 'SubsetDetector']
 
 
 @dataclass
@@ -699,3 +699,44 @@ def detect_in_det_objects(
         dst_det_objects_list.append(objects_in_object)
     return concat_det_objects(dst_det_objects_list)
 
+
+class SubsetDetector(BaseDetector):
+    def __init__(
+        self, 
+        detector: BaseDetector, 
+        interested_class_names: List[str]
+    ) -> None:
+        assert isinstance(detector, BaseDetector)
+        assert detector.class_names is not None
+        assert len(interested_class_names) != 0
+        assert len(set(interested_class_names)) == len(interested_class_names)
+        assert set(interested_class_names).issubset(set(detector.class_names))
+        self.detector = detector
+        self.interested_class_names = interested_class_names
+        
+        if detector.conf_thresh is None or isinstance(detector.conf_thresh, float):
+            conf_thresh = detector.conf_thresh
+        else:
+            conf_thresh = [detector.conf_thresh[detector.class_names.index(name)] 
+                           for name in interested_class_names]
+        super().__init__(
+            num_classes=len(self.interested_class_names),
+            class_names=interested_class_names,
+            conf_thresh=conf_thresh,
+            iou_thresh=detector.iou_thresh,
+            min_width=detector.min_width,
+            min_height=detector.min_height,
+            min_area=detector.min_area,
+            sort_by=detector.sort_by,
+            sort_dir=detector.sort_dir
+        )
+        
+    def forward(self, image: khandy.KArray, **kwargs) -> DetObjects:
+        det_objects = self.detector(image, **kwargs)
+        det_objects.filter_by_class_names(self.interested_class_names, inplace=True)
+        det_objects.classes = [self.interested_class_names.index(name) for name in det_objects.class_names]
+        return det_objects
+
+    def __call__(self, image: khandy.KArray, **kwargs) -> DetObjects:
+        return self.forward(image, **kwargs)
+    

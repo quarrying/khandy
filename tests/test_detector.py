@@ -151,7 +151,41 @@ class TestBaseDetector(unittest.TestCase):
 
         detector = EmptyDetector(num_classes=1)
         self.assertTrue(len(detector(self.image)) == 0)
-        
+
+
+class Dummy3ClassesDetector(khandy.model.BaseDetector):
+    def __init__(self, **kwargs):
+        super().__init__(num_classes=3, class_names=['a', 'b', 'c'], **kwargs)
+    def forward(self, image, **kwargs):
+        return khandy.model.DetObjects(
+            boxes=np.array([[0, 0, 10, 10], [5, 5, 15, 15], [1, 1, 2, 2]]),
+            confs=np.array([0.8, 0.6, 0.9]),
+            classes=np.array([0, 1, 2]),
+            class_names=['a', 'b', 'c']
+        )
+
+class TestSubsetDetector(unittest.TestCase):
+    def setUp(self):
+        self.image = np.zeros((20, 20, 3), dtype=np.uint8)
+        self.detector = Dummy3ClassesDetector()
+
+    def test_subset_detector(self):
+        subset = khandy.model.SubsetDetector(self.detector, ['a', 'c'])
+        det_objects = subset(self.image)
+        self.assertEqual(len(det_objects), 2)
+        self.assertListEqual(det_objects.class_names, ['a', 'c'])
+        self.assertTrue(np.all(det_objects.classes == [0, 1]))
+        self.assertTrue(np.allclose(det_objects.boxes[0], [0, 0, 10, 10]))
+        self.assertTrue(np.allclose(det_objects.boxes[1], [1, 1, 2, 2]))
+        self.assertTrue(np.allclose(det_objects.confs, [0.8, 0.9]))
+
+    def test_invalid_subset(self):
+        with self.assertRaises(AssertionError):
+            khandy.model.SubsetDetector(self.detector, ['a', 'a'])
+        with self.assertRaises(AssertionError):
+            khandy.model.SubsetDetector(self.detector, ['a', 'd'])
+
+
 
 if __name__ == '__main__':
     unittest.main()
