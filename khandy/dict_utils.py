@@ -1,10 +1,34 @@
 import random
 from collections import OrderedDict
+from typing import Any, Tuple, Optional
 
 
-def get_dict_first_item(dict_obj):
-    for key in dict_obj:
-        return key, dict_obj[key]
+def get_dict_first_item(
+    dict_obj: dict, 
+    raise_if_empty: bool = False
+) -> Optional[Tuple[Any, Any]]:
+    """Retrieve the first key-value pair from a dictionary.
+
+    Args:
+        dict_obj (dict): The dictionary to retrieve the first item from.
+        raise_if_empty (bool): Whether to raise an error if the dictionary is empty.
+
+    Returns:
+        Optional[Tuple[Any, Any]]: The first key-value pair, or None if the dictionary 
+            is empty and raise_if_empty is False.
+
+    Raises:
+        TypeError: If dict_obj is not a dictionary.
+        ValueError: If dict_obj is empty and raise_if_empty is True.
+    """
+    if not isinstance(dict_obj, dict):
+        raise TypeError(f'dict_obj should be a dict, got {type(dict_obj)}')
+    if not dict_obj: # empty dict
+        if raise_if_empty:
+            raise ValueError('dict_obj is empty, cannot retrieve the first item')
+        return None
+    # next(iter(...)) is more efficient than `for`
+    return next(iter(dict_obj.items()))
 
 
 def sort_dict(dict_obj, key=None, reverse=False):
