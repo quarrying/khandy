@@ -259,10 +259,7 @@ class DetObjects(khandy.EqLenSequences):
         inplace: bool = False
     ) -> "DetObjects":
         assert isinstance(self.boxes, np.ndarray)
-        widths = self.boxes[:, 2] - self.boxes[:, 0]
-        heights = self.boxes[:, 3] - self.boxes[:, 1] 
-        mask = widths * heights >= min_area
-        keep = np.nonzero(mask)[0]
+        keep = khandy.filter_boxes_by_area(self.boxes, min_area)
         return self.filter(keep, inplace)
     
     def filter_by_min_area(
@@ -282,16 +279,8 @@ class DetObjects(khandy.EqLenSequences):
         max_ar: Optional[Union[int, float]] = None, 
         inplace: bool = False
     )-> "DetObjects":
-        widths = self.boxes[:, 2] - self.boxes[:, 0]
-        heights = self.boxes[:, 3] - self.boxes[:, 1]
-        mask = heights > 0
-        ar = np.zeros_like(widths, dtype=float)
-        ar[mask] = widths[mask] / heights[mask]
-        if min_ar is not None:
-            mask &= (ar >= min_ar)
-        if max_ar is not None:
-            mask &= (ar <= max_ar)
-        keep = np.nonzero(mask)[0]
+        assert isinstance(self.boxes, np.ndarray)
+        keep = khandy.filter_boxes_by_ar(self.boxes, min_ar, max_ar)
         return self.filter(keep, inplace)
 
     def filter_by_size(
@@ -301,7 +290,7 @@ class DetObjects(khandy.EqLenSequences):
         inplace: bool = False
     ) -> "DetObjects":
         assert isinstance(self.boxes, np.ndarray)
-        keep = khandy.filter_small_boxes(self.boxes, min_width, min_height)
+        keep = khandy.filter_boxes_by_size(self.boxes, min_width, min_height)
         return self.filter(keep, inplace)
 
     def filter_by_min_size(
