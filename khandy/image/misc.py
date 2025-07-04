@@ -134,7 +134,7 @@ def get_image_extension(file_or_buffer):
     return get_image_file_type(file_or_buffer)
 
 
-def imread(file_or_buffer, flags=-1):
+def imread(file_or_buffer, flags=cv2.IMREAD_COLOR):
     """Improvement on cv2.imread, make it support filename including chinese character.
     
     Args:
@@ -151,7 +151,7 @@ def imread(file_or_buffer, flags=-1):
         return None
     
 
-def imread_cv(file_or_buffer, flags=-1):
+def imread_cv(file_or_buffer, flags=cv2.IMREAD_COLOR):
     warnings.warn('khandy.imread_cv will be deprecated, use khandy.imread instead!')
     return imread(file_or_buffer, flags)
 
