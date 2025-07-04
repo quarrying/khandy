@@ -138,6 +138,7 @@ def pairwise_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
         http://ww2.mathworks.cn/help/vision/ref/bboxoverlapratio.html
     """
     intersect_areas = pairwise_intersection(boxes1, boxes2)
+    intersect_areas = intersect_areas.astype(np.float32)
     areas1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
     areas2 = (boxes2[:, 2] - boxes2[:, 0]) * (boxes2[:, 3] - boxes2[:, 1])
     

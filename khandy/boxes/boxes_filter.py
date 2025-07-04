@@ -1,7 +1,9 @@
 import warnings
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
+
+from .boxes_overlap import pairwise_overlap_ratio
 
 
 def find_max_area_box(boxes):
@@ -152,6 +154,34 @@ def filter_boxes_completely_outside(boxes, reference_box):
         & (boxes[:, 2] > x_min)
         & (boxes[:, 3] > y_min)
     )
+    return np.nonzero(mask)[0]
+
+
+def filter_boxes_by_overlap(
+    boxes: np.ndarray, 
+    reference_box: List[Union[int, float]],
+    ratio_type: str = 'iou',
+    overlap_ratio: float = 0.5
+) -> np.ndarray:
+    """Filters bounding boxes based on their overlap ratio with a reference box.
+
+    Args:
+        boxes (np.ndarray): Array of bounding boxes with shape (N, 4), 
+            where each box is represented as [x_min, y_min, x_max, y_max].
+        reference_box (List[Union[int, float]]): A single reference box 
+            represented as [x_min, y_min, x_max, y_max].
+        ratio_type (str, optional): Type of overlap ratio to compute. 
+            Options are 'ioa' (intersection over area) or 'iou' 
+            (intersection over union). Default is 'iou'.
+        overlap_ratio (float, optional): Minimum overlap ratio threshold 
+            for filtering boxes. Default is 0.5.
+
+    Returns:
+        np.ndarray: Indices of boxes that satisfy the overlap ratio condition.
+    """
+    reference_boxes = np.array(reference_box[:4]).reshape(1, -1)
+    overlap_ratios = pairwise_overlap_ratio(boxes, reference_boxes, ratio_type)
+    mask = overlap_ratios >= overlap_ratio
     return np.nonzero(mask)[0]
 
 
