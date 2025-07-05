@@ -1,5 +1,6 @@
 import warnings
-from typing import List, Optional, Union
+from collections.abc import Sequence
+from typing import List, Literal, Optional, Union
 
 import numpy as np
 
@@ -185,26 +186,52 @@ def filter_boxes_by_overlap(
     return np.nonzero(mask)[0]
 
 
-def non_max_suppression(boxes, scores, thresh, classes=None, ratio_type="iou"):
-    """Greedily select boxes with high confidence
+def non_max_suppression(
+    boxes: np.ndarray,
+    scores: np.ndarray,
+    thresh: Union[float, Sequence[float], np.ndarray],
+    classes: Optional[np.ndarray] = None,
+    ratio_type: Union[Literal['iou', 'iom'], Sequence[Literal['iou', 'iom']]] = "iou"
+) -> np.ndarray:
+    """Perform Non-Maximum Suppression (NMS) on bounding boxes.
+
     Args:
-        boxes: [[x_min, y_min, x_max, y_max], ...]
-        scores: object confidence
-        thresh: retain overlap_ratio <= thresh
-        classes: class labels
+        boxes (np.ndarray): Array of shape (N, 4), each row is [x_min, y_min, x_max, y_max].
+        scores (np.ndarray): Array of shape (N,) with confidence scores for each box.
+        thresh (float or Sequence or np.ndarray): Overlap threshold for suppression.
+            - If float, the same threshold is used for all boxes.
+            - If array or sequence, should be per-class thresholds (requires `classes`).
+            Boxes with overlap ratio greater than `thresh` are suppressed.
+        classes (np.ndarray, optional): Array of shape (N,) with class indices for each box.
+            If provided, NMS is performed independently per class (using coordinate offsets).
+        ratio_type (str or Sequence): Overlap ratio type, one of:
+            - "iou" or "union": intersection over union (default)
+            - "iom" or "min": intersection over minimum area of two boxes
+            - If a sequence, should be per-class ratio types (requires `classes`).
 
     Returns:
-        indices to keep
+        np.ndarray: Indices of boxes to keep after NMS, sorted by descending score.
+
+    Raises:
+        ValueError: If `thresh` or `ratio_type` is not a float/str and `classes` is None.
+        ValueError: If `ratio_type` is not one of the supported types.
 
     References:
-        `py_cpu_nms` in py-faster-rcnn
-        torchvision.ops.nms
-        torchvision.ops.batched_nms
+        - `py_cpu_nms` in py-faster-rcnn
+        - torchvision.ops.nms
+        - torchvision.ops.batched_nms
     """
+    if not isinstance(thresh, float) and classes is None:
+        raise ValueError('When thresh is not a float, classes should not be None')
+    if not isinstance(ratio_type, str) and classes is None:
+        raise ValueError('When ratio_type is not a str, classes should not be None')
 
+    boxes = np.asarray(boxes)
+    scores = np.asarray(scores)
     if boxes.size == 0:
         return np.empty((0,), dtype=np.int64)
     if classes is not None:
+        classes = np.asarray(classes)
         # strategy: in order to perform NMS independently per class,
         # we add an offset to all the boxes. The offset is dependent
         # only on the class idx, and is large enough so that boxes
@@ -213,6 +240,7 @@ def non_max_suppression(boxes, scores, thresh, classes=None, ratio_type="iou"):
         offsets = classes * (max_coordinate + 1)
         if offsets.ndim == 1:
             offsets = offsets[:, None]
+        # cannot use inplace add
         boxes = boxes + offsets
 
     x_mins = boxes[:, 0]
@@ -235,13 +263,23 @@ def non_max_suppression(boxes, scores, thresh, classes=None, ratio_type="iou"):
         heights = np.maximum(0, min_y_maxs - max_y_mins)
         intersect_areas = widths * heights
 
-        if ratio_type in ["union", "iou"]:
-            ratio = intersect_areas / (areas[i] + areas[order[1:]] - intersect_areas)
-        elif ratio_type == "min":
-            ratio = intersect_areas / np.minimum(areas[i], areas[order[1:]])
+        if isinstance(ratio_type, str):
+            _ratio_type = ratio_type
         else:
-            raise ValueError("Unsupported ratio_type. Got {}".format(ratio_type))
+            _ratio_type = ratio_type[classes[i]]
+        if _ratio_type in ["iou", "union"]:
+            intersect_areas /= (areas[i] + areas[order[1:]] - intersect_areas)
+        elif _ratio_type in ["iom", "min"]:
+            intersect_areas /= np.minimum(areas[i], areas[order[1:]])
+        else:
+            raise ValueError(f"Unsupported ratio_type. Got {_ratio_type}")
+        
+        if isinstance(thresh, float):
+            _thresh = thresh
+        else:
+            _thresh = thresh[classes[i]]
+        inds = np.nonzero(intersect_areas <= _thresh)[0]
 
-        inds = np.nonzero(ratio <= thresh)[0]
         order = order[inds + 1]
+
     return np.asarray(keep)
