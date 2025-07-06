@@ -364,26 +364,29 @@ class BaseDetector(ABC):
         self, 
         num_classes: Optional[int] = None,
         conf_thresh: Optional[Union[float, List[float], Tuple[float, ...], np.ndarray]] = None,
-        iou_thresh: Optional[float] = None,
         min_width: Optional[Union[int, float]] = None,
         min_height: Optional[Union[int, float]] = None,
         min_area: Optional[Union[int, float]] = None,
         class_names: Optional[Union[List[str], Tuple[str, ...]]] = None,
         sort_by: Optional[DetObjectSortBy] = None,
-        sort_dir: Optional[DetObjectSortDir] = DetObjectSortDir.DESC
+        sort_dir: Optional[DetObjectSortDir] = DetObjectSortDir.DESC,
+        **kwargs
     ):
+        # TODO: min_width, min_height and min_area can also support sequence types
+        # which means that they can be filtered by class.
         if num_classes is not None:
             assert isinstance(num_classes, int) and num_classes > 0, f'num_classes must be a positive integer, got {num_classes}'
         self._num_classes = num_classes
 
         self.conf_thresh = conf_thresh
-        self.iou_thresh = iou_thresh
         self.min_width = min_width
         self.min_height = min_height
         self.min_area = min_area
         self.class_names = class_names
         self.sort_by = sort_by
         self.sort_dir = sort_dir
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     @property
     def num_classes(self) -> Optional[int]:
@@ -417,16 +420,6 @@ class BaseDetector(ABC):
             
         self._conf_thresh = value
     
-    @property
-    def iou_thresh(self) -> Optional[float]:
-        return self._iou_thresh
-    
-    @iou_thresh.setter
-    def iou_thresh(self, value: Optional[float]):
-        assert value is None or isinstance(value, float), f'Unsupported type for iou_thresh, got {type(value)}'
-        assert value is None or (0 <= value <= 1), f'iou_thresh must be in [0, 1], got {value}'
-        self._iou_thresh = value
-        
     @property
     def min_width(self) -> Optional[Union[int, float]]:
         return self._min_width
@@ -509,11 +502,6 @@ class BaseDetector(ABC):
     def filter_by_area(self, det_objects: DetObjects, inplace: bool = False) -> DetObjects:
         if self.min_area is not None:
             return det_objects.filter_by_area(self.min_area, inplace=inplace)
-        return det_objects
-    
-    def nms(self, det_objects: DetObjects, ratio_type: str = 'iou', inplace: bool = False) -> DetObjects:
-        if self.iou_thresh is not None:
-            return det_objects.nms(self.iou_thresh, ratio_type, inplace=inplace)
         return det_objects
     
     def __call__(self, image: khandy.KArray, **kwargs) -> DetObjects:
@@ -734,7 +722,6 @@ class SubsetDetector(BaseDetector):
             num_classes=len(self.interested_class_names),
             class_names=interested_class_names,
             conf_thresh=conf_thresh,
-            iou_thresh=detector.iou_thresh,
             min_width=detector.min_width,
             min_height=detector.min_height,
             min_area=detector.min_area,

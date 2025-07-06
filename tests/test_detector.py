@@ -86,8 +86,6 @@ class TestBaseDetector(unittest.TestCase):
     def test_property_setters(self):
         self.detector.conf_thresh = 0.5
         self.assertEqual(self.detector.conf_thresh, 0.5)
-        self.detector.iou_thresh = 0.3
-        self.assertEqual(self.detector.iou_thresh, 0.3)
         self.detector.min_width = 5
         self.assertEqual(self.detector.min_width, 5)
         self.detector.min_height = 6
@@ -185,6 +183,30 @@ class TestSubsetDetector(unittest.TestCase):
         with self.assertRaises(AssertionError):
             khandy.model.SubsetDetector(self.detector, ['a', 'd'])
 
+
+class KwargsDetector(khandy.model.BaseDetector):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def forward(self, image, **kwargs):
+        return khandy.model.DetObjects(
+            boxes=np.array([[0, 0, 1, 1]]),
+            confs=np.array([1.0]),
+            classes=np.array([0]),
+            class_names=['a']
+        )
+
+
+class TestBaseDetectorKwargs(unittest.TestCase):
+    def test_kwargs_passed(self):
+        detector = KwargsDetector(num_classes=1, foo='bar', bar=123)
+        self.assertEqual(detector.foo, 'bar')
+        self.assertEqual(detector.bar, 123)
+ 
+        # Ensure normal detection still works
+        image = np.zeros((10, 10, 3), dtype=np.uint8)
+        det_objects = detector(image)
+        self.assertEqual(len(det_objects), 1)
 
 
 if __name__ == '__main__':
