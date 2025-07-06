@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union, Callable
+from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Union, Callable
 
 import numpy as np
 
@@ -82,8 +82,8 @@ class DetObjectItem:
             **self._extra_fields
         }
         return DetObjects(**kwargs)
-    
-    
+
+
 class DetObjectSortDir(Enum):
     ASC = auto()
     DESC = auto()
@@ -116,7 +116,7 @@ class DetObjects(khandy.EqLenSequences):
             class_names=class_names, 
             **kwargs
         )
-    
+
     def __setattr__(self, name: str, value: Any) -> None:
         if name == 'boxes':
             value = self._set_boxes(value)
@@ -127,7 +127,7 @@ class DetObjects(khandy.EqLenSequences):
         elif name == 'class_names':
             value = self._set_class_names(value)
         super().__setattr__(name, value)
-        
+
     def _set_boxes(self, boxes: Optional[khandy.KArray] = None) -> khandy.KArray:
         if boxes is None:
             boxes = np.empty((len(self), 4), dtype=np.float32)
@@ -144,7 +144,7 @@ class DetObjects(khandy.EqLenSequences):
         assert boxes.ndim == 2, f'boxes ndim is not 2, got {boxes.ndim}'
         assert boxes.shape[1] == 4, f'boxes last axis size is not 4, got {boxes.shape[1]}'
         return boxes
- 
+
     def _set_confs(self, confs: Optional[khandy.KArray] = None) -> khandy.KArray:
         if isinstance(self.boxes, np.ndarray):
             if confs is None:
@@ -182,10 +182,10 @@ class DetObjects(khandy.EqLenSequences):
     def _set_class_names(self, class_names: Optional[List[str]] = None) -> List[str]:
         if class_names is None:
             class_names = [f'unnamed_class#{class_ind}' for class_ind in self.classes]
-            
+
         assert khandy.is_seq_of(class_names, str), f'class_names must be list of str'
         return class_names
-    
+
     def __getitem__(self, key: Union[int, slice]) -> Union["DetObjects", DetObjectItem]:
         item = super().__getitem__(key)
         if type(key) == int:
@@ -202,7 +202,7 @@ class DetObjects(khandy.EqLenSequences):
                 _extra_fields=_extra_fields
             )
         return item
-    
+
     def filter_by_class_index(self, interested_class_inds, inplace=False) -> "DetObjects":
         warnings.warn(
             "filter_by_class_index is deprecated, use filter_by_class_indices instead.",
@@ -225,7 +225,7 @@ class DetObjects(khandy.EqLenSequences):
             raise ValueError("You cannot specify both 'interested' and 'ignored' at the same time.")
         if interested is None and ignored is None:
             return self if inplace else copy.deepcopy(self)
-        
+
         if ignored is not None:
             mask = np.isin(self.classes, ignored, invert=True)
         elif interested is not None:
@@ -233,7 +233,7 @@ class DetObjects(khandy.EqLenSequences):
 
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
-    
+
     def filter_by_class_names(
         self, 
         interested: Optional[Union[Tuple[str, ...], List[str]]] = None,
@@ -244,7 +244,7 @@ class DetObjects(khandy.EqLenSequences):
             raise ValueError("You cannot specify both 'interested' and 'ignored' at the same time.")
         if interested is None and ignored is None:
             return self if inplace else copy.deepcopy(self)
-        
+
         if ignored is not None:
             mask = np.isin(self.class_names, ignored, invert=True)
         elif interested is not None:
@@ -261,7 +261,7 @@ class DetObjects(khandy.EqLenSequences):
         assert isinstance(self.boxes, np.ndarray)
         keep = khandy.filter_boxes_by_area(self.boxes, min_area)
         return self.filter(keep, inplace)
-    
+
     def filter_by_min_area(
         self, 
         min_area: Union[int, float], 
@@ -304,10 +304,10 @@ class DetObjects(khandy.EqLenSequences):
             DeprecationWarning
         )
         return self.filter_by_size(min_width, min_height, inplace)
-    
+
     def filter_by_conf(
         self, 
-        conf_thresh: Optional[Union[float, List[float], Tuple[float, ...], np.ndarray]], 
+        conf_thresh: Union[Union[float, List[float], Tuple[float, ...], np.ndarray]], 
         inplace: bool = False
     ) -> "DetObjects":
         assert isinstance(self.confs, np.ndarray)
@@ -329,12 +329,23 @@ class DetObjects(khandy.EqLenSequences):
         keep = np.nonzero(mask)[0]
         return self.filter(keep, inplace)
 
-    def nms(self, iou_thresh, ratio_type='iou', inplace=False) -> "DetObjects":
+    def nms(
+        self,
+        thresh: Union[Union[float, List[float], Tuple[float, ...], np.ndarray]],
+        ratio_type: Union[Literal['iou', 'iom'], Sequence[Literal['iou', 'iom']]] = "iou",
+        inplace: bool = False,
+    ) -> "DetObjects":
         assert isinstance(self.confs, np.ndarray)
-        keep = khandy.non_max_suppression(self.boxes, self.confs, iou_thresh, self.classes, ratio_type)
+        keep = khandy.non_max_suppression(
+            self.boxes, self.confs, thresh, self.classes, ratio_type
+        )
         return self.filter(keep, inplace)
 
-    def sort(self, sort_by: DetObjectSortBy, direction: DetObjectSortDir = DetObjectSortDir.DESC) -> "DetObjects":
+    def sort(
+        self,
+        sort_by: DetObjectSortBy,
+        direction: DetObjectSortDir = DetObjectSortDir.DESC,
+    ) -> "DetObjects":
         assert isinstance(self.confs, np.ndarray)
         if sort_by == DetObjectSortBy.BY_CONF:
             sorted_inds = np.argsort(self.confs, axis=0)
@@ -516,7 +527,7 @@ class BaseDetector(ABC):
         if self.sort_by is not None:
             det_objects = det_objects.sort(self.sort_by, self.sort_dir)
         return det_objects
-    
+
 
 def convert_det_objects_to_detect_ir_record(
     det_objects: DetObjects, 
@@ -627,8 +638,8 @@ def _concatenate_arrays_or_sequences(
         return first_type(itertools.chain.from_iterable(arrays_or_sequences))
     else:
         raise TypeError('Unsupported type!')
-    
-    
+
+
 def concat_det_objects(det_objects_list: List[DetObjects], only_common_fields: bool = False) -> DetObjects:
     """Concatenates a list of DetObjects into a single DetObjects instance.
     Args:
@@ -739,4 +750,3 @@ class SubsetDetector(BaseDetector):
 
     def __call__(self, image: khandy.KArray, **kwargs) -> DetObjects:
         return self.forward(image, **kwargs)
-    

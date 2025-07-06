@@ -1,6 +1,6 @@
 import warnings
 from collections.abc import Sequence
-from typing import List, Literal, Optional, Union
+from typing import List, Tuple, Literal, Optional, Union
 
 import numpy as np
 
@@ -160,9 +160,9 @@ def filter_boxes_completely_outside(boxes, reference_box):
 
 def filter_boxes_by_overlap(
     boxes: np.ndarray, 
-    reference_box: List[Union[int, float]],
+    reference_box: Sequence[Union[int, float]],
     ratio_type: str = 'iou',
-    overlap_ratio: float = 0.5
+    thresh: float = 0.5
 ) -> np.ndarray:
     """Filters bounding boxes based on their overlap ratio with a reference box.
 
@@ -174,7 +174,7 @@ def filter_boxes_by_overlap(
         ratio_type (str, optional): Type of overlap ratio to compute. 
             Options are 'ioa' (intersection over area) or 'iou' 
             (intersection over union). Default is 'iou'.
-        overlap_ratio (float, optional): Minimum overlap ratio threshold 
+        thresh (float, optional): Minimum overlap ratio threshold 
             for filtering boxes. Default is 0.5.
 
     Returns:
@@ -182,7 +182,7 @@ def filter_boxes_by_overlap(
     """
     reference_boxes = np.array(reference_box[:4]).reshape(1, -1)
     overlap_ratios = pairwise_overlap_ratio(boxes, reference_boxes, ratio_type)
-    mask = overlap_ratios >= overlap_ratio
+    mask = overlap_ratios >= thresh
     return np.nonzero(mask)[0]
 
 

@@ -12,7 +12,7 @@ class TestFilterBoxesByOverlap(unittest.TestCase):
             [9, 9, 20, 20]
         ])
         reference_box = [0, 0, 10, 10]
-        result = khandy.filter_boxes_by_overlap(boxes, reference_box, ratio_type='ioa', overlap_ratio=0.5)
+        result = khandy.filter_boxes_by_overlap(boxes, reference_box, ratio_type='ioa', thresh=0.5)
         np.testing.assert_array_equal(result, [0, 1])
 
         
