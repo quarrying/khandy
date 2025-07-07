@@ -220,6 +220,26 @@ class TestConcatDetObjects(unittest.TestCase):
         with self.assertRaises(ValueError):
             khandy.model.concat_det_objects([self.det_objects1, self.det_objects2, self.det_objects3], only_common_fields=False)
 
+    def test_concat_with_det_object_item(self):
+        item = khandy.model.DetObjectItem(
+            x_min=1.0, y_min=2.0, x_max=3.0, y_max=4.0,
+            conf=0.9, class_index=0, class_name="a",
+            _extra_fields={'class_extras': ['c']}
+        )
+        det_objects = khandy.model.DetObjects(
+            boxes=np.array([[5.0, 6.0, 7.0, 8.0]]),
+            confs=np.array([0.8]),
+            classes=np.array([1]),
+            class_names=["b"],
+            class_extras=['d']
+        )
+        result = khandy.model.concat_det_objects([item, det_objects])
+        self.assertEqual(len(result), 2)
+        self.assertTrue(np.allclose(result.boxes[0], [1.0, 2.0, 3.0, 4.0]))
+        self.assertTrue(np.allclose(result.boxes[1], [5.0, 6.0, 7.0, 8.0]))
+        self.assertTrue(np.allclose(result.confs, [0.9, 0.8]))
+        self.assertTrue(result.class_extras, ['c', 'd'])
+
 
 if __name__ == '__main__':
     unittest.main()
