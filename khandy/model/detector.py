@@ -1,5 +1,6 @@
 import copy
 import math
+import numbers
 import itertools
 import warnings
 from abc import ABC, abstractmethod
@@ -186,11 +187,16 @@ class DetObjects(khandy.EqLenSequences):
         assert khandy.is_seq_of(class_names, str), f'class_names must be list of str'
         return class_names
 
-    def __getitem__(self, key: Union[int, slice]) -> Union["DetObjects", DetObjectItem]:
+    def __getitem__(
+        self, key: Union[numbers.Integral, slice, List[numbers.Integral], np.ndarray]
+    ) -> Union["DetObjects", DetObjectItem]:
         item = super().__getitem__(key)
-        if type(key) == int:
-            _extra_fields = {name: getattr(item, name) for name in self._fields 
-                            if name not in ['boxes', 'confs', 'classes', 'class_names']}
+        if isinstance(key, numbers.Integral):
+            _extra_fields = {
+                name: getattr(item, name)
+                for name in self._fields
+                if name not in ["boxes", "confs", "classes", "class_names"]
+            }
             return DetObjectItem(
                 x_min=item.boxes[0, 0].item(),
                 y_min=item.boxes[0, 1].item(),

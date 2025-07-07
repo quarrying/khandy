@@ -1,3 +1,4 @@
+import numbers
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -48,7 +49,7 @@ class ClassifierResults(khandy.EqLenSequences):
             confs = confs.flatten()
         if confs.ndim != 1:
             raise TypeError(f'Unsupported ndim for confs, got {confs.ndim}')
-        
+
         if classes is None:
             if torch is not None and isinstance(confs, torch.Tensor):
                 classes = torch.zeros((confs.shape[0],), dtype=torch.int32, device=confs.device)
@@ -60,10 +61,10 @@ class ClassifierResults(khandy.EqLenSequences):
             classes = classes.flatten()
         if classes.ndim != 1:
             raise TypeError(f'Unsupported ndim for classes, got {classes.ndim}')
-        
+
         assert class_names is None or khandy.is_list_of(class_names, str)
         assert class_extras is None or isinstance(class_extras, list)
-        
+
         init_kwargs = {'confs': confs, 'classes': classes}
         if class_names is not None:
             init_kwargs['class_names'] = class_names
@@ -71,18 +72,20 @@ class ClassifierResults(khandy.EqLenSequences):
             init_kwargs['class_extras'] = class_extras
         super().__init__(**init_kwargs)
 
-    def __getitem__(self, key: Union[int, slice]) -> Union["ClassifierResults", ClassifierResultItem]:
+    def __getitem__(
+        self, key: Union[numbers.Integral, slice, List[numbers.Integral], np.ndarray]
+    ) -> Union["ClassifierResults", ClassifierResultItem]:
         item = super().__getitem__(key)
-        if type(key) == int:
+        if isinstance(key, numbers.Integral):
             return ClassifierResultItem(
                 conf=item.confs[0].item(),
                 class_index=item.classes[0].item(),
-                class_name=item.class_names[0] if 'class_names' in item else None,
-                class_extra=item.class_extras[0] if 'class_extras' in item else None
+                class_name=item.class_names[0] if "class_names" in item else None,
+                class_extra=item.class_extras[0] if "class_extras" in item else None,
             )
         return item
-    
-    
+
+
 class BaseTopKClassifier(ABC):
     def __init__(
         self, 
@@ -152,8 +155,8 @@ class BaseTopKClassifier(ABC):
         if self.class_extras is not None:
             results.class_extras = [self.class_extras[ind.item()] for ind in results.classes]
         return results
-    
-    
+
+
 class BaseClassifier(BaseTopKClassifier):
     def __init__(
         self, 
@@ -248,4 +251,3 @@ class Gallery:
 def find_topk_in_gallery(inputs, gallery: Gallery, k: int = 3) -> List[Dict[str, ClassifierResults]]:
     logits = np.dot(inputs, gallery.features.T)
     return find_topk_in_collections(logits, gallery.collections, k, do_softmax=True)
-

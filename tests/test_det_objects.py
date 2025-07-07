@@ -45,7 +45,10 @@ class TestDetObjects(unittest.TestCase):
         self.assertTrue(np.array_equal(sliced.confs, self.det_objects.confs[:3]))
         self.assertEqual(sliced.class_names, self.det_objects.class_names[:3])
         self.assertTrue(np.array_equal(sliced.extras, self.det_objects.extras[:3]))
-        
+
+        self.assertEqual(self.det_objects[np.int32(0)].class_index, self.det_objects.classes[0])
+        self.assertEqual(self.det_objects[np.int64(0)].class_index, self.det_objects.classes[0])
+
     def test_filter_by_class_names(self):
         result = self.det_objects.filter_by_class_names(inplace=False)
         self.assertEqual(result.class_names, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'])

@@ -352,12 +352,13 @@ class EqLenSequences:
         """
         return name in self._fields
 
-    def __getitem__(self, key: Union[int, slice, List[int], np.ndarray]):
+    def __getitem__(self, key: Union[numbers.Integral, slice, List[numbers.Integral], np.ndarray]):
         """Supports indexing and slicing to get a new object
         with sequences indexed or sliced by the given key.
 
         Args:
-            key (Union[int, slice, List[int]], np.ndarray): Index, slice, or list of indices to use for getting sequences.
+            key (Union[numbers.Integral, slice, List[numbers.Integral]], np.ndarray): Index, slice, 
+                or list of indices to use for getting sequences.
 
         Returns:
             A new object of the same class with sequences indexed or sliced according to the key.
@@ -368,7 +369,7 @@ class EqLenSequences:
             AssertionError: If the key is a numpy array but not 1D, or if the length of the sequence 
                 does not match the length of the key when using a boolean mask.
         """
-        if type(key) is int:
+        if isinstance(key, numbers.Integral):
             if key >= len(self) or key < -len(self):
                 raise IndexError(f"{self.__class__.__name__} index {key} out of range!")
             else:
@@ -414,7 +415,7 @@ class EqLenSequences:
         """
         return self._fields
 
-    def filter_(self, index: Union[int, slice, List[int], np.ndarray]):
+    def filter_(self, index: Union[numbers.Integral, slice, List[numbers.Integral], np.ndarray]):
         """Filter the EqLenSequences object by indexing the stored sequences using the provided index.
 
         This method allows you to filter the sequences stored in the EqLenSequences object by
@@ -422,7 +423,7 @@ class EqLenSequences:
         index provided, the corresponding elements or slices will be retained in the object.
 
         Args:
-            index (Union[int, slice, List[int], np.ndarray]): The index or slice to use for filtering.
+            index (Union[numbers.Integral, slice, List[numbers.Integral], np.ndarray]): The index or slice to use for filtering.
                 - If an integer is provided, it should be within the valid range of the object's length.
                 - If a slice is provided, it will be used to slice the sequences.
                 - If a list of integers is provided, the sequences at the specified indices will be retained.
@@ -440,7 +441,7 @@ class EqLenSequences:
             AssertionError: If the provided index is a numpy array but not 1D, or if the length of the sequence
                 does not match the length of the key when using a boolean mask.
         """
-        if type(index) is int:
+        if isinstance(index, numbers.Integral):
             if index >= len(self) or index < -len(self):
                 raise IndexError(f"{self.__class__.__name__} index {index} out of range!")
             else:
@@ -467,7 +468,7 @@ class EqLenSequences:
                     super().__setattr__(name, [value[i] for i in index])
         return self
     
-    def filter(self, index: Union[int, slice, List[int], np.ndarray], inplace: bool):
+    def filter(self, index: Union[numbers.Integral, slice, List[numbers.Integral], np.ndarray], inplace: bool):
         if inplace:
             return self.filter_(index)
         else:
