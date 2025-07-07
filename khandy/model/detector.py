@@ -217,14 +217,19 @@ class DetObjects(khandy.EqLenSequences):
 
     def filter_by_class_indices(
         self,
-        interested: Optional[Union[Tuple[int, ...], List[int]]] = None,
-        ignored: Optional[Union[Tuple[int, ...], List[int]]] = None,
+        interested: Optional[Union[int, Tuple[int, ...], List[int]]] = None,
+        ignored: Optional[Union[int, Tuple[int, ...], List[int]]] = None,
         inplace: bool = False
     ) -> "DetObjects":
         if interested is not None and ignored is not None:
             raise ValueError("You cannot specify both 'interested' and 'ignored' at the same time.")
         if interested is None and ignored is None:
             return self if inplace else copy.deepcopy(self)
+
+        if isinstance(interested, int):
+            interested = [interested]
+        if isinstance(ignored, int):
+            ignored = [ignored]
 
         if ignored is not None:
             mask = np.isin(self.classes, ignored, invert=True)
@@ -236,14 +241,19 @@ class DetObjects(khandy.EqLenSequences):
 
     def filter_by_class_names(
         self, 
-        interested: Optional[Union[Tuple[str, ...], List[str]]] = None,
-        ignored: Optional[Union[Tuple[str, ...], List[str]]] = None, 
+        interested: Optional[Union[str, Tuple[str, ...], List[str]]] = None,
+        ignored: Optional[Union[str, Tuple[str, ...], List[str]]] = None, 
         inplace: bool = False
     ) -> "DetObjects":
         if interested is not None and ignored is not None:
             raise ValueError("You cannot specify both 'interested' and 'ignored' at the same time.")
         if interested is None and ignored is None:
             return self if inplace else copy.deepcopy(self)
+
+        if isinstance(interested, str):
+            interested = [interested]
+        if isinstance(ignored, str):
+            ignored = [ignored]
 
         if ignored is not None:
             mask = np.isin(self.class_names, ignored, invert=True)

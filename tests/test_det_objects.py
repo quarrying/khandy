@@ -47,36 +47,54 @@ class TestDetObjects(unittest.TestCase):
         self.assertTrue(np.array_equal(sliced.extras, self.det_objects.extras[:3]))
         
     def test_filter_by_class_names(self):
-        result1 = self.det_objects.filter_by_class_names(inplace=False)
-        self.assertEqual(result1.class_names, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'])
+        result = self.det_objects.filter_by_class_names(inplace=False)
+        self.assertEqual(result.class_names, ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'])
 
-        result2 = self.det_objects.filter_by_class_names(ignored=['d', 'e'], inplace=False)
-        self.assertEqual(result2.class_names, ['a', 'b', 'c', 'f', 'g', 'h', 'i', 'j'])
+        result = self.det_objects.filter_by_class_names(ignored='d', inplace=False)
+        self.assertEqual(result.class_names, ['a', 'b', 'c', 'e', 'f', 'g', 'h', 'i', 'j'])
 
-        result3 = self.det_objects.filter_by_class_names(interested=['a', 'b', 'c'], inplace=False)
-        self.assertEqual(result3.class_names, ['a', 'b', 'c'])
+        result = self.det_objects.filter_by_class_names(interested='a', inplace=False)
+        self.assertEqual(result.class_names, ['a'])
 
-        result4 = self.det_objects.filter_by_class_names(ignored=['d', 'e', 'x'], inplace=False)
-        self.assertEqual(result4.class_names, ['a', 'b', 'c', 'f', 'g', 'h', 'i', 'j'])
+        result = self.det_objects.filter_by_class_names(ignored=['d', 'e'], inplace=False)
+        self.assertEqual(result.class_names, ['a', 'b', 'c', 'f', 'g', 'h', 'i', 'j'])
 
-        result5 = self.det_objects.filter_by_class_names(interested=['a', 'b', 'c', 'x'], inplace=False)
-        self.assertEqual(result5.class_names, ['a', 'b', 'c'])
+        result = self.det_objects.filter_by_class_names(interested=['a', 'b', 'c'], inplace=False)
+        self.assertEqual(result.class_names, ['a', 'b', 'c'])
+
+        result = self.det_objects.filter_by_class_names(ignored=['d', 'e', 'x'], inplace=False)
+        self.assertEqual(result.class_names, ['a', 'b', 'c', 'f', 'g', 'h', 'i', 'j'])
+
+        result = self.det_objects.filter_by_class_names(interested=['a', 'b', 'c', 'x'], inplace=False)
+        self.assertEqual(result.class_names, ['a', 'b', 'c'])
 
     def test_filter_by_class_indices(self):
-        result1 = self.det_objects.filter_by_class_indices(inplace=False)
-        self.assertTrue(np.array_equal(result1.classes.flatten(), [0, 1, 1, 3, 3, 5, 6, 7, 8, 9]))
+        result = self.det_objects.filter_by_class_indices(inplace=False)
+        self.assertTrue(np.array_equal(result.classes, [0, 1, 1, 3, 3, 5, 6, 7, 8, 9]))
 
-        result2 = self.det_objects.filter_by_class_indices(ignored=[0, 1], inplace=False)
-        self.assertTrue(np.array_equal(result2.classes.flatten(), [3, 3, 5, 6, 7, 8, 9]))
+        result = self.det_objects.filter_by_class_indices(ignored=0, inplace=False)
+        self.assertTrue(np.array_equal(result.classes, [1, 1, 3, 3, 5, 6, 7, 8, 9]))
 
-        result3 = self.det_objects.filter_by_class_indices(interested=[3, 4, 5], inplace=False)
-        self.assertTrue(np.array_equal(result3.classes.flatten(), [3, 3, 5]))
+        result = self.det_objects.filter_by_class_indices(ignored=1, inplace=False)
+        self.assertTrue(np.array_equal(result.classes, [0, 3, 3, 5, 6, 7, 8, 9]))
 
-        result4 = self.det_objects.filter_by_class_indices(ignored=[0, 1, 100], inplace=False)
-        self.assertTrue(np.array_equal(result4.classes.flatten(), [3, 3, 5, 6, 7, 8, 9]))
+        result = self.det_objects.filter_by_class_indices(interested=0, inplace=False)
+        self.assertTrue(np.array_equal(result.classes, [0]))
 
-        result5 = self.det_objects.filter_by_class_indices(interested=[3, 4, 5, 100], inplace=False)
-        self.assertTrue(np.array_equal(result5.classes.flatten(), [3, 3, 5]))
+        result = self.det_objects.filter_by_class_indices(interested=1, inplace=False)
+        self.assertTrue(np.array_equal(result.classes, [1, 1]))
+
+        result = self.det_objects.filter_by_class_indices(ignored=[0, 1], inplace=False)
+        self.assertTrue(np.array_equal(result.classes, [3, 3, 5, 6, 7, 8, 9]))
+
+        result = self.det_objects.filter_by_class_indices(interested=[3, 4, 5], inplace=False)
+        self.assertTrue(np.array_equal(result.classes, [3, 3, 5]))
+
+        result = self.det_objects.filter_by_class_indices(ignored=[0, 1, 100], inplace=False)
+        self.assertTrue(np.array_equal(result.classes, [3, 3, 5, 6, 7, 8, 9]))
+
+        result = self.det_objects.filter_by_class_indices(interested=[3, 4, 5, 100], inplace=False)
+        self.assertTrue(np.array_equal(result.classes, [3, 3, 5]))
 
     def _assert_equal(self, a, b):
         self.assertEqual(len(a), len(b))
