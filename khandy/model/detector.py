@@ -333,12 +333,18 @@ class DetObjects(khandy.EqLenSequences):
         self,
         thresh: Union[Union[float, List[float], Tuple[float, ...], np.ndarray]],
         ratio_type: Union[Literal['iou', 'iom'], Sequence[Literal['iou', 'iom']]] = "iou",
+        class_agnostic: bool = False,
         inplace: bool = False,
     ) -> "DetObjects":
         assert isinstance(self.confs, np.ndarray)
-        keep = khandy.non_max_suppression(
-            self.boxes, self.confs, thresh, self.classes, ratio_type
-        )
+        if class_agnostic:
+            keep = khandy.non_max_suppression(
+                self.boxes, self.confs, thresh, None, ratio_type
+            )
+        else:
+            keep = khandy.non_max_suppression(
+                self.boxes, self.confs, thresh, self.classes, ratio_type
+            )
         return self.filter(keep, inplace)
 
     def sort(
