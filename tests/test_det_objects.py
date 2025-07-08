@@ -245,7 +245,7 @@ class TestConcatDetObjects(unittest.TestCase):
         item = khandy.model.DetObjectItem(
             x_min=1.0, y_min=2.0, x_max=3.0, y_max=4.0,
             conf=0.9, class_index=0, class_name="a",
-            _extra_fields={'class_extras': ['c']}
+            class_extras=['c']
         )
         det_objects = khandy.model.DetObjects(
             boxes=np.array([[5.0, 6.0, 7.0, 8.0]]),

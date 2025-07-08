@@ -5,7 +5,6 @@ import itertools
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Union, Callable
 
@@ -22,7 +21,6 @@ __all__ = ['DetObjectItem', 'DetObjectSortDir', 'DetObjectSortBy', 'DetObjects',
            'concat_det_objects', 'detect_in_det_objects', 'SubsetDetector']
 
 
-@dataclass
 class DetObjectItem:
     x_min: float
     y_min: float
@@ -31,13 +29,29 @@ class DetObjectItem:
     conf: float
     class_index: int
     class_name: str
-    _extra_fields: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self) -> None:
-        for name, value in self._extra_fields.items():
-            assert name not in self.__annotations__, f'Extra field {name} conflicts with existing field'
-            assert len(value) == 1, f'Extra field {name} must have length 1, got {len(value)}'
-            
+    def __init__(
+        self,
+        x_min: float,
+        y_min: float,
+        x_max: float,
+        y_max: float,
+        conf: float,
+        class_index: int,
+        class_name: str,
+        **kwargs
+    ):
+        self.x_min = x_min
+        self.y_min = y_min
+        self.x_max = x_max
+        self.y_max = y_max
+        self.conf = conf
+        self.class_index = class_index
+        self.class_name = class_name
+        self._extra_fields = {}
+        for name, value in kwargs.items():
+            setattr(self, name, value)
+
     def __getattr__(self, name: str) -> Any:
         try:
             return self._extra_fields[name]
@@ -47,8 +61,15 @@ class DetObjectItem:
             return super().__getattribute__(name)
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if name not in self.__annotations__ and name not in ['area']:
-            assert len(value) == 1, f'Extra field {name} must have length 1, got {len(value)}'
+        if name not in (
+            "x_min", "y_min", "x_max", "y_max", "conf", 
+            "class_index", "class_name", "_extra_fields",
+            "x_center", "y_center", "width", "height", "area"
+        ):
+            if not hasattr(value, '__len__'):
+                raise AssertionError(f'Extra field {name} value must have __len__ attribute')
+            if len(value) != 1:
+                raise AssertionError(f'Extra field {name} value must have length 1, got {len(value)}')
             self._extra_fields[name] = value
         else:
             super().__setattr__(name, value)
@@ -74,9 +95,8 @@ class DetObjectItem:
         return (self.x_max - self.x_min) * (self.y_max - self.y_min)
 
     def to_det_objects(self) -> "DetObjects":
-        box = [self.x_min, self.y_min, self.x_max, self.y_max]
         kwargs = {
-            'boxes': [box],
+            'boxes': [[self.x_min, self.y_min, self.x_max, self.y_max]],
             'confs': [self.conf],
             'classes': [self.class_index],
             'class_names': [self.class_name],
@@ -205,7 +225,7 @@ class DetObjects(khandy.EqLenSequences):
                 conf=item.confs[0].item(),
                 class_index=item.classes[0].item(),
                 class_name=item.class_names[0],
-                _extra_fields=_extra_fields
+                **_extra_fields
             )
         return item
 

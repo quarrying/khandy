@@ -7,8 +7,10 @@ class TestDetObjectItem(unittest.TestCase):
         self.item = khandy.model.DetObjectItem(
             x_min=10.0, y_min=20.0, x_max=30.0, y_max=40.0,
             conf=0.95, class_index=1, class_name="person",
-            _extra_fields={"colors": ["red"], "sizes": ["large"]}
+            colors=["red"], sizes=["large"]
         )
+        print(self.item.__dict__)
+        print(self.item.__annotations__)
 
     def test_field_access(self):
         self.assertEqual(self.item.x_min, 10.0)
@@ -23,26 +25,44 @@ class TestDetObjectItem(unittest.TestCase):
         with self.assertRaises(AttributeError):
             _ = self.item.non_existent_field
             
-    def test_post_init(self):
+    def test_init(self):
         with self.assertRaises(AssertionError):
             khandy.model.DetObjectItem(
                 x_min=10.0, y_min=20.0, x_max=30.0, y_max=40.0,
                 conf=0.95, class_index=1, class_name="person",
-                _extra_fields={"class_name": ["red"]}
+                colors=0
             )
         with self.assertRaises(AssertionError):
             khandy.model.DetObjectItem(
                 x_min=10.0, y_min=20.0, x_max=30.0, y_max=40.0,
                 conf=0.95, class_index=1, class_name="person",
-                _extra_fields={"colors": "red"}
+                colors=["red", 'green']
             )
         with self.assertRaises(AssertionError):
             khandy.model.DetObjectItem(
                 x_min=10.0, y_min=20.0, x_max=30.0, y_max=40.0,
                 conf=0.95, class_index=1, class_name="person",
-                _extra_fields={"colors": ["red", 'green']}
+                **{"colors": 0}
             )
-            
+        with self.assertRaises(AssertionError):
+            khandy.model.DetObjectItem(
+                x_min=10.0, y_min=20.0, x_max=30.0, y_max=40.0,
+                conf=0.95, class_index=1, class_name="person",
+                **{"colors": ["red", 'green']}
+            )
+        with self.assertRaises(TypeError):
+            khandy.model.DetObjectItem(
+                x_min=10.0, y_min=20.0, x_max=30.0, y_max=40.0,
+                conf=0.95, class_index=1, class_name="person",
+                **{"class_name": ["a"]}
+            )
+        with self.assertRaises(AttributeError):
+            khandy.model.DetObjectItem(
+                x_min=10.0, y_min=20.0, x_max=30.0, y_max=40.0,
+                conf=0.95, class_index=1, class_name="person",
+                **{"area": ["a"]}
+            )
+
     def test_field_modification(self):
         self.item.x_min = 10.5
         self.assertAlmostEqual(self.item.x_min, 10.5)
@@ -55,6 +75,11 @@ class TestDetObjectItem(unittest.TestCase):
             self.item.colors = "blue"
         with self.assertRaises(AssertionError):
             self.item.colors = ["blue", 'green']
+       
+        with self.assertRaises(AssertionError):
+            self.item.new_attr1 = "blue"
+        with self.assertRaises(AssertionError):
+            self.item.new_attr2 = ["blue", 'green']
             
     def test_to_det_objects(self):
         det_objects = self.item.to_det_objects()
