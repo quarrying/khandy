@@ -3,10 +3,15 @@ import math
 import numbers
 import itertools
 import warnings
+import sys
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
 from enum import Enum, auto
-from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Union, Callable
+from typing import Any, List, Literal, Optional, Tuple, Union
+
+if sys.version_info >= (3, 9):
+    from collections.abc import Sequence, Mapping, Callable
+else:
+    from typing import Sequence, Mapping, Callable
 
 import numpy as np
 

@@ -1,7 +1,12 @@
 import warnings
-from collections.abc import Sequence
-from typing import List, Tuple, Literal, Optional, Union
+import sys
+from typing import Literal, Optional, Union
 
+if sys.version_info >= (3, 9):
+    from collections.abc import Sequence
+else:
+    from typing import Sequence
+    
 import numpy as np
 
 from .boxes_overlap import pairwise_overlap_ratio
@@ -169,7 +174,7 @@ def filter_boxes_by_overlap(
     Args:
         boxes (np.ndarray): Array of bounding boxes with shape (N, 4), 
             where each box is represented as [x_min, y_min, x_max, y_max].
-        reference_box (List[Union[int, float]]): A single reference box 
+        reference_box (Sequence[Union[int, float]]): A single reference box 
             represented as [x_min, y_min, x_max, y_max].
         ratio_type (str, optional): Type of overlap ratio to compute. 
             Options are 'ioa' (intersection over area) or 'iou' 
