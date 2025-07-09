@@ -655,7 +655,7 @@ def convert_detect_ir_to_det_objects(
     return det_objects
 
 
-def _concatenate_arrays_or_sequences(
+def _concat_arrays_or_sequences(
     arrays_or_sequences: Union[List[khandy.KArray], List[Sequence]]
 ) -> Union[khandy.KArray, Sequence]:
     assert len(arrays_or_sequences) > 0
@@ -712,7 +712,7 @@ def concat_det_objects(
             name_to_list.setdefault(name, []).append(getattr(det_objects, name))
     name_to_sequence = {}
     for name, values in name_to_list.items():
-        name_to_sequence[name] = _concatenate_arrays_or_sequences(values)
+        name_to_sequence[name] = _concat_arrays_or_sequences(values)
     return DetObjects(**name_to_sequence)
 
 
@@ -720,18 +720,10 @@ def detect_in_det_objects(
     detector: BaseDetector, 
     image: np.ndarray, 
     det_objects: DetObjects, 
-    min_width: Optional[Union[int, float]] = None,
-    min_height: Optional[Union[int, float]] = None,
     **detector_kwargs
 ) -> DetObjects:
     dst_det_objects_list = []
     for det_object in det_objects:
-        # TODO: remove min_width and min_height, can use DetObjects.filter_by_size.
-        if min_width is not None and det_object.width < min_width:
-            continue
-        if min_height is not None and det_object.height < min_height:
-            continue
-
         x_min = math.floor(det_object.x_min)
         y_min = math.floor(det_object.y_min)
         x_max = math.ceil(det_object.x_max)
