@@ -23,7 +23,8 @@ __all__ = ['DetObjectItem', 'DetObjectSortDir', 'DetObjectSortBy', 'DetObjects',
            'BaseDetector', 'convert_det_objects_to_detect_ir_record', 
            'convert_detect_ir_record_to_det_objects',
            'convert_det_objects_to_detect_ir', 'convert_detect_ir_to_det_objects',
-           'concat_det_objects', 'detect_in_det_objects', 'SubsetDetector']
+           'concat_det_objects', 'detect_in_det_objects', 'SubsetDetector',
+           'get_matches', 'match_det_objects', 'merge_det_objects']
 
 
 class DetObjectItem:
@@ -665,7 +666,7 @@ def convert_detect_ir_to_det_objects(
     return det_objects
 
 
-def _concatenate_arrays_or_sequences(
+def _concat_arrays_or_sequences(
     arrays_or_sequences: Union[List[khandy.KArray], List[Sequence]]
 ) -> Union[khandy.KArray, Sequence]:
     assert len(arrays_or_sequences) > 0
@@ -722,7 +723,7 @@ def concat_det_objects(
             name_to_list.setdefault(name, []).append(getattr(det_objects, name))
     name_to_sequence = {}
     for name, values in name_to_list.items():
-        name_to_sequence[name] = _concatenate_arrays_or_sequences(values)
+        name_to_sequence[name] = _concat_arrays_or_sequences(values)
     return DetObjects(**name_to_sequence)
 
 
@@ -730,18 +731,10 @@ def detect_in_det_objects(
     detector: BaseDetector, 
     image: np.ndarray, 
     det_objects: DetObjects, 
-    min_width: Optional[Union[int, float]] = None,
-    min_height: Optional[Union[int, float]] = None,
     **detector_kwargs
 ) -> DetObjects:
     dst_det_objects_list = []
     for det_object in det_objects:
-        # TODO: remove min_width and min_height, can use DetObjects.filter_by_size.
-        if min_width is not None and det_object.width < min_width:
-            continue
-        if min_height is not None and det_object.height < min_height:
-            continue
-
         x_min = math.floor(det_object.x_min)
         y_min = math.floor(det_object.y_min)
         x_max = math.ceil(det_object.x_max)
@@ -801,3 +794,199 @@ class SubsetDetector(BaseDetector):
 
     def __call__(self, image: khandy.KArray, **kwargs) -> DetObjects:
         return self.forward(image, **kwargs)
+
+
+def get_matches(
+    overlaps: np.ndarray, 
+    thresh: float = 0.5, 
+    match_type: Literal['1vn', 'nv1', '1v1'] = '1v1'
+) -> np.ndarray:
+    """Find matching pairs of boxes based on overlap ratios.
+
+    Args:
+        overlaps (np.ndarray): A 2D array of shape `(num_boxes1, num_boxes2)` containing 
+            the overlap ratios between two sets of boxes.
+        thresh (float, optional): The overlap threshold for considering a pair of boxes 
+            as a match. Defaults to 0.5.
+        match_type (Literal['1vn', 'nv1', '1v1'], optional): The matching strategy to use:
+            - '1vn': One box from the first set can match multiple boxes from the second set.
+            - 'nv1': Multiple boxes from the first set can match one box from the second set.
+            - '1v1': One-to-one matching between boxes from the two sets.
+            Defaults to '1v1'.
+
+    Returns:
+        np.ndarray: A 2D array of shape `(num_matches, 3)` where each row contains 
+            the index of the box from the first set, the index of the box from the second set, 
+            and the overlap ratio between them.
+    """
+    if match_type.lower() not in ['1vn', 'nv1', '1v1']:
+        raise ValueError(f'Invalid match_type: {match_type}')
+
+    num_boxes1, num_boxes2 = overlaps.shape
+    if num_boxes1 >= 1 and num_boxes2 >= 1:
+        indices = np.nonzero(overlaps >= thresh)
+        matches = np.concatenate((np.stack(indices, 1), overlaps[indices][:, None]), 1)
+        if match_type.lower() in ['1vn', '1v1']:
+            matches = matches[matches[:, 2].argsort()[::-1]]
+            matches = matches[np.unique(matches[:, 1], return_index=True)[1]]
+        if match_type.lower() in ['nv1', '1v1']:
+            matches = matches[matches[:, 2].argsort()[::-1]]
+            matches = matches[np.unique(matches[:, 0], return_index=True)[1]]
+    else:
+        matches = np.zeros((0, 3))
+    return matches
+
+
+def _adjust_boxes(boxes, classes, max_coordinate=None):
+    """Adjust the boxes by adding an offset based on their class indices.
+
+    This method is used to perform boxes matching independently per class.
+    An offset is added to each box such that boxes from different classes do not overlap.
+
+    Args:
+        boxes (np.ndarray): A 2D array of shape `(num_boxes, 4)` containing the bounding boxes.
+        classes (np.ndarray): A 1D array of shape `(num_boxes,)` containing the class indices of the boxes.
+        max_coordinate (float, optional): The maximum coordinate value among all boxes. 
+            If None, it will be calculated from the boxes. Defaults to None.
+
+    Returns:
+        np.ndarray: A 2D array of shape `(num_boxes, 4)` containing the adjusted boxes.
+    """
+    classes = np.asarray(classes)
+    if max_coordinate is None:
+        max_coordinate = np.max(boxes)
+    offsets = classes * (max_coordinate + 1)
+    if offsets.ndim == 1:
+        offsets = offsets[:, None]
+    # cannot use inplace add
+    boxes = boxes + offsets
+    return boxes
+
+
+def match_det_objects(
+    det_objects1: DetObjects,
+    det_objects2: DetObjects,
+    thresh: float = 0.5, 
+    ratio_type: Literal['iou', 'iom'] = 'iou',
+    match_type: Literal['1vn', 'nv1', '1v1'] = '1v1',
+    return_missed_inds: bool = False,
+    class_agnostic: bool = False
+)-> Union[List[Tuple[int, int]], Tuple[List[Tuple[int, int]], List[int], List[int]]]:
+    """Match detection objects from two sets based on their overlap ratios.
+
+    Args:
+        det_objects1 (DetObjects): The first set of detection objects.
+        det_objects2 (DetObjects): The second set of detection objects.
+        thresh (float, optional): The overlap threshold for considering a pair of objects as a match.
+            Defaults to 0.5.
+        ratio_type (Literal['iou', 'iom'], optional): The type of overlap ratio to use, either 'iou' 
+            (Intersection over Union) or 'iom' (Intersection over Minimum). Defaults to 'iou'.
+        match_type (Literal['1vn', 'nv1', '1v1'], optional): The matching strategy to use:
+            - '1vn': One object from the first set can match multiple objects from the second set.
+            - 'nv1': Multiple objects from the first set can match one object from the second set.
+            - '1v1': One-to-one matching between objects from the two sets.
+            Defaults to '1v1'.
+        return_missed_inds (bool, optional): If True, return the indices of missed objects in both sets. 
+            Defaults to False.
+        class_agnostic (bool, optional): If True, perform class-agnostic matching. Defaults to False.
+
+    Returns:
+        Union[List[Tuple[int, int]], Tuple[List[Tuple[int, int]], List[int], List[int]]]:
+            If return_missed_inds is False, return a list of tuples containing the indices of matched objects.
+            If return_missed_inds is True, return a tuple containing the list of matched indices,
+            the list of missed indices in det_objects1, and the list of missed indices in det_objects2.
+    """
+    num_objects1, num_objects2 = len(det_objects1), len(det_objects2)
+    if num_objects1 == 0 or num_objects2 == 0:
+        if not return_missed_inds:
+            return []
+        else:
+            missed_obj1_inds = list(set(range(num_objects1)))
+            missed_obj2_inds = list(set(range(num_objects2)))
+            return [], missed_obj1_inds, missed_obj2_inds
+
+    if not class_agnostic:
+        max_coordinate = np.max([np.max(det_objects1.boxes), np.max(det_objects2.boxes)])
+        boxes1 = _adjust_boxes(det_objects1.boxes, det_objects1.classes, max_coordinate=max_coordinate)
+        boxes2 = _adjust_boxes(det_objects2.boxes, det_objects2.classes, max_coordinate=max_coordinate)
+    else:
+        boxes1, boxes2 = det_objects1.boxes, det_objects2.boxes
+
+    overlaps = khandy.pairwise_overlap_ratio(boxes1, boxes2, ratio_type)
+    matches = get_matches(overlaps, thresh, match_type)
+    matched_ind_pairs = [(int(obj1_ind), int(obj2_ind)) for obj1_ind, obj2_ind, _ in matches]
+
+    if not return_missed_inds:
+        return matched_ind_pairs
+    else:
+        matched_obj1_inds = [obj1_ind for obj1_ind, obj2_ind in matched_ind_pairs]
+        matched_obj2_inds = [obj2_ind for obj1_ind, obj2_ind in matched_ind_pairs]
+        missed_obj1_inds = list(set(range(num_objects1)) - set(matched_obj1_inds))
+        missed_obj2_inds = list(set(range(num_objects2)) - set(matched_obj2_inds))
+        return matched_ind_pairs, missed_obj1_inds, missed_obj2_inds
+
+
+def merge_det_objects(
+    det_objects1: DetObjects,
+    det_objects2: DetObjects,
+    thresh: float = 0.5,
+    ratio_type: Literal['iou', 'iom'] = 'iou',
+    match_type: Literal['1vn', 'nv1', '1v1'] = '1v1',
+    merge_type: Literal['object1', 'object2', 'max_conf', 'max_area'] = 'max_conf',
+    class_agnostic: bool = False
+) -> DetObjects:
+    """
+    Merge two sets of detection objects based on their overlap ratios.
+
+    Args:
+        det_objects1 (DetObjects): The first set of detection objects.
+        det_objects2 (DetObjects): The second set of detection objects.
+        thresh (float, optional): The overlap threshold for considering a pair of objects as a match. 
+            Defaults to 0.5.
+        ratio_type (Literal['iou', 'iom'], optional): The type of overlap ratio to use, either 'iou' 
+            (Intersection over Union) or 'iom' (Intersection over Minimum). Defaults to 'iou'.
+        match_type (Literal['1vn', 'nv1', '1v1'], optional): The matching strategy to use:
+            - '1vn': One object from the first set can match multiple objects from the second set.
+            - 'nv1': Multiple objects from the first set can match one object from the second set.
+            - '1v1': One-to-one matching between objects from the two sets.
+            Defaults to '1v1'.
+        merge_type (Literal['object1', 'object2', 'max_conf', 'max_area'], optional): The merging strategy to use:
+            - 'object1': Keep objects from the first set and unmatched objects from the second set.
+            - 'object2': Keep objects from the second set and unmatched objects from the first set.
+            - 'max_conf': Keep the object with the maximum confidence score from each matched pair.
+            - 'max_area': Keep the object with the maximum area from each matched pair.
+            Defaults to 'max_conf'.
+        class_agnostic (bool, optional): If True, perform class-agnostic matching. Defaults to False.
+
+    Returns:
+        DetObjects: A new DetObjects instance containing the merged detection objects.
+    """
+    if len(det_objects1) == 0 or len(det_objects2) == 0:
+        return concat_det_objects([det_objects1, det_objects2], only_common_fields=True)
+    
+    matched_ind_pairs, missed_obj1_inds, missed_obj2_inds = match_det_objects(
+        det_objects1, det_objects2, thresh, ratio_type, match_type, 
+        return_missed_inds=True, class_agnostic=class_agnostic)
+
+    if merge_type.lower() in ['object1', 'box1', 'obj1']:
+        det_objects_list = [det_objects1, det_objects2[missed_obj2_inds]]
+    elif merge_type.lower() in ['object2', 'box2', 'obj2']:
+        det_objects_list = [det_objects1[missed_obj1_inds], det_objects2]
+    elif merge_type.lower() == 'max_conf':
+        det_objects_list = [det_objects1[missed_obj1_inds], det_objects2[missed_obj2_inds]]
+        for box1_ind, box2_ind in matched_ind_pairs:
+            if det_objects2[box2_ind].conf >= det_objects1[box1_ind].conf:
+                det_objects_list.append(det_objects2[box2_ind])
+            else:
+                det_objects_list.append(det_objects1[box1_ind])
+    elif merge_type.lower() == 'max_area':
+        det_objects_list = [det_objects1[missed_obj1_inds], det_objects2[missed_obj2_inds]]
+        for box1_ind, box2_ind in matched_ind_pairs:
+            if det_objects2[box2_ind].area >= det_objects1[box1_ind].area:
+                det_objects_list.append(det_objects2[box2_ind])
+            else:
+                det_objects_list.append(det_objects1[box1_ind])
+    else:
+        raise ValueError(f'Unsupported merge_type, got {merge_type}')
+
+    return concat_det_objects(det_objects_list, only_common_fields=True)

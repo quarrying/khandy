@@ -262,6 +262,80 @@ class TestConcatDetObjects(unittest.TestCase):
         self.assertTrue(result.class_extras, ['c', 'd'])
 
 
+class TestGetMatches(unittest.TestCase):
+    def setUp(self):
+       
+       self.overlaps = np.array([
+            [0.6, 0.4, 0.7],
+            [0.8, 0.2, 0.5],
+            [0.9, 0.3, 0.5],
+        ])
+        # overlaps >= 0.4
+        # [[ True  True  True]
+        #  [ True False  True]
+        #  [ True False  True]
+        # matches
+        # [[0.  0.  0.6]
+        #  [0.  1.  0.4]
+        #  [0.  2.  0.7]
+        #  [1.  0.  0.8]
+        #  [1.  2.  0.5]
+        #  [2.  0.  0.9]
+        #  [2.  2.  0.5]]
+
+    def test_empty_input(self):
+        """Test when either set of boxes is empty."""
+        # Both sets empty
+        overlaps = np.zeros((0, 0))
+        result = khandy.model.get_matches(overlaps)
+        self.assertEqual(result.shape, (0, 3))
+        
+        # First set empty
+        overlaps = np.zeros((0, 5))
+        result = khandy.model.get_matches(overlaps)
+        self.assertEqual(result.shape, (0, 3))
+        
+        # Second set empty
+        overlaps = np.zeros((5, 0))
+        result = khandy.model.get_matches(overlaps)
+        self.assertEqual(result.shape, (0, 3))
+
+    def test_1vn_matching(self):
+        """Test one-to-many matching."""
+        expected = np.array([
+            [2, 0, 0.9],
+            [0, 1, 0.4],
+            [0, 2, 0.7]
+        ])
+        result = khandy.model.get_matches(self.overlaps, thresh=0.4, match_type='1vn')
+        np.testing.assert_array_equal(result, expected)
+
+    def test_nv1_matching(self):
+        """Test many-to-one matching."""
+        expected = np.array([
+            [0, 2, 0.7],
+            [1, 0, 0.8],
+            [2, 0, 0.9]
+        ])
+        result = khandy.model.get_matches(self.overlaps, thresh=0.4, match_type='nv1')
+        np.testing.assert_array_equal(result, expected)
+
+    def test_1v1_matching(self):
+        """Test one-to-one matching."""
+        expected = np.array([
+            [0, 2, 0.7],
+            [2, 0, 0.9]
+        ])
+        result = khandy.model.get_matches(self.overlaps, thresh=0.2, match_type='1v1')
+        np.testing.assert_array_equal(result, expected)
+
+    def test_invalid_match_type(self):
+        """Test that invalid match types raise an error."""
+        overlaps = np.array([[0.5]])
+        with self.assertRaises(ValueError):
+            khandy.model.get_matches(overlaps, match_type='invalid')
+
+
 if __name__ == '__main__':
     unittest.main()
     
