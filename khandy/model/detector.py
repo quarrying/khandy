@@ -153,20 +153,20 @@ class DetObjects(khandy.EqLenSequences):
 
     @class_indices.setter
     def class_indices(self, value):
-        self.classes = self._set_classes(value)
+        self.classes = self._normalize_classes(value)
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name == 'boxes':
-            value = self._set_boxes(value)
+            value = self._normalize_boxes(value)
         elif name == 'confs':
-            value = self._set_confs(value)
+            value = self._normalize_confs(value)
         elif name == 'classes':
-            value = self._set_classes(value)
+            value = self._normalize_classes(value)
         elif name == 'class_names':
-            value = self._set_class_names(value)
+            value = self._normalize_class_names(value)
         super().__setattr__(name, value)
 
-    def _set_boxes(self, boxes: Optional[khandy.KArray] = None) -> khandy.KArray:
+    def _normalize_boxes(self, boxes: Optional[khandy.KArray] = None) -> khandy.KArray:
         if boxes is None:
             boxes = np.empty((len(self), 4), dtype=np.float32)
         if torch is not None and isinstance(boxes, torch.Tensor):
@@ -183,7 +183,7 @@ class DetObjects(khandy.EqLenSequences):
         assert boxes.shape[1] == 4, f'boxes last axis size is not 4, got {boxes.shape[1]}'
         return boxes
 
-    def _set_confs(self, confs: Optional[khandy.KArray] = None) -> khandy.KArray:
+    def _normalize_confs(self, confs: Optional[khandy.KArray] = None) -> khandy.KArray:
         if isinstance(self.boxes, np.ndarray):
             if confs is None:
                 confs = np.ones((len(self),), dtype=np.float32)
@@ -200,7 +200,7 @@ class DetObjects(khandy.EqLenSequences):
         assert confs.ndim == 1, f'confs ndim is not 1, got {confs.ndim}'
         return confs
 
-    def _set_classes(self, classes: Optional[khandy.KArray] = None) -> khandy.KArray:
+    def _normalize_classes(self, classes: Optional[khandy.KArray] = None) -> khandy.KArray:
         if isinstance(self.boxes, np.ndarray):
             if classes is None:
                 classes = np.zeros((len(self),), dtype=np.int32)
@@ -217,7 +217,7 @@ class DetObjects(khandy.EqLenSequences):
         assert classes.ndim == 1, f'classes ndim is not 1, got {classes.ndim}'
         return classes
 
-    def _set_class_names(self, class_names: Optional[List[str]] = None) -> List[str]:
+    def _normalize_class_names(self, class_names: Optional[List[str]] = None) -> List[str]:
         if class_names is None:
             class_names = [f'unnamed_class#{class_ind}' for class_ind in self.classes]
 
