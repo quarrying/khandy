@@ -9,8 +9,6 @@ class TestDetObjectItem(unittest.TestCase):
             conf=0.95, class_index=1, class_name="person",
             colors=["red"], sizes=["large"]
         )
-        print(self.item.__dict__)
-        print(self.item.__annotations__)
 
     def test_field_access(self):
         self.assertEqual(self.item.x_min, 10.0)

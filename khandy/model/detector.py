@@ -9,9 +9,9 @@ from enum import Enum, auto
 from typing import Any, List, Literal, Optional, Tuple, Union
 
 if sys.version_info >= (3, 9):
-    from collections.abc import Sequence, Mapping, Callable
+    from collections.abc import Sequence, Mapping, Callable, Iterator
 else:
-    from typing import Sequence, Mapping, Callable
+    from typing import Sequence, Mapping, Callable, Iterator
 
 import numpy as np
 
@@ -234,6 +234,11 @@ class DetObjects(khandy.EqLenSequences):
             )
         return item
 
+    def __iter__(self) -> Iterator[DetObjectItem]:
+        # only for Pylance type reason
+        for i in range(len(self)):
+            yield self[i]
+            
     def filter_by_class_index(self, interested_class_inds, inplace=False) -> "DetObjects":
         warnings.warn(
             "filter_by_class_index is deprecated, use filter_by_class_indices instead.",
