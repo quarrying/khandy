@@ -76,6 +76,8 @@ class DetObjectItem:
                 raise AssertionError(f'Extra field {name} value must have __len__ attribute')
             if len(value) != 1:
                 raise AssertionError(f'Extra field {name} value must have length 1, got {len(value)}')
+            if not hasattr(value, '__getitem__'):
+                raise AssertionError(f'Extra field {name} value must contain __getitem__ attribute')
             self._extra_fields[name] = value
         else:
             super().__setattr__(name, value)
@@ -143,6 +145,14 @@ class DetObjects(khandy.EqLenSequences):
             class_names=class_names, 
             **kwargs
         )
+
+    @property
+    def class_indices(self) -> khandy.KArray:
+        return self.classes
+
+    @class_indices.setter
+    def class_indices(self, value):
+        self.classes = self._set_classes(value)
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name == 'boxes':

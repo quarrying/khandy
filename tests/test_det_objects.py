@@ -214,6 +214,13 @@ class TestDetObjects(unittest.TestCase):
         det_objects2 = det_objects.filter_by_func(func, inplace=True)
         self.assertTrue(len(det_objects2) == 0)
 
+    def test_set_class_indices(self):
+        det_objects = khandy.model.DetObjects(boxes=np.random.randn(3, 4))
+        test_array = np.array([[0], [1], [2]])
+        det_objects.class_indices = test_array
+        self.assertTrue(np.array_equal(det_objects.classes, test_array.flatten()))
+        self.assertTrue(np.array_equal(det_objects.classes, det_objects.class_indices))
+
 
 class TestConcatDetObjects(unittest.TestCase):
     def setUp(self):
