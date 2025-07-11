@@ -616,7 +616,7 @@ def convert_detect_ir_record_to_det_objects(
     det_objects = DetObjects(
         boxes=boxes, 
         class_names=class_names,
-        class_indices=class_indices
+        classes=class_indices
     )
     return det_objects
 
@@ -637,10 +637,12 @@ def convert_det_objects_to_detect_ir(
 
 
 def convert_detect_ir_to_det_objects(
-    detect_ir: Union[khandy.label.DetectIrRecord, 
-                     khandy.label.DetectIrObject, 
-                     List[khandy.label.DetectIrObject]],
-    label2index: Optional[Mapping[str, int]] = None
+    detect_ir: Union[
+        khandy.label.DetectIrRecord,
+        khandy.label.DetectIrObject,
+        List[khandy.label.DetectIrObject],
+    ],
+    label2index: Optional[Mapping[str, int]] = None,
 ) -> DetObjects:
     if isinstance(detect_ir, khandy.label.DetectIrRecord):
         ir_objects = detect_ir.objects
@@ -648,7 +650,7 @@ def convert_detect_ir_to_det_objects(
         ir_objects = [detect_ir]
     else:
         ir_objects = detect_ir
-        
+
     class_names, boxes = [], []
     for ir_object in ir_objects:
         class_names.append(ir_object.label)
@@ -661,7 +663,7 @@ def convert_detect_ir_to_det_objects(
     det_objects = DetObjects(
         boxes=boxes, 
         class_names=class_names,
-        class_indices=class_indices
+        classes=class_indices
     )
     return det_objects
 

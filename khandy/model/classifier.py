@@ -14,8 +14,12 @@ __all__ = ['ClassifierResultItem', 'ClassifierResults', 'BaseTopKClassifier',
            'Gallery', 'find_topk', 'find_topk_in_gallery']
 
 
-def find_topk(inputs, indices_list: Optional[List[List[int]]] = None, 
-              k: int = 3, do_softmax: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+def find_topk(
+    inputs: np.ndarray,
+    indices_list: Optional[List[List[int]]] = None,
+    k: int = 3,
+    do_softmax: bool = False,
+) -> Tuple[np.ndarray, np.ndarray]:
     if indices_list is not None:
         if do_softmax:
             valid_indices = list(set(sum(indices_list, [])))
@@ -179,9 +183,11 @@ class ClassCollectionItem:
 
 
 def find_topk_in_collections(
-        inputs, collections: Dict[str, List[ClassCollectionItem]], 
-        k: int = 3, do_softmax: bool = False
-    ) -> List[Dict[str, ClassifierResults]]:
+    inputs: np.ndarray,
+    collections: Dict[str, List[ClassCollectionItem]],
+    k: int = 3,
+    do_softmax: bool = False,
+) -> List[Dict[str, ClassifierResults]]:
     num_examples = len(inputs)
     results = [{} for _ in range(num_examples)]
     for collection_name, collection_val in collections.items(): # #collection
@@ -226,28 +232,30 @@ class Gallery:
         self._features = features
         self._collections = collections
         self._model_name = model_name
-    
+
     @property
     def features(self) -> np.ndarray:
         return self._features
-    
+
     @property
     def collections(self) -> Dict[str, List[ClassCollectionItem]]:
         return self._collections
-    
+
     @property
     def model_name(self) -> str:
         return self._model_name
-    
+
     @property
     def size(self) -> int:
         return len(self.features)
-    
+
     @property
     def feature_dim(self) -> int:
         return self.features.shape[-1]
 
 
-def find_topk_in_gallery(inputs, gallery: Gallery, k: int = 3) -> List[Dict[str, ClassifierResults]]:
+def find_topk_in_gallery(
+    inputs: np.ndarray, gallery: Gallery, k: int = 3
+) -> List[Dict[str, ClassifierResults]]:
     logits = np.dot(inputs, gallery.features.T)
     return find_topk_in_collections(logits, gallery.collections, k, do_softmax=True)
