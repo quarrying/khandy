@@ -24,7 +24,8 @@ __all__ = ['DetObjectItem', 'DetObjectSortDir', 'DetObjectSortBy', 'DetObjects',
            'convert_detect_ir_record_to_det_objects',
            'convert_det_objects_to_detect_ir', 'convert_detect_ir_to_det_objects',
            'concat_det_objects', 'detect_in_det_objects', 'SubsetDetector',
-           'get_matches', 'match_det_objects', 'merge_det_objects']
+           'get_matches', 'match_det_objects', 'merge_det_objects',
+           'save_det_objects', 'load_det_objects']
 
 
 class DetObjectItem:
@@ -1002,3 +1003,76 @@ def merge_det_objects(
         raise ValueError(f'Unsupported merge_type, got {merge_type}')
 
     return concat_det_objects(det_objects_list, only_common_fields=True)
+
+
+def save_det_objects(filename: str, det_objects: DetObjects):
+    """Save detection objects to a formatted text file.
+    
+    Args:
+        filename: Output file path
+        det_objects: DetObjects instance to save
+    
+    File Format:
+        Header row with column names, followed by aligned data rows.
+        Columns: [index, x_min, y_min, x_max, y_max, conf, name]
+        Numeric values are formatted to 5 decimal places
+    """
+    header_names = ['index', 'x_min', 'y_min', 'x_max', 'y_max', 'conf', 'name']
+    rows = []
+    for obj in det_objects:
+        rows.append(
+            [
+                f"{obj.class_index}",
+                f"{obj.x_min:.5f}",
+                f"{obj.y_min:.5f}",
+                f"{obj.x_max:.5f}",
+                f"{obj.y_max:.5f}",
+                f"{obj.conf:.5f}",
+                obj.class_name,
+            ]
+        )
+
+    min_length = 5 
+    lengths = [max(min_length, len(header)) for header in header_names]
+    for row in rows:
+        lengths = [max(len(cell), lengths[k]) for k, cell in enumerate(row)]
+
+    aligned_rows = [[f'{header}'.rjust(lengths[k]) for k, header in enumerate(header_names)]]
+    for row in rows:
+        aligned_rows.append([f'{cell}'.rjust(lengths[k]) for k, cell in enumerate(row)])
+    records = [', '.join(row) for row in aligned_rows]
+    khandy.save_list(filename, records)
+
+
+def load_det_objects(filename: str) -> DetObjects:
+    """Load detection objects from a formatted text file.
+    
+    Args:
+        filename: Input file path to load from
+        
+    Returns:
+        DetObjects: Reconstructed detection objects container
+        
+    Raises:
+        AssertionError: If file header doesn't match expected format
+    """
+    records = khandy.load_list(filename)
+    det_objects = []
+    header_names = records[0].split(',')
+    header_names = [header.strip() for header in header_names]
+    assert header_names == ['index', 'x_min', 'y_min', 'x_max', 'y_max', 'conf', 'name'], \
+        f"Invalid header, got {header_names}"
+
+    for record in records[1:]:
+        record = record.split(',')
+        class_index, x_min, y_min, x_max, y_max, conf, name = record
+        det_objects.append(DetObjectItem(
+            x_min=float(x_min.strip()),
+            y_min=float(y_min.strip()),
+            x_max=float(x_max.strip()),
+            y_max=float(y_max.strip()),
+            conf=float(conf.strip()),
+            class_index=int(class_index.strip()),
+            class_name=name.strip(),
+        ))
+    return concat_det_objects(det_objects)

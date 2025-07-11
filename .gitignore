@@ -3,6 +3,7 @@
 *.json
 *.pkl
 *.swp
+*.tmp
 archive.py
 _run_*.py
 

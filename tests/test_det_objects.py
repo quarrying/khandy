@@ -1,3 +1,5 @@
+import os
+import tempfile
 import unittest
 import warnings
 
@@ -342,6 +344,21 @@ class TestGetMatches(unittest.TestCase):
         with self.assertRaises(ValueError):
             khandy.model.get_matches(overlaps, match_type='invalid')
 
+
+class TestSaveLoadDetObjects(unittest.TestCase):
+    def test_normal_case(self):
+        det_objects = khandy.model.DetObjects(
+            boxes=np.array([[0, 0, 1, 1], [1, 1, 2, 2]]),
+            confs=np.array([0.8, 0.9]),
+            classes=np.array([0, 1]),
+            class_names=["class_0", "class_1"]
+        )
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            temp_name = os.path.join(tmp_dir, "custom_name.tmp")
+            khandy.model.save_det_objects(temp_name, det_objects) 
+            loaded_det_objects = khandy.model.load_det_objects(temp_name)
+            self.assertTrue(np.allclose(det_objects.boxes, loaded_det_objects.boxes))
+        
 
 if __name__ == '__main__':
     unittest.main()
