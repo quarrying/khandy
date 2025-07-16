@@ -365,14 +365,11 @@ class YoloRecord:
 class YoloHandler:
     @staticmethod
     def load(filename, **kwargs) -> YoloRecord:
-        assert 'image_filename' in kwargs
-        assert 'width' in kwargs and 'height' in kwargs
-
         records = khandy.load_list(filename)
         yolo_record = YoloRecord(
-            filename=kwargs.get('image_filename'),
-            width=kwargs.get('width'),
-            height=kwargs.get('height'))
+            filename=kwargs.get('image_filename', ''),
+            width=kwargs.get('width', 1),
+            height=kwargs.get('height', 1))
         for record in records:
             record_parts = record.split()
             yolo_record.objects.append(YoloObject(
@@ -648,10 +645,16 @@ def load_detect(filename, fmt, **kwargs) -> Union[DetectIrRecord, List[DetectIrR
         ir_record = LabelBeeHandler.to_ir(labelbee_record)
     else:
         raise ValueError(f"Unsupported detect label fmt. Got {fmt}")
+    if isinstance(ir_record, DetectIrRecord):
+        if ir_record.width == 1 and ir_record.height == 1:
+            warnings.warn("width and height is 1, you are using relative coordinates")
     return ir_record
 
 
-def save_detect(filename, ir_record: DetectIrRecord, out_fmt):
+def save_detect(filename, ir_record: DetectIrRecord, out_fmt: str):
+    if ir_record.width == 1 and ir_record.height == 1:
+        warnings.warn("width and height is 1, you are using relative coordinates")
+
     os.makedirs(os.path.dirname(os.path.abspath(filename)), exist_ok=True)
     if out_fmt == 'labelme':
         labelme_record = LabelmeHandler.from_ir(ir_record)
