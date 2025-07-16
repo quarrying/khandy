@@ -4,7 +4,7 @@ import re
 import shutil
 import warnings
 from datetime import datetime
-from typing import Callable, List, Literal, Optional, Union
+from typing import Callable, List, Tuple, Literal, Optional, Union
 
 
 def get_path_stem(path: str) -> str:
@@ -70,29 +70,25 @@ def is_path_in_extensions(path: str, extensions: Union[str, List[str]]) -> bool:
     return extension.lower() in extensions
 
 
-def get_path_parts(path: str, sep: Optional[Literal['/', '\\']] = None) -> List[str]:
+def get_path_parts(path: str) -> Tuple[str]:
     """Splits a file path into its constituent parts.  
   
     Args:
         path (str): The file path to be split.  
-        sep (Optional[Literal['/', '\\']], optional): The separator to use for splitting the path.  
-            Must be None, '/', or '\\'. Defaults to the system-specific path separator (os.path.sep).  
   
     Returns:
-        List[str]: A list of strings representing the individual parts of the path.  
-  
-    Raises:
-        ValueError: If sep is not None, '/', or '\\'.
+        Tuple[str]: A list of strings representing the individual parts of the path.  
 
     Notes:
         This implementation is different from pathlib.Path.parts. 
     """
-    if sep is not None and sep not in ('/', '\\'):
-        raise ValueError("sep must be None, '/', or '\\'")
-    sep = sep or os.path.sep
     path = os.path.normpath(path)
-    parts = path.split(sep)
-    return parts
+    parts = path.split(os.path.sep)
+    if parts[-1] == '':
+        parts = parts[:-1]
+    if parts[0] == '.':
+        parts = parts[1:]
+    return tuple(parts)
 
 
 def normalize_path(path: str, norm_case: bool = True) -> str:
