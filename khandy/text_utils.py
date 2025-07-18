@@ -1,14 +1,14 @@
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Literal
 
 CONTENT_WITH_HW_PAREN_PATTERN = r'(?:(?P<out_paren>[^(]+))?'
-CONTENT_WITH_HW_PAREN_PATTERN += r'(?:[(](?P<in_paren>[^)]*)[)])?'
+CONTENT_WITH_HW_PAREN_PATTERN += r'(?:[(](?P<in_paren>[^)]+)[)])?'
 CONTENT_WITH_HW_PAREN_PATTERN_OBJ = re.compile(CONTENT_WITH_HW_PAREN_PATTERN)
 
 CONTENT_WITH_FW_PAREN_PATTERN = r'(?:(?P<out_paren>[^（]+))?'
-CONTENT_WITH_FW_PAREN_PATTERN += r'(?:（(?P<in_paren>[^）]*)）)?'
+CONTENT_WITH_FW_PAREN_PATTERN += r'(?:（(?P<in_paren>[^）]+)）)?'
 CONTENT_WITH_FW_PAREN_PATTERN_OBJ = re.compile(CONTENT_WITH_FW_PAREN_PATTERN)
 
 CONTENT_IN_PAREN_PATTERN = r"\([^)]*\)|（[^）]*）"
@@ -51,36 +51,56 @@ def has_nested_or_unmatched_paren(string: str, paren_type: str = 'hw') -> bool:
     return len(stack) != 0
 
 
-def split_content_with_paren(string: str, paren_type: str = 'hw') -> Tuple[Optional[str], Optional[str]]:
-    """Split a string into two parts based on the presence of parentheses of a specified type.
-  
+def split_content_with_paren(
+    string: str, 
+    paren_type: Literal['hw', 'fw'] = 'hw'
+) -> Tuple[Optional[str], Optional[str]]:
+    """Split a string into content outside and inside parentheses.
+    
     Args:
-        string (str): The input string to be split.
-        paren_type (str, optional): The type of parentheses to split on. Defaults to 'hw' (half-width parentheses).
-            Accepted values are 'hw' for half-width parentheses and 'fw' for full-width parentheses.
-  
+        string: Input string to be processed
+        paren_type: Type of parentheses to handle, either:
+            - 'hw' for half-width parentheses: ()
+            - 'fw' for full-width parentheses: （）
+            Defaults to 'hw'
+            
     Returns:
         Tuple[Optional[str], Optional[str]]: A tuple containing two optional string elements.
             The first element is the part outside the parentheses (or None if not found).
             The second element is the part inside the parentheses (or None if not found).
-  
-    Raises:  
-        AssertionError: If the `paren_type` is not one of 'hw' or 'fw'.
-    """ 
-    assert paren_type in ('hw', 'fw'), f"Paren type must be either 'hw' or 'fw', got {paren_type}."
+        
+    Raises:
+        AssertionError: If invalid paren_type is provided
+        ValueError: If string contains:
+            - Nested/unmatched parentheses
+            - Fails to match the expected pattern
+            
+    Examples:
+        >>> split_content_with_paren("hello(world)", "hw")
+        ('hello', 'world')
+        
+        >>> split_content_with_paren("你好（世界）", "fw") 
+        ('你好', '世界')
+        
+        >>> split_content_with_paren("no parentheses")
+        ('no parentheses', None)
+    """
+    if paren_type not in ('hw', 'fw'):
+        raise AssertionError(f"Paren type must be either 'hw' or 'fw', got {paren_type}.")
+    
     pattern_obj = {
         'hw': CONTENT_WITH_HW_PAREN_PATTERN_OBJ,
         'fw': CONTENT_WITH_FW_PAREN_PATTERN_OBJ
     }[paren_type]
 
-    if has_nested_or_unmatched_paren(string, 'hw'):
-        return None, None
+    if has_nested_or_unmatched_paren(string, paren_type):
+        raise ValueError(f'nested or unmatched paren: {string}')
     matched = pattern_obj.fullmatch(string)
     if matched is None:
-        return None, None
+        raise ValueError(f'parse failure: {string}')
     outside, inside = matched.groups()
     return outside, inside
-    
+
 
 def strip_content_in_paren(string: str) -> str:
     """
