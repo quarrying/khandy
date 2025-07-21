@@ -74,16 +74,6 @@ def split_content_with_paren(
         ValueError: If string contains:
             - Nested/unmatched parentheses
             - Fails to match the expected pattern
-            
-    Examples:
-        >>> split_content_with_paren("hello(world)", "hw")
-        ('hello', 'world')
-        
-        >>> split_content_with_paren("你好（世界）", "fw") 
-        ('你好', '世界')
-        
-        >>> split_content_with_paren("no parentheses")
-        ('no parentheses', None)
     """
     if paren_type not in ('hw', 'fw'):
         raise AssertionError(f"Paren type must be either 'hw' or 'fw', got {paren_type}.")
@@ -100,6 +90,46 @@ def split_content_with_paren(
         raise ValueError(f'parse failure: {string}')
     outside, inside = matched.groups()
     return outside, inside
+
+
+def split_before_after(
+    text: str,
+    strip_whitespace: bool = True,
+    sep: str = '$'
+) -> Tuple[Optional[str], Optional[str]]:
+    """Split a string into two parts by a separator.
+
+    Args:
+        text (str): The input string to split.
+        strip_whitespace (bool, optional): Whether to strip whitespace from both parts. Defaults to True.
+        sep (str, optional): The separator to split on. Defaults to '$'.
+
+    Returns:
+        Tuple[Optional[str], Optional[str]]: A tuple (before, after). If a part is empty, it will be None.
+
+    Raises:
+        ValueError: If the string ends with the separator, or contains more than one separator.
+    """
+    if strip_whitespace:
+        text = text.strip()
+        
+    if text.endswith(sep):
+        raise ValueError(f'cannot end with "{sep}": {text}')
+    parts = text.split(sep)
+    if len(parts) > 2:
+        raise ValueError(f'cannot contain more than one "{sep}": {text}')
+
+    before_part = parts[0]
+    after_part = parts[1] if len(parts) == 2 else ''
+    
+    if strip_whitespace:
+        before_part = before_part.strip()
+        after_part = after_part.strip()
+    if before_part == '':
+        before_part = None
+    if after_part == '':
+        after_part = None
+    return before_part, after_part
 
 
 def strip_content_in_paren(string: str) -> str:
