@@ -729,20 +729,69 @@ def convert_detect(record, out_fmt):
     return dst_record
 
 
-def replace_detect_label(record: DetectIrRecord, label_map: Dict[str, str], ignore: bool = True) -> DetectIrRecord:
-    dst_record = copy.deepcopy(record)
+def replace_detect_label(
+    detect_ir: Union[DetectIrRecord, List[DetectIrObject]], 
+    label_map: Union[Dict[str, Optional[str]], Callable[[str], Optional[str]]], 
+    ignore_none: bool = False
+) -> Union[DetectIrRecord, List[DetectIrObject]]:
+    """Replace the labels of detection objects based on a mapping.
+
+    This function replaces the labels of detection objects in a `DetectIrRecord` or a list of `DetectIrObject`
+    using a provided mapping. The mapping can be a dictionary or a callable. Unmapped labels can be ignored
+    or retained based on the `ignore_none` parameter.
+
+    Parameters:
+        detect_ir (Union[DetectIrRecord, List[DetectIrObject]]): 
+            The input detection data, which can be a `DetectIrRecord` or a list of `DetectIrObject`.
+        label_map (Union[Dict[str, Optional[str]], Callable[[str], Optional[str]]]): 
+            A mapping for label replacement. It can be:
+            - A dictionary where keys are original labels and values are new labels.
+            - A callable that takes an original label as input and returns a new label.
+        ignore_none (bool, optional): 
+            If `True`, detection objects with labels that are not mapped (i.e., `None`) will be ignored.
+            Defaults to `False`.
+
+    Returns:
+        Union[DetectIrRecord, List[DetectIrObject]]: 
+            A new `DetectIrRecord` or list of `DetectIrObject` with updated labels.
+
+    Raises:
+        TypeError: If `detect_ir` is not a `DetectIrRecord` or a list of `DetectIrObject`.
+        TypeError: If `label_map` is neither a dictionary nor a callable.
+    """
+    if isinstance(detect_ir, DetectIrRecord):
+        ir_objects = copy.deepcopy(detect_ir.objects)
+    elif khandy.is_list_of(detect_ir, DetectIrObject):
+        ir_objects = copy.deepcopy(detect_ir)
+    else:
+        raise TypeError('detect_ir must be DetectIrRecord or list of DetectIrObject')
+    
+    if not (isinstance(label_map, dict) or callable(label_map)):
+        raise TypeError("label_map must be a dictionary or a callable")
+
     dst_objects = []
-    for ir_object in dst_record.objects:
-        if not ignore:
-            if ir_object.label in label_map:
-                ir_object.label = label_map[ir_object.label]
-            dst_objects.append(ir_object)
+    for ir_object in ir_objects:
+        if callable(label_map):
+            new_label = label_map(ir_object.label)
         else:
-            if ir_object.label in label_map:
-                ir_object.label = label_map[ir_object.label]
-                dst_objects.append(ir_object)
-    dst_record.objects = dst_objects
-    return dst_record
+            new_label = label_map.get(ir_object.label)
+
+        if new_label is not None:
+            ir_object.label = new_label
+            dst_objects.append(ir_object)
+        elif not ignore_none:
+            dst_objects.append(ir_object)
+
+    if isinstance(detect_ir, DetectIrRecord):
+        dst_record = DetectIrRecord(
+            filename=detect_ir.filename,
+            width=detect_ir.width,
+            height=detect_ir.height,
+            objects=dst_objects
+        )
+        return dst_record
+    else:
+        return dst_objects
 
 
 def load_coco_class_names(filename):

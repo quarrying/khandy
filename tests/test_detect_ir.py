@@ -65,7 +65,60 @@ class TestDetectIrObject(unittest.TestCase):
         self.assertAlmostEqual(obj.area, 6.0)
 
 
+class TestReplaceDetectLabel(unittest.TestCase):
+    def setUp(self):
+        self.record = khandy.label.DetectIrRecord(
+            filename="",
+            width=10,
+            height=10,
+            objects=[
+                khandy.label.DetectIrObject("cat", 0, 0, 10, 10),
+                khandy.label.DetectIrObject("dog", 0, 0, 10, 10),
+                khandy.label.DetectIrObject("bird", 0, 0, 10, 10),
+            ]
+        )
+        self.label_map_dict = {"cat": "feline", "dog": "canine"}
+        self.label_map_callable = lambda label: self.label_map_dict.get(label)
+
+    def test_replace_with_dict_label_map(self):
+        result = khandy.label.replace_detect_label(self.record, self.label_map_dict, ignore_none=False)
+        self.assertEqual(result.objects[0].label, "feline")
+        self.assertEqual(result.objects[1].label, "canine")
+        self.assertEqual(result.objects[2].label, "bird")  # Unmapped label remains unchanged
+        self.assertEqual(self.record.objects[0].label, "cat")
+        self.assertEqual(self.record.objects[1].label, "dog")
+        self.assertEqual(self.record.objects[2].label, "bird")
+        
+    def test_replace_with_callable_label_map(self):
+        result = khandy.label.replace_detect_label(self.record, self.label_map_callable, ignore_none=False)
+        self.assertEqual(result.objects[0].label, "feline")
+        self.assertEqual(result.objects[1].label, "canine")
+        self.assertEqual(result.objects[2].label, "bird")  # Unmapped label remains unchanged
+        self.assertEqual(self.record.objects[0].label, "cat")
+        self.assertEqual(self.record.objects[1].label, "dog")
+        self.assertEqual(self.record.objects[2].label, "bird")
+        
+    def test_ignore_none_true(self):
+        result = khandy.label.replace_detect_label(self.record, self.label_map_dict, ignore_none=True)
+        self.assertEqual(len(result.objects), 2)  # Only mapped labels are kept
+        self.assertEqual(result.objects[0].label, "feline")
+        self.assertEqual(result.objects[1].label, "canine")
+        self.assertEqual(self.record.objects[0].label, "cat")
+        self.assertEqual(self.record.objects[1].label, "dog")
+        self.assertEqual(self.record.objects[2].label, "bird")
+        
+    def test_ignore_none_false(self):
+        result = khandy.label.replace_detect_label(self.record, self.label_map_dict, ignore_none=False)
+        self.assertEqual(len(result.objects), 3)  # All objects are kept
+        self.assertEqual(result.objects[2].label, "bird")  # Unmapped label remains unchanged
+        self.assertEqual(self.record.objects[0].label, "cat")
+        self.assertEqual(self.record.objects[1].label, "dog")
+        self.assertEqual(self.record.objects[2].label, "bird")
+        
+    def test_invalid_input_type(self):
+        with self.assertRaises(TypeError):
+            khandy.label.replace_detect_label("invalid_input", self.label_map_dict)
+
+
 if __name__ == '__main__':
     unittest.main()
-    
-    
