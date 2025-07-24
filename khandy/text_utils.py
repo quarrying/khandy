@@ -1,8 +1,14 @@
 import re
+import sys
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Tuple, Literal
+from typing import List, Optional, Tuple
 
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+    
 CONTENT_WITH_HW_PAREN_PATTERN = r'(?:(?P<out_paren>[^(]+))?'
 CONTENT_WITH_HW_PAREN_PATTERN += r'(?:[(](?P<in_paren>[^)]+)[)])?'
 CONTENT_WITH_HW_PAREN_PATTERN_OBJ = re.compile(CONTENT_WITH_HW_PAREN_PATTERN)

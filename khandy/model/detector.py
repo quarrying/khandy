@@ -6,8 +6,13 @@ import warnings
 import sys
 from abc import ABC, abstractmethod
 from enum import Enum, auto
-from typing import Any, List, Literal, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+    
 if sys.version_info >= (3, 9):
     from collections.abc import Sequence, Mapping, Callable, Iterator
 else:

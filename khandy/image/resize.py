@@ -1,7 +1,13 @@
+import sys
 import warnings
 from dataclasses import dataclass
-from typing import Literal, Tuple
+from typing import Tuple
 
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+    
 import cv2
 import numpy as np
 

@@ -1,7 +1,12 @@
 import warnings
 import sys
-from typing import Literal, Optional, Union
+from typing import Optional, Union
 
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+    
 if sys.version_info >= (3, 9):
     from collections.abc import Sequence
 else:

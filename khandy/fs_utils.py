@@ -2,11 +2,17 @@ import logging
 import os
 import re
 import shutil
+import sys
 import warnings
 from datetime import datetime
-from typing import Callable, List, Tuple, Literal, Optional, Union
+from typing import Callable, List, Tuple, Optional, Union
 
-
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+    
+    
 def get_path_stem(path: str) -> str:
     """
     References:

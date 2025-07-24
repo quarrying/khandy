@@ -1,10 +1,13 @@
 import os
 import re
+import sys
 from setuptools import find_packages, setup
 
-
-install_requires = ['numpy>=1.11.1', 'opencv-python', 'pillow', 'lxml', 'requests']
-
+if sys.version_info >= (3, 8):
+    install_requires = ['numpy>=1.11.1', 'opencv-python', 'pillow', 'lxml', 'requests']
+else:
+    install_requires = ['numpy>=1.11.1', 'opencv-python', 'pillow', 'lxml', 'requests<2.30', 'typing-extensions']
+    
 
 def get_version() -> str:
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +31,7 @@ setup(
     description='Handy Utilities for Computer Vision',
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
-    python_requires=">=3.8",
+    python_requires=">=3.7",
     keywords='computer vision',
     packages=find_packages(exclude=['tests']),
     classifiers=[
