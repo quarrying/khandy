@@ -74,7 +74,10 @@ class DetectIrRecord:
     height: int
     objects: List[DetectIrObject] = field(default_factory=list)
 
-
+    def __len__(self):
+        return len(self.objects)
+    
+    
 @dataclass
 class PascalVocSource:
     database: str = ''
