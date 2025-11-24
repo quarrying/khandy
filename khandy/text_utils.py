@@ -154,18 +154,26 @@ def is_chinese_char(uchar: str) -> bool:
 
     References:
         `is_chinese_char` in https://github.com/thunlp/OpenNRE/
+        `is_chinese_char` in https://github.com/loveminimal/rime-jk
+        https://en.wikipedia.org/wiki/CJK_Unified_Ideographs
     """
     codepoint = ord(uchar)
-    if ((0x4E00 <= codepoint <= 0x9FFF) or # CJK Unified Ideographs
-        (0x3400 <= codepoint <= 0x4DBF) or # CJK Unified Ideographs Extension A
-        (0xF900 <= codepoint <= 0xFAFF) or # CJK Compatibility Ideographs
-        (0x20000 <= codepoint <= 0x2A6DF) or # CJK Unified Ideographs Extension B
-        (0x2A700 <= codepoint <= 0x2B73F) or
-        (0x2B740 <= codepoint <= 0x2B81F) or
-        (0x2B820 <= codepoint <= 0x2CEAF) or
-        (0x2F800 <= codepoint <= 0x2FA1F)): # CJK Compatibility Supplement
-        return True
-    return False
+    cjk_ranges = [
+        (0x4E00, 0x9FFF),   # CJK Unified Ideographs
+        (0x3400, 0x4DBF),   # CJK Unified Ideographs Extension A
+        (0x20000, 0x2A6DF), # CJK Unified Ideographs Extension B
+        (0x2A700, 0x2B73F), # CJK Unified Ideographs Extension C
+        (0x2B740, 0x2B81F), # CJK Unified Ideographs Extension D
+        (0x2B820, 0x2CEAF), # CJK Unified Ideographs Extension E
+        (0x2CEB0, 0x2EBEF), # CJK Unified Ideographs Extension F
+        (0x30000, 0x3134F), # CJK Unified Ideographs Extension G
+        (0x31350, 0x323AF), # CJK Unified Ideographs Extension H
+        (0x2EBF0, 0x2EE5F), # CJK Unified Ideographs Extension I
+        (0x323B0, 0x33479), # CJK Unified Ideographs Extension J
+        (0xF900, 0xFAFF),   # CJK Compatibility Ideographs
+        (0x2F800, 0x2FA1F)  # CJK Compatibility Ideographs Supplement
+    ]
+    return any(start <= codepoint <= end for start, end in cjk_ranges)
 
 
 def strip_blank_lines(lines: List[str]) -> List[str]:
