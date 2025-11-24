@@ -195,8 +195,12 @@ def imread_pil(file_or_buffer, to_mode=None):
         return None
         
         
-def imwrite_bytes(filename, image_bytes: bytes, raise_if_not_image: bool = True, 
-                  use_adpative_ext: bool = True):
+def imwrite_bytes(
+    filename: str,
+    image_bytes: bytes,
+    raise_if_not_image: bool = True,
+    use_adpative_ext: bool = True
+) -> str:
     """Write image bytes to file.
     
     Args:
@@ -212,8 +216,12 @@ def imwrite_bytes(filename, image_bytes: bytes, raise_if_not_image: bool = True,
     extension = get_image_file_type(image_bytes)
     if extension is None and raise_if_not_image:
         raise Exception('image_bytes is not image!')
+    name_extension = khandy.get_path_extension(filename)
+    if name_extension == '':
+        filename = f'{filename}.{extension}'
+        name_extension = f'.{extension}'
+        
     if extension is not None:
-        name_extension = khandy.get_path_extension(filename)
         if name_extension.lower() == '.jpg' and extension.lower() == 'jpeg':
             extension == 'jpg'
         if (extension.lower() != name_extension.lower()[1:]):
