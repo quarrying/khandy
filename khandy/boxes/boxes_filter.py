@@ -201,7 +201,7 @@ def non_max_suppression(
     scores: np.ndarray,
     thresh: Union[float, Sequence[float], np.ndarray],
     classes: Optional[np.ndarray] = None,
-    ratio_type: Union[Literal['iou', 'iom'], Sequence[Literal['iou', 'iom']]] = "iou"
+    ratio_type: Union[Literal['iou', 'ios'], Sequence[Literal['iou', 'ios']]] = "iou"
 ) -> np.ndarray:
     """Perform Non-Maximum Suppression (NMS) on bounding boxes.
 
@@ -216,7 +216,8 @@ def non_max_suppression(
             If provided, NMS is performed independently per class (using coordinate offsets).
         ratio_type (str or Sequence): Overlap ratio type, one of:
             - "iou" or "union": intersection over union (default)
-            - "iom" or "min": intersection over minimum area of two boxes
+            - "ios" or "min": intersection over smaller area of two boxes
+            - "iom": the same as "ios", but kept for backward compatibility, will be removed in the future.
             - If a sequence, should be per-class ratio types (requires `classes`).
 
     Returns:
@@ -235,7 +236,14 @@ def non_max_suppression(
         raise ValueError('When thresh is not a float, classes should not be None')
     if not isinstance(ratio_type, str) and classes is None:
         raise ValueError('When ratio_type is not a str, classes should not be None')
-
+    if ratio_type == 'iom':
+        ratio_type = 'ios'
+        warnings.warn(
+            "ratio_type='iom' is deprecated and will be removed in the future. "
+            "Use 'ios' instead.",
+            DeprecationWarning,
+        )
+        
     boxes = np.asarray(boxes)
     scores = np.asarray(scores)
     if boxes.size == 0:
@@ -279,7 +287,7 @@ def non_max_suppression(
             _ratio_type = ratio_type[classes[i]]
         if _ratio_type in ["iou", "union"]:
             intersect_areas /= (areas[i] + areas[order[1:]] - intersect_areas)
-        elif _ratio_type in ["iom", "min"]:
+        elif _ratio_type in ["ios", "min"]:
             intersect_areas /= np.minimum(areas[i], areas[order[1:]])
         else:
             raise ValueError(f"Unsupported ratio_type. Got {_ratio_type}")

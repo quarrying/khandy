@@ -71,8 +71,10 @@ def paired_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
         boxes2: a numpy array with shape [N, 4] holding N boxes
         ratio_type:
             iou: Intersection over union (iou).
-            iom: Compute the ratio as the area of intersection between box1 and box2, 
-                divided by the minimum area of the two bounding boxes.
+            ios: Compute the ratio as the area of intersection between box1 and box2, 
+                divided by the smaller area of the two bounding boxes.
+            iom: the same as "ios", but named as intersection over minimum area,
+                kepy it for backward compatibility, will be removed in the future.
             ioa: Intersection over area (ioa) between two boxes box1 and box2 is defined as
                 their intersection area over box2's area. 
             iof: intersection over foreground (iof) between two boxes box1 and box2 is defined as
@@ -90,6 +92,14 @@ def paired_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
         `structures.boxes.matched_boxlist_iou` in detectron2
         `mmdet.core.bbox.bbox_overlaps`, see https://mmdetection.readthedocs.io/en/v2.17.0/api.html#mmdet.core.bbox.bbox_overlaps
     """
+    if ratio_type == 'iom':
+        ratio_type = 'ios'
+        warnings.warn(
+            "ratio_type='iom' is deprecated and will be removed in the future. "
+            "Use 'ios' instead.",
+            DeprecationWarning,
+        )
+        
     intersect_areas = paired_intersection(boxes1, boxes2)
     intersect_areas = intersect_areas.astype(np.float32)
     areas1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
@@ -99,7 +109,7 @@ def paired_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
         union_areas = areas1 - intersect_areas
         union_areas += areas2
         intersect_areas /= union_areas
-    elif ratio_type in ['iom', 'min']:
+    elif ratio_type in ['ios', 'min']:
         intersect_areas /= np.minimum(areas1, areas2)
     elif ratio_type == 'ioa':
         warnings.warn('use ioa1 or ioa2 instead whose name is more clear!')
@@ -134,8 +144,10 @@ def pairwise_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
         boxes2: a numpy array with shape [M, 4] holding M boxes
         ratio_type:
             iou: Intersection over union (iou).
-            iom: Compute the ratio as the area of intersection between box1 and box2, 
-                divided by the minimum area of the two bounding boxes.
+            ios: Compute the ratio as the area of intersection between box1 and box2, 
+                divided by the smaller area of the two bounding boxes.
+            iom: the same as "ios", but named as intersection over minimum area,
+                kepy it for backward compatibility, will be removed in the future.
             ioa: Intersection over area (ioa) between two boxes box1 and box2 is defined as
                 their intersection area over box2's area. 
             iof: intersection over foreground (iof) between two boxes box1 and box2 is defined as
@@ -157,6 +169,14 @@ def pairwise_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
         `torchvision.ops.generalized_box_iou`, see https://pytorch.org/vision/stable/ops.html#torchvision.ops.generalized_box_iou
         http://ww2.mathworks.cn/help/vision/ref/bboxoverlapratio.html
     """
+    if ratio_type == 'iom':
+        ratio_type = 'ios'
+        warnings.warn(
+            "ratio_type='iom' is deprecated and will be removed in the future. "
+            "Use 'ios' instead.",
+            DeprecationWarning,
+        )
+        
     intersect_areas = pairwise_intersection(boxes1, boxes2)
     intersect_areas = intersect_areas.astype(np.float32)
     areas1 = (boxes1[:, 2] - boxes1[:, 0]) * (boxes1[:, 3] - boxes1[:, 1])
@@ -168,7 +188,7 @@ def pairwise_overlap_ratio(boxes1, boxes2, ratio_type='iou'):
         union_areas = areas1 - intersect_areas
         union_areas += areas2
         intersect_areas /= union_areas
-    elif ratio_type in ['iom', 'min']:
+    elif ratio_type in ['ios', 'min']:
         intersect_areas /= np.minimum(areas1, areas2)
     elif ratio_type == 'ioa':
         warnings.warn('use ioa1 or ioa2 instead whose name is more clear!')

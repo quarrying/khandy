@@ -395,7 +395,7 @@ class DetObjects(khandy.EqLenSequences):
     def nms(
         self,
         thresh: Union[Union[float, List[float], Tuple[float, ...], np.ndarray]],
-        ratio_type: Union[Literal['iou', 'iom'], Sequence[Literal['iou', 'iom']]] = "iou",
+        ratio_type: Union[Literal['iou', 'ios'], Sequence[Literal['iou', 'ios']]] = "iou",
         class_agnostic: bool = False,
         inplace: bool = False,
     ) -> "DetObjects":
@@ -885,7 +885,7 @@ def match_det_objects(
     det_objects1: DetObjects,
     det_objects2: DetObjects,
     thresh: float = 0.5, 
-    ratio_type: Literal['iou', 'iom'] = 'iou',
+    ratio_type: Literal['iou', 'ios'] = 'iou',
     match_type: Literal['1vn', 'nv1', '1v1'] = '1v1',
     return_missed_inds: bool = False,
     class_agnostic: bool = False
@@ -897,8 +897,8 @@ def match_det_objects(
         det_objects2 (DetObjects): The second set of detection objects.
         thresh (float, optional): The overlap threshold for considering a pair of objects as a match.
             Defaults to 0.5.
-        ratio_type (Literal['iou', 'iom'], optional): The type of overlap ratio to use, either 'iou' 
-            (Intersection over Union) or 'iom' (Intersection over Minimum). Defaults to 'iou'.
+        ratio_type (Literal['iou', 'ios'], optional): The type of overlap ratio to use, either 'iou' 
+            (Intersection over Union) or 'ios' (Intersection over Smaller). Defaults to 'iou'.
         match_type (Literal['1vn', 'nv1', '1v1'], optional): The matching strategy to use:
             - '1vn': One object from the first set can match multiple objects from the second set.
             - 'nv1': Multiple objects from the first set can match one object from the second set.
@@ -948,7 +948,7 @@ def merge_det_objects(
     det_objects1: DetObjects,
     det_objects2: DetObjects,
     thresh: float = 0.5,
-    ratio_type: Literal['iou', 'iom'] = 'iou',
+    ratio_type: Literal['iou', 'ios'] = 'iou',
     match_type: Literal['1vn', 'nv1', '1v1'] = '1v1',
     merge_type: Literal['object1', 'object2', 'max_conf', 'max_area'] = 'max_conf',
     class_agnostic: bool = False
@@ -961,8 +961,8 @@ def merge_det_objects(
         det_objects2 (DetObjects): The second set of detection objects.
         thresh (float, optional): The overlap threshold for considering a pair of objects as a match. 
             Defaults to 0.5.
-        ratio_type (Literal['iou', 'iom'], optional): The type of overlap ratio to use, either 'iou' 
-            (Intersection over Union) or 'iom' (Intersection over Minimum). Defaults to 'iou'.
+        ratio_type (Literal['iou', 'ios'], optional): The type of overlap ratio to use, either 'iou' 
+            (Intersection over Union) or 'ios' (Intersection over Smaller). Defaults to 'iou'.
         match_type (Literal['1vn', 'nv1', '1v1'], optional): The matching strategy to use:
             - '1vn': One object from the first set can match multiple objects from the second set.
             - 'nv1': Multiple objects from the first set can match one object from the second set.
