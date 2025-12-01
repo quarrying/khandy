@@ -283,8 +283,15 @@ class DownloadError(Exception):
     __str__ = __repr__
 
     
-def download_image(image_url, min_filesize=0, max_filesize=100*1024*1024, 
-                   params=None, **kwargs) -> bytes:
+def download_image(
+    image_url: str, 
+    min_filesize: int = 0, 
+    max_filesize: int = 100*1024*1024, 
+    params: Optional[dict] = None, 
+    check_content_type: bool = True,
+    check_content_length: bool = True,
+    **kwargs
+) -> bytes:
     """
     References:
         https://httpwg.org/specs/rfc9110.html#field.content-length
@@ -295,23 +302,25 @@ def download_image(image_url, min_filesize=0, max_filesize=100*1024*1024,
     with requests.get(image_url, stream=stream, params=params, **kwargs) as response:
         response.raise_for_status()
 
-        content_type = response.headers.get('content-type')
-        if content_type is None:
-            warnings.warn('No Content-Type!')
-        else:
-            if not content_type.startswith(('image/', 'application/octet-stream')):
-                raise DownloadError(DownloadStatusCode.URL_IS_NOT_IMAGE)
-        
-        # when Transfer-Encoding == chunked, Content-Length does not exist.
-        content_length = response.headers.get('content-length')
-        if content_length is None:
-            warnings.warn('No Content-Length!')
-        else:
-            content_length = int(content_length)
-            if content_length > max_filesize:
-                raise DownloadError(DownloadStatusCode.FILE_SIZE_TOO_LARGE)
-            if content_length < min_filesize:
-                raise DownloadError(DownloadStatusCode.FILE_SIZE_TOO_SMALL)
+        if check_content_type:
+            content_type = response.headers.get('content-type')
+            if content_type is None:
+                warnings.warn('No Content-Type!')
+            else:
+                if not content_type.startswith(('image/', 'application/octet-stream')):
+                    raise DownloadError(DownloadStatusCode.URL_IS_NOT_IMAGE)
+            
+        if check_content_length:
+            # when Transfer-Encoding == chunked, Content-Length does not exist.
+            content_length = response.headers.get('content-length')
+            if content_length is None:
+                warnings.warn('No Content-Length!')
+            else:
+                content_length = int(content_length)
+                if content_length > max_filesize:
+                    raise DownloadError(DownloadStatusCode.FILE_SIZE_TOO_LARGE)
+                if content_length < min_filesize:
+                    raise DownloadError(DownloadStatusCode.FILE_SIZE_TOO_SMALL)
         
         filesize = 0
         chunks = []
@@ -327,8 +336,14 @@ def download_image(image_url, min_filesize=0, max_filesize=100*1024*1024,
     return image_bytes
     
 
-def download_file(url, min_filesize=0, max_filesize=100*1024*1024, 
-                  params=None, **kwargs) -> bytes:
+def download_file(
+    url: str, 
+    min_filesize: int = 0,
+    max_filesize: int = 100*1024*1024, 
+    params: Optional[dict] = None, 
+    check_content_length: bool = True,
+    **kwargs
+) -> bytes:
     """
     References:
         https://httpwg.org/specs/rfc9110.html#field.content-length
@@ -339,17 +354,18 @@ def download_file(url, min_filesize=0, max_filesize=100*1024*1024,
     with requests.get(url, stream=stream, params=params, **kwargs) as response:
         response.raise_for_status()
 
-        # when Transfer-Encoding == chunked, Content-Length does not exist.
-        content_length = response.headers.get('content-length')
-        if content_length is None:
-            warnings.warn('No Content-Length!')
-        else:
-            content_length = int(content_length)
-            if content_length > max_filesize:
-                raise DownloadError(DownloadStatusCode.FILE_SIZE_TOO_LARGE)
-            if content_length < min_filesize:
-                raise DownloadError(DownloadStatusCode.FILE_SIZE_TOO_SMALL)
-        
+        if check_content_length:
+            # when Transfer-Encoding == chunked, Content-Length does not exist.
+            content_length = response.headers.get('content-length')
+            if content_length is None:
+                warnings.warn('No Content-Length!')
+            else:
+                content_length = int(content_length)
+                if content_length > max_filesize:
+                    raise DownloadError(DownloadStatusCode.FILE_SIZE_TOO_LARGE)
+                if content_length < min_filesize:
+                    raise DownloadError(DownloadStatusCode.FILE_SIZE_TOO_SMALL)
+            
         filesize = 0
         chunks = []
         for chunk in response.iter_content(chunk_size=10*1024):
