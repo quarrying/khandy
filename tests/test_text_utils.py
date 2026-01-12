@@ -14,19 +14,20 @@ class TestSplitContentWithParen(unittest.TestCase):
         self.assertEqual(split_content_with_paren("abc ( def )", "hw"), ("abc ", " def "))
         self.assertEqual(split_content_with_paren(" ( )", "hw"), (" ", " "))
         
+    def test_no_outside_content(self):
+        """Test when there's no outside content."""
         self.assertEqual(split_content_with_paren("(def)", "hw"), (None, "def"))
+        self.assertEqual(split_content_with_paren("（jkl）", "fw"), (None, "jkl"))
+        
+    def test_no_paren(self):
+        """Test when there's no parentheses in the string."""
         self.assertEqual(split_content_with_paren("abc", "hw"), ("abc", None))
         self.assertEqual(split_content_with_paren("", "hw"), (None, None))
         
     def test_no_content_inside_paren(self):
         """Test when there's no content inside the parentheses."""
-        with self.assertRaises(ValueError):
-            split_content_with_paren("abc()", "hw")
-
-    def test_only_parentheses(self):
-        """Test when the entire string is just parentheses."""
-        with self.assertRaises(ValueError):
-            split_content_with_paren("()", "hw")
+        self.assertEqual(split_content_with_paren("abc()", "hw"), ("abc", ""))
+        self.assertEqual(split_content_with_paren("()", "hw"), (None, ""))
 
     def test_nested_parentheses(self):
         """Test with nested parentheses (pattern does not support nesting)."""

@@ -10,11 +10,11 @@ else:
     from typing_extensions import Literal
     
 CONTENT_WITH_HW_PAREN_PATTERN = r'(?:(?P<out_paren>[^(]+))?'
-CONTENT_WITH_HW_PAREN_PATTERN += r'(?:[(](?P<in_paren>[^)]+)[)])?'
+CONTENT_WITH_HW_PAREN_PATTERN += r'(?:[(](?P<in_paren>[^)]*)[)])?'
 CONTENT_WITH_HW_PAREN_PATTERN_OBJ = re.compile(CONTENT_WITH_HW_PAREN_PATTERN)
 
 CONTENT_WITH_FW_PAREN_PATTERN = r'(?:(?P<out_paren>[^（]+))?'
-CONTENT_WITH_FW_PAREN_PATTERN += r'(?:（(?P<in_paren>[^）]+)）)?'
+CONTENT_WITH_FW_PAREN_PATTERN += r'(?:（(?P<in_paren>[^）]*)）)?'
 CONTENT_WITH_FW_PAREN_PATTERN_OBJ = re.compile(CONTENT_WITH_FW_PAREN_PATTERN)
 
 CONTENT_IN_PAREN_PATTERN = r"\([^)]*\)|（[^）]*）"
@@ -90,10 +90,10 @@ def split_content_with_paren(
     }[paren_type]
 
     if has_nested_or_unmatched_paren(string, paren_type):
-        raise ValueError(f'nested or unmatched paren: {string}')
+        raise ValueError(f'nested or unmatched paren: "{string}"')
     matched = pattern_obj.fullmatch(string)
     if matched is None:
-        raise ValueError(f'parse failure: {string}')
+        raise ValueError(f'parse failure: "{string}"')
     outside, inside = matched.groups()
     return outside, inside
 
