@@ -270,8 +270,8 @@ class DetObjects(khandy.EqLenSequences):
 
     def filter_by_class_indices(
         self,
-        interested: Optional[Union[int, Tuple[int, ...], List[int]]] = None,
-        ignored: Optional[Union[int, Tuple[int, ...], List[int]]] = None,
+        interested: Union[int, Tuple[int, ...], List[int], None] = None,
+        ignored: Union[int, Tuple[int, ...], List[int], None] = None,
         inplace: bool = False
     ) -> "DetObjects":
         if interested is not None and ignored is not None:
@@ -294,8 +294,8 @@ class DetObjects(khandy.EqLenSequences):
 
     def filter_by_class_names(
         self, 
-        interested: Optional[Union[str, Tuple[str, ...], List[str]]] = None,
-        ignored: Optional[Union[str, Tuple[str, ...], List[str]]] = None, 
+        interested: Union[str, Tuple[str, ...], List[str], None] = None,
+        ignored: Union[str, Tuple[str, ...], List[str], None] = None, 
         inplace: bool = False
     ) -> "DetObjects":
         if interested is not None and ignored is not None:
@@ -338,8 +338,8 @@ class DetObjects(khandy.EqLenSequences):
 
     def filter_by_ar(
         self,
-        min_ar: Optional[Union[int, float]] = None, 
-        max_ar: Optional[Union[int, float]] = None, 
+        min_ar: Union[int, float, None] = None, 
+        max_ar: Union[int, float, None] = None, 
         inplace: bool = False
     )-> "DetObjects":
         assert isinstance(self.boxes, np.ndarray)
@@ -348,8 +348,8 @@ class DetObjects(khandy.EqLenSequences):
 
     def filter_by_size(
         self, 
-        min_width: Optional[Union[int, float]] = None, 
-        min_height: Optional[Union[int, float]] = None,
+        min_width: Union[int, float, None] = None, 
+        min_height: Union[int, float, None] = None,
         inplace: bool = False
     ) -> "DetObjects":
         assert isinstance(self.boxes, np.ndarray)
@@ -358,8 +358,8 @@ class DetObjects(khandy.EqLenSequences):
 
     def filter_by_min_size(
         self, 
-        min_width: Optional[Union[int, float]] = None, 
-        min_height: Optional[Union[int, float]] = None,
+        min_width: Union[int, float, None] = None, 
+        min_height: Union[int, float, None] = None,
         inplace: bool = False
     ) -> "DetObjects":
         warnings.warn(
@@ -432,11 +432,11 @@ class BaseDetector(ABC):
     def __init__(
         self, 
         num_classes: Optional[int] = None,
-        conf_thresh: Optional[Union[float, List[float], Tuple[float, ...], np.ndarray]] = None,
-        min_width: Optional[Union[int, float]] = None,
-        min_height: Optional[Union[int, float]] = None,
-        min_area: Optional[Union[int, float]] = None,
-        class_names: Optional[Union[List[str], Tuple[str, ...]]] = None,
+        conf_thresh: Union[float, List[float], Tuple[float, ...], np.ndarray, None] = None,
+        min_width: Union[int, float, None] = None,
+        min_height: Union[int, float, None] = None,
+        min_area: Union[int, float, None] = None,
+        class_names: Union[List[str], Tuple[str, ...], None] = None,
         sort_by: Optional[DetObjectSortBy] = None,
         sort_dir: Optional[DetObjectSortDir] = DetObjectSortDir.DESC,
         **kwargs
@@ -462,11 +462,11 @@ class BaseDetector(ABC):
         return self._num_classes
     
     @property
-    def conf_thresh(self) -> Optional[Union[float, np.ndarray]]:
+    def conf_thresh(self) -> Union[float, np.ndarray, None]:
         return self._conf_thresh
     
     @conf_thresh.setter
-    def conf_thresh(self, value: Optional[Union[float, List[float], Tuple[float, ...], np.ndarray]]):
+    def conf_thresh(self, value: Union[float, List[float], Tuple[float, ...], np.ndarray, None]):
         if value is None or isinstance(value, float):
             pass
         elif isinstance(value, (list, tuple)):
@@ -490,31 +490,31 @@ class BaseDetector(ABC):
         self._conf_thresh = value
     
     @property
-    def min_width(self) -> Optional[Union[int, float]]:
+    def min_width(self) -> Union[int, float, None]:
         return self._min_width
     
     @min_width.setter
-    def min_width(self, value: Optional[Union[int, float]]):
+    def min_width(self, value: Union[int, float, None]):
         assert value is None or isinstance(value, (int, float)), f'Unsupported type for min_width, got {type(value)}'
         assert value is None or value >= 0, f'min_width must be >= 0, got {value}'
         self._min_width = value
         
     @property
-    def min_height(self) -> Optional[Union[int, float]]:
+    def min_height(self) -> Union[int, float, None]:
         return self._min_height
     
     @min_height.setter
-    def min_height(self, value: Optional[Union[int, float]]):
+    def min_height(self, value: Union[int, float, None]):
         assert value is None or isinstance(value, (int, float)), f'Unsupported type for min_height, got {type(value)}'
         assert value is None or value >= 0, f'min_height must be >= 0, got {value}'
         self._min_height = value
         
     @property
-    def min_area(self) -> Optional[Union[int, float]]:
+    def min_area(self) -> Union[int, float, None]:
         return self._min_area
     
     @min_area.setter
-    def min_area(self, value: Optional[Union[int, float]]):
+    def min_area(self, value: Union[int, float, None]):
         assert value is None or isinstance(value, (int, float)), f'Unsupported type for min_area, got {type(value)}'
         assert value is None or value >= 0, f'min_area must be >= 0, got {value}'
         self._min_area = value
@@ -524,7 +524,7 @@ class BaseDetector(ABC):
         return self._class_names
     
     @class_names.setter
-    def class_names(self, value: Optional[Union[List[str], Tuple[str, ...]]]):
+    def class_names(self, value: Union[List[str], Tuple[str, ...], None]):
         if value is None:
             pass
         elif isinstance(value, (list, tuple)):

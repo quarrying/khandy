@@ -134,9 +134,9 @@ def print_with_no(obj):
 class TypeShapeSpec:
     name: str
     type: Optional[builtins.type] = None
-    shape: Optional[Union[Tuple[int, ...], int]] = None
+    shape: Union[Tuple[int, ...], int, None] = None
     dtype: Optional[str] = None
-    value: Optional[Union[int, bool, float]] = None
+    value: Union[int, bool, float, None] = None
     
     def __repr__(self):
         type = self.type

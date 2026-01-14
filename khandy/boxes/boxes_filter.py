@@ -17,7 +17,7 @@ import numpy as np
 from .boxes_overlap import pairwise_overlap_ratio
 
 
-def find_max_area_box(boxes):
+def find_max_area_box(boxes: np.ndarray) -> int:
     """Find the index of the bounding box with the maximum area.
 
     Args:
@@ -35,7 +35,10 @@ def find_max_area_box(boxes):
     return np.argmax(areas)
 
 
-def sort_boxes_by_area(boxes, reverse=False):
+def sort_boxes_by_area(
+    boxes: np.ndarray, 
+    reverse: bool = False
+) -> np.ndarray:
     """Sort bounding boxes based on their areas.
 
     Args:
@@ -63,8 +66,8 @@ def sort_boxes_by_area(boxes, reverse=False):
 
 def filter_boxes_by_size(
     boxes: np.ndarray,
-    min_width: Optional[Union[int, float]] = None,
-    min_height: Optional[Union[int, float]] = None,
+    min_width: Union[int, float, None] = None,
+    min_height: Union[int, float, None] = None
 ) -> np.ndarray:
     """Filter bounding boxes based on minimum width and height requirements.
 
@@ -100,8 +103,8 @@ def filter_boxes_by_size(
 
 def filter_small_boxes(
     boxes: np.ndarray,
-    min_width: Optional[Union[int, float]] = None,
-    min_height: Optional[Union[int, float]] = None,
+    min_width: Union[int, float, None] = None,
+    min_height: Union[int, float, None] = None
 ) -> np.ndarray:
     warnings.warn(
         "filter_small_boxes will be deprecated, use filter_boxes_by_size instead.",
@@ -110,7 +113,10 @@ def filter_small_boxes(
     return filter_boxes_by_size(boxes, min_width, min_height)
 
 
-def filter_boxes_by_area(boxes: np.ndarray, min_area: Union[int, float]) -> np.ndarray:
+def filter_boxes_by_area(
+    boxes: np.ndarray, 
+    min_area: Union[int, float]
+) -> np.ndarray:
     widths = boxes[:, 2] - boxes[:, 0]
     heights = boxes[:, 3] - boxes[:, 1]
     mask = widths * heights >= min_area
@@ -119,8 +125,8 @@ def filter_boxes_by_area(boxes: np.ndarray, min_area: Union[int, float]) -> np.n
 
 def filter_boxes_by_ar(
     boxes: np.ndarray,
-    min_ar: Optional[Union[int, float]] = None,
-    max_ar: Optional[Union[int, float]] = None,
+    min_ar: Union[int, float, None] = None,
+    max_ar: Union[int, float, None] = None
 ) -> np.ndarray:
     if min_ar is not None and max_ar is not None:
         assert min_ar < max_ar

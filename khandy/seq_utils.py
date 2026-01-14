@@ -213,14 +213,14 @@ def to_4tuple(x):
 def is_seq_of(
     seq: Any, 
     item_type: Union[type, Tuple[type, ...]], 
-    seq_type: Optional[Union[type, Tuple[type, ...]]] = None
+    seq_type: Union[type, Tuple[type, ...], None] = None
 ) -> bool:
     """Checks if the provided sequence is of a specified item type and optionally of a specified sequence type.
 
     Args:
         seq (Any): The sequence to check.
         item_type (Union[type, Tuple[type, ...]]): The expected type(s) of items in the sequence.
-        seq_type (Optional[Union[type, Tuple[type, ...]]]): The expected type(s) of the sequence itself. 
+        seq_type (Union[type, Tuple[type, ...], None]): The expected type(s) of the sequence itself. 
             If None, defaults to collections.abc.Sequence.
 
     Returns:
