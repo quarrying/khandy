@@ -142,6 +142,108 @@ class TestSampleMultidict(unittest.TestCase):
         self.assertEqual(result1, result2)
 
 
+class TestFilterMultidictByNumber(unittest.TestCase):
+    
+    def setUp(self):
+        """Set up test data"""
+        self.test_dict = {
+            'a': [1, 2, 3],      # length 3
+            'b': [4, 5],         # length 2
+            'c': [6],            # length 1
+            'd': [7, 8, 9, 10],  # length 4
+            'e': []              # length 0
+        }
+    
+    def test_no_bounds_returns_copy(self):
+        """Test when both lower and upper bounds are None"""
+        result = khandy.filter_multidict_by_number(self.test_dict)
+        expected = self.test_dict.copy()
+        self.assertEqual(result, expected)
+        # Ensure it's a copy and not the same object
+        self.assertIsNot(result, self.test_dict)
+    
+    def test_only_upper_bound(self):
+        """Test with only upper bound specified"""
+        result = khandy.filter_multidict_by_number(self.test_dict, upper=2)
+        expected = {
+            'b': [4, 5],  # length 2
+            'c': [6],     # length 1
+            'e': []       # length 0
+        }
+        self.assertEqual(result, expected)
+    
+    def test_only_lower_bound(self):
+        """Test with only lower bound specified"""
+        result = khandy.filter_multidict_by_number(self.test_dict, lower=3)
+        expected = {
+            'a': [1, 2, 3],      # length 3
+            'd': [7, 8, 9, 10]   # length 4
+        }
+        self.assertEqual(result, expected)
+    
+    def test_both_bounds(self):
+        """Test with both lower and upper bounds specified"""
+        result = khandy.filter_multidict_by_number(self.test_dict, lower=2, upper=3)
+        expected = {
+            'a': [1, 2, 3],  # length 3
+            'b': [4, 5]      # length 2
+        }
+        self.assertEqual(result, expected)
+    
+    def test_empty_dict(self):
+        """Test with empty dictionary"""
+        result = khandy.filter_multidict_by_number({}, lower=1, upper=5)
+        self.assertEqual(result, {})
+        
+        result = khandy.filter_multidict_by_number({})
+        self.assertEqual(result, {})
+    
+    def test_dict_with_empty_lists(self):
+        """Test dictionary containing empty lists"""
+        empty_dict = {'empty': [], 'non_empty': [1, 2]}
+        
+        result = khandy.filter_multidict_by_number(empty_dict, upper=1)
+        expected = {'empty': []}
+        self.assertEqual(result, expected)
+        
+        result = khandy.filter_multidict_by_number(empty_dict, lower=1)
+        expected = {'non_empty': [1, 2]}
+        self.assertEqual(result, expected)
+    
+    def test_boundary_conditions(self):
+        """Test boundary conditions"""
+        # When upper bound equals exact length
+        result = khandy.filter_multidict_by_number(self.test_dict, upper=3)
+        expected = {
+            'a': [1, 2, 3],  # length 3 (equals upper bound)
+            'b': [4, 5],     # length 2
+            'c': [6],        # length 1
+            'e': []          # length 0
+        }
+        self.assertEqual(result, expected)
+        
+        # When lower bound equals exact length
+        result = khandy.filter_multidict_by_number(self.test_dict, lower=2)
+        expected = {
+            'a': [1, 2, 3],      # length 3
+            'b': [4, 5],         # length 2 (equals lower bound)
+            'd': [7, 8, 9, 10]   # length 4
+        }
+        self.assertEqual(result, expected)
+    
+    def test_assertion_error_when_lower_greater_than_upper(self):
+        """Test that assertion error is raised when lower > upper"""
+        with self.assertRaises(AssertionError) as context:
+            khandy.filter_multidict_by_number(self.test_dict, lower=5, upper=3)
+        self.assertIn('lower must not be greater than upper', str(context.exception))
+    
+    def test_single_element_bounds(self):
+        """Test with bounds that result in single elements"""
+        result = khandy.filter_multidict_by_number(self.test_dict, lower=1, upper=1)
+        expected = {'c': [6]}  # Only 'c' has length exactly 1
+        self.assertEqual(result, expected)
+
+
 if __name__ == '__main__':
     unittest.main()
 

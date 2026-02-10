@@ -168,8 +168,17 @@ def get_multidict_info(multidict_obj, with_print=False, desc=None):
     return info
     
 
-def filter_multidict_by_number(multidict_obj, lower, upper=None):
-    if upper is None:
+def filter_multidict_by_number(
+    multidict_obj: Dict[Any, List[Any]], 
+    lower: Optional[int] = None, 
+    upper: Optional[int] = None
+) -> Dict[Any, List[Any]]:
+    if lower is None and upper is None:
+        return multidict_obj.copy()
+    elif lower is None:
+        return {key: value for key, value in multidict_obj.items() 
+                if len(value) <= upper}
+    elif upper is None:
         return {key: value for key, value in multidict_obj.items() 
                 if lower <= len(value) }
     else:
