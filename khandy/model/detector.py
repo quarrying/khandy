@@ -950,7 +950,7 @@ def merge_det_objects(
     thresh: float = 0.5,
     ratio_type: Literal['iou', 'ios'] = 'iou',
     match_type: Literal['1vn', 'nv1', '1v1'] = '1v1',
-    merge_type: Literal['object1', 'object2', 'max_conf', 'max_area'] = 'max_conf',
+    merge_type: Literal['object1', 'object2', 'max_conf', 'max_area', 'bound'] = 'max_conf',
     class_agnostic: bool = False
 ) -> DetObjects:
     """
@@ -973,6 +973,7 @@ def merge_det_objects(
             - 'object2': Keep objects from the second set and unmatched objects from the first set.
             - 'max_conf': Keep the object with the maximum confidence score from each matched pair.
             - 'max_area': Keep the object with the maximum area from each matched pair.
+            - 'bound': Merge bounding boxes of matched objects.
             Defaults to 'max_conf'.
         class_agnostic (bool, optional): If True, perform class-agnostic matching. Defaults to False.
 
@@ -1004,6 +1005,19 @@ def merge_det_objects(
                 det_objects_list.append(det_objects2[box2_ind])
             else:
                 det_objects_list.append(det_objects1[box1_ind])
+    elif merge_type.lower() == 'bound':
+        det_objects_list = [det_objects1[missed_obj1_inds], det_objects2[missed_obj2_inds]]
+        for box1_ind, box2_ind in matched_ind_pairs:
+            det_object_item = khandy.model.DetObjectItem(
+                x_min=min(det_objects1[box1_ind].x_min, det_objects2[box2_ind].x_min),
+                y_min=min(det_objects1[box1_ind].y_min, det_objects2[box2_ind].y_min),
+                x_max=max(det_objects1[box1_ind].x_max, det_objects2[box2_ind].x_max),
+                y_max=max(det_objects1[box1_ind].y_max, det_objects2[box2_ind].y_max),
+                conf=(det_objects1[box1_ind].conf + det_objects2[box2_ind].conf) * 0.5,
+                class_index=det_objects1[box1_ind].class_index,
+                class_name=det_objects1[box1_ind].class_name
+            )
+            det_objects_list.append(det_object_item)
     else:
         raise ValueError(f'Unsupported merge_type, got {merge_type}')
 
