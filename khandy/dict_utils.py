@@ -1,6 +1,6 @@
 import random
 from collections import OrderedDict
-from typing import Any, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 
 
 def get_dict_first_item(
@@ -68,16 +68,36 @@ def convert_multidict_to_records(multidict_obj, key_map=None, raise_if_key_error
     return records
     
     
-def sample_multidict(multidict_obj, num_keys, num_per_key=None):
-    num_keys = min(num_keys, len(multidict_obj))
+def sample_multidict(
+    multidict_obj: Dict[Any, List[Any]], 
+    num_keys: Optional[int] = None, 
+    num_per_key: Optional[int] = None
+) -> Dict[Any, List[Any]]:
+    """Randomly samples key-value pairs from a multi-dict object.
+
+    Args:
+        multidict_obj (Dict[Any, List[Any]]): Input multi-dict object where each key maps to a list of values.
+        num_keys (Optional[int]): Number of keys to sample. If None or less than 1, all keys are used.
+        num_per_key (Optional[int]): Number of values to sample per key. If None or less than 1, all values 
+            for each selected key are retained.
+
+    Returns:
+        Dict[Any, List[Any]]: A new multi-dict containing the sampled key-value pairs.
+    """
+    if num_keys is None or num_keys < 1:
+        num_keys = len(multidict_obj)
+    else:
+        num_keys = min(num_keys, len(multidict_obj))
     sub_keys = random.sample(list(multidict_obj), num_keys)
     if num_per_key is None:
         sub_mdict = {key: multidict_obj[key] for key in sub_keys}
     else:
         sub_mdict = {}
         for key in sub_keys:
-            num_examples_inner = min(num_per_key, len(multidict_obj[key]))
-            sub_mdict[key] = random.sample(multidict_obj[key], num_examples_inner)
+            if num_per_key >= len(multidict_obj[key]) or num_per_key < 1:
+                sub_mdict[key] = multidict_obj[key]
+            else:
+                sub_mdict[key] = random.sample(multidict_obj[key], num_per_key)
     return sub_mdict
     
     
