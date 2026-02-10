@@ -51,20 +51,49 @@ def convert_multidict_to_list(multidict_obj):
     return key_list, value_list
 
 
-def convert_multidict_to_records(multidict_obj, key_map=None, raise_if_key_error=True):
+def remap_multidict_keys(
+    multidict_obj: Dict[Any, List[Any]], 
+    key_map: Dict[Any, Any], 
+    raise_if_key_error: bool = True
+) -> Dict[Any, List[Any]]:
+    """Apply key mapping to a multidict object.
+    
+    Args:
+        multidict_obj: Input multidict object where each key maps to a list of values
+        key_map: Dictionary mapping old keys to new keys
+        raise_if_key_error: Whether to raise an error if a key is not found in key_map
+        
+    Returns:
+        A new multidict with remapped keys
+    """
+    result = {}
+    for key, values in multidict_obj.items():
+        if raise_if_key_error:
+            mapped_key = key_map[key]  # This will raise KeyError if key not in key_map
+        else:
+            mapped_key = key_map.get(key, key)  # Use original key if not in key_map
+        result[mapped_key] = values
+    return result
+
+
+def convert_multidict_to_records(
+    multidict_obj: Dict[Any, List[Any]], 
+    key_map: Dict[Any, Any], 
+    raise_if_key_error: bool = True,
+    value_first: bool = True
+) -> List[str]:
     records = []
     if key_map is None:
-        for key in multidict_obj:
-            for value in multidict_obj[key]:
-                records.append('{},{}'.format(value, key))
+        current_multidict = multidict_obj
     else:
-        for key in multidict_obj:
-            if raise_if_key_error:
-                mapped_key = key_map[key]
+        current_multidict = remap_multidict_keys(multidict_obj, key_map, raise_if_key_error)
+        
+    for key, values in current_multidict.items():
+        for value in values:
+            if value_first:
+                records.append(f'{value},{key}')
             else:
-                mapped_key = key_map.get(key, key)
-            for value in multidict_obj[key]:
-                records.append('{},{}'.format(value, mapped_key))
+                records.append(f'{key},{value}')
     return records
     
     
