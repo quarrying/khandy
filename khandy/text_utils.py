@@ -21,7 +21,10 @@ CONTENT_IN_PAREN_PATTERN = r"\([^)]*\)|（[^）]*）"
 CONTENT_IN_PAREN_PATTERN_OBJ = re.compile(CONTENT_IN_PAREN_PATTERN)
 
 
-def has_nested_or_unmatched_paren(string: str, paren_type: str = 'hw') -> bool:
+def has_nested_or_unmatched_paren(
+    string: str, 
+    paren_type: Literal['hw', 'fw'] = 'hw'
+) -> bool:
     """Check if a string contains nested or unmatched parentheses.
   
     Args:

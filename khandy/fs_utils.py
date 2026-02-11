@@ -21,16 +21,20 @@ def get_path_stem(path: str) -> str:
     return os.path.splitext(os.path.basename(path))[0]
 
 
-def replace_path_stem(path: str, new_stem: Union[str, Callable[[str], str]]) -> str:
-    dirname, basename = os.path.split(path)
-    stem, extension = os.path.splitext(basename)
+def replace_path_stem(
+    path: str, 
+    new_stem: Union[str, Callable[[str], str]]
+) -> str:
     if isinstance(new_stem, str):
-        return os.path.join(dirname, new_stem + extension)
+        stem = new_stem
     elif callable(new_stem):
-        return os.path.join(dirname, new_stem(stem) + extension)
+        stem = new_stem(path)
     else:
-        raise TypeError('Unsupported Type!')
-        
+        raise TypeError(f'Unsupported type, got {type(new_stem)}!')
+    dirname, basename = os.path.split(path)
+    extension = os.path.splitext(basename)[1]
+    return os.path.join(dirname, stem + extension)
+    
 
 def get_path_extension(path: str) -> str:
     """
@@ -43,7 +47,10 @@ def get_path_extension(path: str) -> str:
     return os.path.splitext(os.path.basename(path))[1]
     
 
-def replace_path_extension(path: str, new_extension: Optional[str] = None) -> str:
+def replace_path_extension(
+    path: str, 
+    new_extension: Union[str, Callable[[str], Optional[str]], None]
+) -> str:
     """Replaces the extension with new_extension or removes it when the default value is used.
     Firstly, if this path has an extension, it is removed. Then, a dot character is appended 
     to the pathname, if new_extension is not empty or does not begin with a dot character.
@@ -51,13 +58,20 @@ def replace_path_extension(path: str, new_extension: Optional[str] = None) -> st
     References:
         `std::filesystem::path::replace_extension` since C++17
     """
-    path_wo_ext = os.path.splitext(path)[0]
-    if new_extension == '' or new_extension is None:
-        return path_wo_ext
-    elif new_extension.startswith('.'):
-        return f'{path_wo_ext}{new_extension}'
+    if isinstance(new_extension, str) or new_extension is None:
+        extension = new_extension
+    elif callable(new_extension):
+        extension = new_extension(path)
     else:
-        return f'{path_wo_ext}.{new_extension}'
+        raise TypeError(f'Unsupported type, got {type(new_extension)}!')
+    
+    path_wo_ext = os.path.splitext(path)[0]
+    if extension == '' or extension is None:
+        return path_wo_ext
+    elif extension.startswith('.'):
+        return f'{path_wo_ext}{extension}'
+    else:
+        return f'{path_wo_ext}.{extension}'
     
     
 def normalize_extension(extension: str) -> str:
@@ -75,6 +89,21 @@ def is_path_in_extensions(path: str, extensions: Union[str, List[str]]) -> bool:
     extension = get_path_extension(path)
     return extension.lower() in extensions
 
+
+def replace_path_parent(
+    path: str, 
+    new_parent: Union[str, Callable[[str], str], None]
+) -> str:
+    if new_parent is None:
+        parent_dir = ''
+    elif isinstance(new_parent, str):
+        parent_dir = new_parent
+    elif callable(new_parent):
+        parent_dir = new_parent(path)
+    else:
+        raise TypeError(f'Unsupported type, got {type(new_parent)}!')
+    return os.path.join(parent_dir, os.path.basename(path))
+    
 
 def get_path_parts(path: str) -> Tuple[str]:
     """Splits a file path into its constituent parts.  
