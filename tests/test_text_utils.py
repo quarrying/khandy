@@ -2,6 +2,7 @@ import re
 import unittest
 from typing import Optional, Tuple
 
+import khandy
 from khandy import split_content_with_paren
 from khandy import split_before_after
 
@@ -142,6 +143,53 @@ class TestSplitBeforeAfter(unittest.TestCase):
         with self.assertRaises(ValueError):
             split_before_after_v2('invalid$format$here', True)
             
+
+class TestHasNestedOrUnmatchedParen(unittest.TestCase):
+
+    def test_valid_parentheses_hw_half_width(self):
+        # Test valid parentheses (no nesting, balanced)
+        self.assertFalse(khandy.has_nested_or_unmatched_paren("", "hw"))
+        self.assertFalse(khandy.has_nested_or_unmatched_paren("abc", "hw"))
+        self.assertFalse(khandy.has_nested_or_unmatched_paren("(abc)", "hw"))
+        self.assertFalse(khandy.has_nested_or_unmatched_paren("abc(def)", "hw"))
+        self.assertFalse(khandy.has_nested_or_unmatched_paren("(abc)def", "hw"))
+        self.assertFalse(khandy.has_nested_or_unmatched_paren("abc(def)ghi", "hw"))
+
+    def test_valid_parentheses_fw_full_width(self):
+        # Test valid parentheses (no nesting, balanced) with full-width
+        self.assertFalse(khandy.has_nested_or_unmatched_paren("", "fw"))
+        self.assertFalse(khandy.has_nested_or_unmatched_paren("abc", "fw"))
+        self.assertFalse(khandy.has_nested_or_unmatched_paren("（abc）", "fw"))
+        self.assertFalse(khandy.has_nested_or_unmatched_paren("abc（def）", "fw"))
+        self.assertFalse(khandy.has_nested_or_unmatched_paren("（abc）def", "fw"))
+        self.assertFalse(khandy.has_nested_or_unmatched_paren("abc（def）ghi", "fw"))
+
+    def test_nested_parentheses_half_width(self):
+        # Test nested parentheses
+        self.assertTrue(khandy.has_nested_or_unmatched_paren("(())", "hw"))
+        self.assertTrue(khandy.has_nested_or_unmatched_paren("（（abc））", "fw"))
+
+    def test_unmatched_parentheses_half_width(self):
+        # Test unmatched parentheses (left over)
+        self.assertTrue(khandy.has_nested_or_unmatched_paren("(", "hw"))
+        self.assertTrue(khandy.has_nested_or_unmatched_paren(")", "hw"))
+        self.assertTrue(khandy.has_nested_or_unmatched_paren(")abc", "hw"))
+        self.assertTrue(khandy.has_nested_or_unmatched_paren("abc(", "hw"))
+        
+        self.assertTrue(khandy.has_nested_or_unmatched_paren("）abc", "fw"))  # Unmatched right
+        self.assertTrue(khandy.has_nested_or_unmatched_paren("abc（", "fw"))  # Unmatched left
+
+    def test_invalid_paren_type(self):
+        # Test invalid paren_type
+        with self.assertRaises(ValueError):
+            khandy.has_nested_or_unmatched_paren("abc", "invalid")
+        with self.assertRaises(ValueError):
+            khandy.has_nested_or_unmatched_paren("abc", "HW")  # Case sensitive
+        with self.assertRaises(ValueError):
+            khandy.has_nested_or_unmatched_paren("abc", "FW")  # Case sensitive
+        with self.assertRaises(ValueError):
+            khandy.has_nested_or_unmatched_paren("abc", "xyz")
+
 
 if __name__ == '__main__':
     unittest.main()
