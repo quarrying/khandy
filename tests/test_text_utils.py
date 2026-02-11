@@ -191,6 +191,54 @@ class TestHasNestedOrUnmatchedParen(unittest.TestCase):
             khandy.has_nested_or_unmatched_paren("abc", "xyz")
 
 
+def parse_score_str(score_str, str_len=None, lower=0.0, upper=1.0):
+    # 当 str_len 不为 None, 检查 score_str 的长度是否等于 str_len
+    # 若不等于, 则直接返回 None, 否则进入下一步判断
+    if str_len is not None and (len(score_str) != str_len):
+        return None
+    try:
+        score = float(score_str)
+        return score if lower <= score <= upper else None
+    except:
+        return None
+    
+
+class TestUpsert(unittest.TestCase):
+    def test_upsert_prefix_into_path_stem(self):
+        text = f'{0.5:.05f}'
+        validator = lambda text: parse_score_str(text) is not None
+        self.assertEqual(khandy.upsert_prefix_into_path_stem('', text), '0.50000')
+        self.assertEqual(khandy.upsert_prefix_into_path_stem('.jpg', text), '0.50000.jpg')
+        self.assertEqual(khandy.upsert_prefix_into_path_stem('_a.jpg', text), '0.50000_a.jpg')
+        self.assertEqual(khandy.upsert_prefix_into_path_stem('a.jpg', text), '0.50000_a.jpg')
+
+        self.assertEqual(khandy.upsert_prefix_into_path_stem('', text, validator), '0.50000')
+        self.assertEqual(khandy.upsert_prefix_into_path_stem('.jpg', text, validator), '0.50000.jpg')
+        self.assertEqual(khandy.upsert_prefix_into_path_stem('_a.jpg', text, validator), '0.50000_a.jpg')
+        self.assertEqual(khandy.upsert_prefix_into_path_stem('a.jpg', text, validator), '0.50000_a.jpg')
+
+        self.assertEqual(khandy.upsert_prefix_into_path_stem('0.5.jpg', text, validator), '0.50000.jpg')
+        self.assertEqual(khandy.upsert_prefix_into_path_stem('0.5_a.jpg', text, validator), '0.50000_a.jpg')
+
+    def test_upsert_suffix_into_path_stem(self):
+        text = f'{0.5:.05f}'
+        validator = lambda text: parse_score_str(text) is not None
+        self.assertEqual(khandy.upsert_suffix_into_path_stem('', text), '0.50000')
+        self.assertEqual(khandy.upsert_suffix_into_path_stem('.jpg', text), '0.50000.jpg')
+        self.assertEqual(khandy.upsert_suffix_into_path_stem('a_.jpg', text), 'a_0.50000.jpg')
+        self.assertEqual(khandy.upsert_suffix_into_path_stem('a.jpg', text), 'a_0.50000.jpg')
+        self.assertEqual(khandy.upsert_suffix_into_path_stem('', text, validator), '0.50000')
+        self.assertEqual(khandy.upsert_suffix_into_path_stem('.jpg', text, validator), '0.50000.jpg')
+        self.assertEqual(khandy.upsert_suffix_into_path_stem('a_.jpg', text, validator), 'a_0.50000.jpg')
+        self.assertEqual(khandy.upsert_suffix_into_path_stem('a.jpg', text, validator), 'a_0.50000.jpg')
+
+        validator = lambda text: text in ['PASS', 'KEEP']
+        self.assertEqual(khandy.upsert_suffix_into_path_stem('0.5_KEEP.jpg', 'KEEP', validator), '0.5_KEEP.jpg')
+        self.assertEqual(khandy.upsert_suffix_into_path_stem('0.5_a_PASS.jpg', 'PASS', validator), '0.5_a_PASS.jpg')
+        self.assertEqual(khandy.upsert_suffix_into_path_stem('0.5_a_PASS.jpg', 'KEEP', validator), '0.5_a_KEEP.jpg')
+        self.assertEqual(khandy.upsert_suffix_into_path_stem('0.5_a_FOO.jpg', 'PASS', validator), '0.5_a_FOO_PASS.jpg')
+
+
 if __name__ == '__main__':
     unittest.main()
     
