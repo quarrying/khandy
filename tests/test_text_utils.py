@@ -239,6 +239,52 @@ class TestUpsert(unittest.TestCase):
         self.assertEqual(khandy.upsert_suffix_into_path_stem('0.5_a_FOO.jpg', 'PASS', validator), '0.5_a_FOO_PASS.jpg')
 
 
+class TestParseRangeString(unittest.TestCase):
+    
+    def test_basic_ranges(self):
+        # Test basic comma-separated numbers
+        self.assertEqual(khandy.parse_range_string("1,2,3"), [1, 2, 3])
+        # Test basic range
+        self.assertEqual(khandy.parse_range_string("1-3"), [1, 2, 3])
+        # Test mixed numbers and ranges
+        self.assertEqual(khandy.parse_range_string("1,3-5,7"), [1, 3, 4, 5, 7])
+        # Test single number
+        self.assertEqual(khandy.parse_range_string("5"), [5])
+    
+    def test_circle_digits(self):
+        # Test circle digits conversion
+        self.assertEqual(khandy.parse_range_string("①,③-⑤,⑦"), [1, 3, 4, 5, 7])
+        # Test mixed regular and circle digits
+        self.assertEqual(khandy.parse_range_string("1,③-5,⑦"), [1, 3, 4, 5, 7])
+    
+    def test_custom_separators(self):
+        # Test custom separator
+        self.assertEqual(khandy.parse_range_string("1;3-5;7", sep=';'), [1, 3, 4, 5, 7])
+        # Test custom range separator
+        self.assertEqual(khandy.parse_range_string("1,3~5,7", range_sep='~'), [1, 3, 4, 5, 7])
+    
+    def test_edge_cases(self):
+        # Test empty string
+        self.assertEqual(khandy.parse_range_string(""), [])
+        # Test duplicate numbers
+        self.assertEqual(khandy.parse_range_string("1,1,2,2,3"), [1, 2, 3])
+        # Test overlapping ranges
+        self.assertEqual(khandy.parse_range_string("1-3,2-4"), [1, 2, 3, 4])
+        # Test reverse range (should work)
+        self.assertEqual(khandy.parse_range_string("5-1"), [])
+    
+    def test_invalid_inputs(self):
+        # Test invalid range format
+        with self.assertRaises(ValueError):
+            khandy.parse_range_string("1-2-3")
+        # Test invalid range with non-numeric values
+        with self.assertRaises(ValueError):
+            khandy.parse_range_string("1-a")
+        # Test invalid range separator
+        with self.assertRaises(ValueError):
+            khandy.parse_range_string("1~3")
+
+
 if __name__ == '__main__':
     unittest.main()
     

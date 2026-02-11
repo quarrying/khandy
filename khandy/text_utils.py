@@ -317,3 +317,40 @@ def dumps_markdown_table(table: MarkdownTable, align_header: bool = False) -> Li
     dst_lines = [line.strip() for line in dst_lines]
     return dst_lines
 
+
+def parse_range_string(
+    range_string: str, 
+    sep: str = ',', 
+    range_sep: str = '-'
+) -> List[int]:
+    """Parse a string representing a range of numbers and return a sorted list of integers.
+    
+    Args:
+        range_string: A string containing comma-separated numbers or ranges (e.g., "1,3-5,7")
+        sep: Separator for different parts in the range string, default is ','
+        range_sep: Separator used to denote ranges, default is '-'
+        
+    Returns:
+        A sorted list of unique integers parsed from the input string
+        
+    Raises:
+        ValueError: If a range part is invalid (doesn't contain exactly two parts separated by range_sep)
+    """
+    circle_digits = '⓪①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'
+    circle_digit_map = {digit: str(k) for k, digit in enumerate(circle_digits)}
+    for old_str, new_str in circle_digit_map.items():
+        range_string = range_string.replace(old_str, new_str)
+
+    result = []
+    for part in range_string.split(sep):
+        if range_sep in part:
+            subparts = part.split(range_sep)
+            if len(subparts) != 2:
+                raise ValueError(f"Invalid range part: {part}")
+            start, end = map(int, subparts)
+            result.extend(range(start, end + 1))
+        else:
+            if part.strip() != '':
+                result.append(int(part))
+    result = sorted(set(result))
+    return result
