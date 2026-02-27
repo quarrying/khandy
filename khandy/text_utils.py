@@ -2,13 +2,13 @@ import re
 import sys
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 if sys.version_info >= (3, 8):
-    from typing import Literal
+    from typing import Literal, SupportsIndex
 else:
-    from typing_extensions import Literal
-    
+    from typing_extensions import Literal, SupportsIndex
+
 CONTENT_WITH_HW_PAREN_PATTERN = r'(?:(?P<out_paren>[^(]+))?'
 CONTENT_WITH_HW_PAREN_PATTERN += r'(?:[(](?P<in_paren>[^)]*)[)])?'
 CONTENT_WITH_HW_PAREN_PATTERN_OBJ = re.compile(CONTENT_WITH_HW_PAREN_PATTERN)
@@ -207,15 +207,15 @@ class MarkdownTableAlignType(Enum):
     LEFT = 1
     RIGHT = 2
     BOTH = 3
-    
-    
+
+
 @dataclass
 class MarkdownTable:
     headers: List[str]
     align_types: List[MarkdownTableAlignType]
     rows: List[List[str]]
-    
-    
+
+
 def _get_cell_align_type(cell: str) -> MarkdownTableAlignType:
     cell = re.sub(r'\s', '', cell)
     cell = re.sub(r'-{2,}', '-', cell)
@@ -229,8 +229,8 @@ def _get_cell_align_type(cell: str) -> MarkdownTableAlignType:
         return MarkdownTableAlignType.BOTH
     else:
         raise Exception('parse align type')
-    
-    
+
+
 def _split_table_line(line: str, length: Optional[int] = None) -> List[str]:
     line = line.strip('|')
     cells = line.split('|')
@@ -276,7 +276,7 @@ def parse_markdown_table(lines: List[str]) -> MarkdownTable:
         rows.append(parts)
         
     return MarkdownTable(headers, align_types, rows)
-    
+
 
 def dumps_markdown_table(table: MarkdownTable, align_header: bool = False) -> List[str]:
     """Convert a khandy.MarkdownTable object to a list of strings representing a Markdown table.
@@ -354,3 +354,37 @@ def parse_range_string(
                 result.append(int(part))
     result = sorted(set(result))
     return result
+
+
+def str_contains(
+    s: str, 
+    sub: Union[str, Tuple[str, ...]], 
+    start: Optional[SupportsIndex] = None, 
+    end: Optional[SupportsIndex] = None, 
+) -> bool:
+    """Check if a string contains a substring or any of a tuple of substrings.
+
+    Args:
+        s: The string to search.
+        sub: The substring or tuple of substrings to search for.
+        start: The start index (inclusive) to search from.
+        end: The end index (exclusive) to search to.
+
+    Returns:
+        True if the string contains the substring or any of the substrings in the tuple, False otherwise.
+
+    Raises:
+        TypeError: If the sub argument is not a string or tuple.
+        TypeError: If any item in the tuple is not a string.
+
+    Notes:
+        This function simulates str.startswith and str.endswith with the ability to check for multiple substrings at once.
+    """
+    if isinstance(sub, str):
+        return s.find(sub, start, end) != -1
+    if isinstance(sub, tuple):
+        for item in sub:
+            if not isinstance(item, str):
+                raise TypeError(f"expected str, not {type(item).__name__}")
+        return any(s.find(item, start, end) != -1 for item in sub)
+    raise TypeError(f"str_contains arg 1 must be str or tuple, not {type(sub).__name__}")

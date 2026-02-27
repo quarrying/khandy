@@ -285,6 +285,66 @@ class TestParseRangeString(unittest.TestCase):
             khandy.parse_range_string("1~3")
 
 
+class TestStrContains(unittest.TestCase):
+
+    def test_single_substring_found(self):
+        # Test case where a single substring is found
+        self.assertTrue(khandy.str_contains("hello world", "world"))
+        self.assertTrue(khandy.str_contains("hello world", "hello"))
+        self.assertTrue(khandy.str_contains("hello world", "o w"))
+
+    def test_single_substring_not_found(self):
+        # Test case where a single substring is not found
+        self.assertFalse(khandy.str_contains("hello world", "python"))
+        self.assertFalse(khandy.str_contains("hello world", "xyz"))
+
+    def test_tuple_of_substrings_found(self):
+        # Test case where any substring in the tuple is found
+        self.assertTrue(khandy.str_contains("hello world", ("world", "python")))
+        self.assertTrue(khandy.str_contains("hello world", ("hello", "xyz")))
+        self.assertTrue(khandy.str_contains("hello world", ("test", "world")))
+
+    def test_tuple_of_substrings_not_found(self):
+        # Test case where none of the substrings in the tuple are found
+        self.assertFalse(khandy.str_contains("hello world", ("python", "java")))
+        self.assertFalse(khandy.str_contains("hello world", ("xyz", "abc")))
+
+    def test_with_start_and_end_indices(self):
+        # Test case with start and end indices
+        self.assertTrue(khandy.str_contains("hello world", "world", start=6))
+        self.assertFalse(khandy.str_contains("hello world", "hello", start=6))
+        self.assertTrue(khandy.str_contains("hello world", "hello", end=5))
+        self.assertFalse(khandy.str_contains("hello world", "world", end=5))
+
+    def test_empty_substring(self):
+        # Test case with an empty substring (should always return True)
+        self.assertTrue(khandy.str_contains("hello world", ""))
+        self.assertTrue(khandy.str_contains("", ""))
+
+    def test_empty_tuple(self):
+        # Test case with an empty tuple (should return False)
+        self.assertFalse(khandy.str_contains("hello world", ()))
+
+    def test_invalid_sub_type(self):
+        # Test case where sub is neither a string nor a tuple
+        with self.assertRaises(TypeError):
+            khandy.str_contains("hello world", 123)
+
+    def test_invalid_tuple_item_type(self):
+        # Test case where tuple contains non-string items
+        with self.assertRaises(TypeError):
+            khandy.str_contains("hello world", ("valid", 123))
+        with self.assertRaises(TypeError):
+            khandy.str_contains("hello world", (123, "valid"))
+
+    def test_edge_cases(self):
+        # Edge cases
+        self.assertTrue(khandy.str_contains("a", "a"))  # Single character match
+        self.assertFalse(khandy.str_contains("a", "b"))  # Single character mismatch
+        self.assertTrue(khandy.str_contains("abc", "abc"))  # Full string match
+        self.assertFalse(khandy.str_contains("abc", "abcd"))  # Substring longer than string
+
+
 if __name__ == '__main__':
     unittest.main()
     
