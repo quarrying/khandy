@@ -3,7 +3,17 @@ import itertools
 import numbers
 import random
 import warnings
-from typing import Any, List, Optional, Union, Tuple, Iterable
+from typing import (
+    Any,
+    List,
+    Optional,
+    Union,
+    Tuple,
+    Iterable,
+    TypeVar,
+    Callable,
+    Literal,
+)
 
 import numpy as np
 
@@ -170,6 +180,52 @@ def split_by_ratio(x, ratios):
     cdf = [sum(pdf[:k]) for k in range(len(pdf) + 1)]
     indices = [int(round(len(x) * k)) for k in cdf]
     return [x[indices[i]: indices[i + 1]] for i in range(len(ratios))]
+
+
+T = TypeVar('T')
+def split_by(
+    iterable: Iterable[T], 
+    condition: Callable[[int, T], bool], 
+    mode: Literal['first', 'last', 'drop'] = 'first'
+) -> List[List[T]]:
+    """Split an iterable into sublists based on a condition.
+    
+    References:
+        more_itertools.split_at
+        more_itertools.split_before
+        more_itertools.split_after
+    """
+    if mode not in ['first', 'last', 'drop']:
+        raise ValueError("mode must be one of 'first', 'last', or 'drop'")
+    
+    result: List[List[T]] = []
+    current_sublist: List[T] = []
+    
+    for index, item in enumerate(iterable):
+        if condition(index, item):
+            if mode == 'first':
+                # Add current sublist if not empty, then start new sublist with the matching item
+                if current_sublist:
+                    result.append(current_sublist)
+                current_sublist = [item]
+            elif mode == 'last':
+                # Add the matching item to current sublist and save it
+                current_sublist.append(item)
+                result.append(current_sublist)
+                current_sublist = []
+            elif mode == 'drop':
+                # Add current sublist, drop the matching item
+                result.append(current_sublist)
+                current_sublist = []
+        else:
+            # Regular item, add to current sublist
+            current_sublist.append(item)
+    
+    if mode == 'drop':
+        result.append(current_sublist)
+    elif current_sublist:
+        result.append(current_sublist)
+    return result
 
 
 def to_ntuple(x, n):
@@ -473,4 +529,3 @@ class EqLenSequences:
             return self.filter_(index)
         else:
             return self[index]
-        
