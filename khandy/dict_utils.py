@@ -1,4 +1,5 @@
 import random
+import warnings
 from collections import OrderedDict
 from typing import Any, Dict, List, Tuple, Optional
 
@@ -51,7 +52,7 @@ def convert_multidict_to_list(multidict_obj):
     return key_list, value_list
 
 
-def remap_multidict_keys(
+def rekey_multidict(
     multidict_obj: Dict[Any, List[Any]], 
     key_map: Dict[Any, Any], 
     raise_if_key_error: bool = True
@@ -72,8 +73,17 @@ def remap_multidict_keys(
             mapped_key = key_map[key]  # This will raise KeyError if key not in key_map
         else:
             mapped_key = key_map.get(key, key)  # Use original key if not in key_map
-        result[mapped_key] = values
+        result.setdefault(mapped_key, []).extend(values) 
     return result
+
+
+def remap_multidict_keys(
+    multidict_obj: Dict[Any, List[Any]], 
+    key_map: Dict[Any, Any], 
+    raise_if_key_error: bool = True
+) -> Dict[Any, List[Any]]:
+    warnings.warn('`remap_multidict_keys` will be deprecated, use `rekey_multidict` instead!')
+    return rekey_multidict(multidict_obj, key_map, raise_if_key_error)
 
 
 def convert_multidict_to_records(
@@ -86,7 +96,7 @@ def convert_multidict_to_records(
     if key_map is None:
         current_multidict = multidict_obj
     else:
-        current_multidict = remap_multidict_keys(multidict_obj, key_map, raise_if_key_error)
+        current_multidict = rekey_multidict(multidict_obj, key_map, raise_if_key_error)
         
     for key, values in current_multidict.items():
         for value in values:

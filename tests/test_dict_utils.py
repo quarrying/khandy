@@ -244,7 +244,7 @@ class TestFilterMultidictByNumber(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-class TestRemapMultidictKeys(unittest.TestCase):
+class TestRekeyMultidict(unittest.TestCase):
     
     def test_valid_mapping_all_keys_present(self):
         """Test when all keys in multidict_obj exist in key_map with raise_if_key_error=True"""
@@ -252,7 +252,7 @@ class TestRemapMultidictKeys(unittest.TestCase):
         key_map = {'a': 'x', 'b': 'y'}
         expected = {'x': [1, 2], 'y': [3, 4]}
         
-        result = khandy.remap_multidict_keys(multidict_obj, key_map, raise_if_key_error=True)
+        result = khandy.rekey_multidict(multidict_obj, key_map, raise_if_key_error=True)
         self.assertEqual(result, expected)
     
     def test_valid_mapping_with_raise_false_missing_keys(self):
@@ -261,7 +261,7 @@ class TestRemapMultidictKeys(unittest.TestCase):
         key_map = {'a': 'x', 'b': 'y'}  # 'c' is missing from key_map
         expected = {'x': [1, 2], 'y': [3, 4], 'c': [5, 6]}  # 'c' should remain unchanged
         
-        result = khandy.remap_multidict_keys(multidict_obj, key_map, raise_if_key_error=False)
+        result = khandy.rekey_multidict(multidict_obj, key_map, raise_if_key_error=False)
         self.assertEqual(result, expected)
     
     def test_missing_key_raises_error_when_flag_true(self):
@@ -270,7 +270,7 @@ class TestRemapMultidictKeys(unittest.TestCase):
         key_map = {'a': 'x'}  # 'b' is missing from key_map
         
         with self.assertRaises(KeyError):
-            khandy.remap_multidict_keys(multidict_obj, key_map, raise_if_key_error=True)
+            khandy.rekey_multidict(multidict_obj, key_map, raise_if_key_error=True)
     
     def test_empty_multidict_returns_empty(self):
         """Test with empty multidict_obj"""
@@ -278,7 +278,7 @@ class TestRemapMultidictKeys(unittest.TestCase):
         key_map = {'a': 'x', 'b': 'y'}
         expected = {}
         
-        result = khandy.remap_multidict_keys(multidict_obj, key_map, raise_if_key_error=True)
+        result = khandy.rekey_multidict(multidict_obj, key_map, raise_if_key_error=True)
         self.assertEqual(result, expected)
     
     def test_empty_key_map_with_raise_false(self):
@@ -287,7 +287,7 @@ class TestRemapMultidictKeys(unittest.TestCase):
         key_map = {}  # Empty key_map
         expected = {'a': [1, 2], 'b': [3, 4]}  # Original keys preserved
         
-        result = khandy.remap_multidict_keys(multidict_obj, key_map, raise_if_key_error=False)
+        result = khandy.rekey_multidict(multidict_obj, key_map, raise_if_key_error=False)
         self.assertEqual(result, expected)
     
     def test_empty_key_map_with_raise_true(self):
@@ -296,7 +296,7 @@ class TestRemapMultidictKeys(unittest.TestCase):
         key_map = {}  # Empty key_map
         
         with self.assertRaises(KeyError):
-            khandy.remap_multidict_keys(multidict_obj, key_map, raise_if_key_error=True)
+            khandy.rekey_multidict(multidict_obj, key_map, raise_if_key_error=True)
     
     def test_complex_data_types_as_values(self):
         """Test with complex data types as values in the lists"""
@@ -310,7 +310,7 @@ class TestRemapMultidictKeys(unittest.TestCase):
             'beta': ['string', 42]
         }
         
-        result = khandy.remap_multidict_keys(multidict_obj, key_map, raise_if_key_error=True)
+        result = khandy.rekey_multidict(multidict_obj, key_map, raise_if_key_error=True)
         self.assertEqual(result, expected)
     
     def test_non_string_keys_and_values(self):
@@ -319,7 +319,7 @@ class TestRemapMultidictKeys(unittest.TestCase):
         key_map = {1: 'one', 2: 'two'}
         expected = {'one': ['a', 'b'], 'two': [True, False]}
         
-        result = khandy.remap_multidict_keys(multidict_obj, key_map, raise_if_key_error=True)
+        result = khandy.rekey_multidict(multidict_obj, key_map, raise_if_key_error=True)
         self.assertEqual(result, expected)
     
     def test_mixed_type_keys(self):
@@ -328,7 +328,7 @@ class TestRemapMultidictKeys(unittest.TestCase):
         key_map = {1: 'number_one', 'str_key': 'renamed_str_key'}
         expected = {'number_one': [10, 20], 'renamed_str_key': [30, 40]}
         
-        result = khandy.remap_multidict_keys(multidict_obj, key_map, raise_if_key_error=True)
+        result = khandy.rekey_multidict(multidict_obj, key_map, raise_if_key_error=True)
         self.assertEqual(result, expected)
     
     def test_duplicate_values_preserved(self):
@@ -337,7 +337,7 @@ class TestRemapMultidictKeys(unittest.TestCase):
         key_map = {'old_key': 'new_key'}
         expected = {'new_key': [1, 1, 2, 2, 3]}
         
-        result = khandy.remap_multidict_keys(multidict_obj, key_map, raise_if_key_error=True)
+        result = khandy.rekey_multidict(multidict_obj, key_map, raise_if_key_error=True)
         self.assertEqual(result, expected)
     
     def test_original_object_not_modified(self):
@@ -346,7 +346,7 @@ class TestRemapMultidictKeys(unittest.TestCase):
         original_copy = {'a': [1, 2], 'b': [3, 4]}  # Make a copy to compare
         key_map = {'a': 'x', 'b': 'y'}
         
-        result = khandy.remap_multidict_keys(original_multidict, key_map, raise_if_key_error=True)
+        result = khandy.rekey_multidict(original_multidict, key_map, raise_if_key_error=True)
         
         # Original object should remain unchanged
         self.assertEqual(original_multidict, original_copy)
@@ -359,9 +359,17 @@ class TestRemapMultidictKeys(unittest.TestCase):
         key_map = {'key1': 'mapped_key1'}
         expected = {'mapped_key1': [1, 'string', None, [1, 2], {'a': 1}]}
         
-        result = khandy.remap_multidict_keys(multidict_obj, key_map, raise_if_key_error=True)
+        result = khandy.rekey_multidict(multidict_obj, key_map, raise_if_key_error=True)
         self.assertEqual(result, expected)
 
+    def test_multiple_keys_mapping_to_same_new_key(self):
+        """Test when multiple old keys map to the same new key (values should be combined)"""
+        multidict_obj = {'a': [1, 2], 'b': [3, 4]}
+        key_map = {'a': 'x', 'b': 'x'}
+        expected = {'x': [1, 2, 3, 4]}  # Values from both 'a' and 'b' should be combined under 'x'
+        result = khandy.rekey_multidict(multidict_obj, key_map, raise_if_key_error=True)
+        self.assertEqual(result, expected)
+        
 
 class TestConvertMultidictToRecords(unittest.TestCase):
     
