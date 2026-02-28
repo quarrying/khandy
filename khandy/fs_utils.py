@@ -105,14 +105,14 @@ def replace_path_parent(
     return os.path.join(parent_dir, os.path.basename(path))
     
 
-def get_path_parts(path: str) -> Tuple[str]:
+def get_path_parts(path: str) -> Tuple[str, ...]:
     """Splits a file path into its constituent parts.  
   
     Args:
         path (str): The file path to be split.  
   
     Returns:
-        Tuple[str]: A list of strings representing the individual parts of the path.  
+        Tuple[str, ...]: A tuple of strings representing the individual parts of the path.
 
     Notes:
         This implementation is different from pathlib.Path.parts. 

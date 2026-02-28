@@ -250,7 +250,9 @@ class TestParseRangeString(unittest.TestCase):
         self.assertEqual(khandy.parse_range_string("1,3-5,7"), [1, 3, 4, 5, 7])
         # Test single number
         self.assertEqual(khandy.parse_range_string("5"), [5])
-    
+        # Test mixed separators
+        self.assertEqual(khandy.parse_range_string("1,3-5,7~9"), [1, 3, 4, 5, 7, 8, 9])
+
     def test_circle_digits(self):
         # Test circle digits conversion
         self.assertEqual(khandy.parse_range_string("①,③-⑤,⑦"), [1, 3, 4, 5, 7])
@@ -280,9 +282,6 @@ class TestParseRangeString(unittest.TestCase):
         # Test invalid range with non-numeric values
         with self.assertRaises(ValueError):
             khandy.parse_range_string("1-a")
-        # Test invalid range separator
-        with self.assertRaises(ValueError):
-            khandy.parse_range_string("1~3")
 
 
 class TestStrContains(unittest.TestCase):
