@@ -345,6 +345,84 @@ class TestStrContains(unittest.TestCase):
         self.assertFalse(khandy.str_contains("abc", "abcd"))  # Substring longer than string
 
 
+class TestStrSplit(unittest.TestCase):
+    
+    def test_single_string_separator(self):
+        """Test splitting with a single string separator"""
+        result = khandy.str_split("apple-banana-cherry", "-")
+        self.assertEqual(result, ["apple", "banana", "cherry"])
+        
+    def test_none_separator_default_whitespace(self):
+        """Test splitting with None separator (default whitespace behavior)"""
+        result = khandy.str_split("  apple   banana  cherry  ")
+        self.assertEqual(result, ["apple", "banana", "cherry"])
+        
+    def test_tuple_separators_basic(self):
+        """Test splitting with tuple of separators"""
+        result = khandy.str_split("apple-banana~cherry#date", ('-', '~', '#'))
+        self.assertEqual(result, ["apple", "banana", "cherry", "date"])
+        
+    def test_tuple_separators_with_maxsplit_zero(self):
+        """Test splitting with tuple separators when maxsplit is 0"""
+        result = khandy.str_split("apple-banana~cherry#date", ('-', '~', '#'), maxsplit=0)
+        self.assertEqual(result, ["apple-banana~cherry#date"])
+        
+    def test_tuple_separators_with_maxsplit_positive(self):
+        """Test splitting with tuple separators and positive maxsplit"""
+        result = khandy.str_split("apple-banana~cherry#date", ('-', '~', '#'), maxsplit=2)
+        self.assertEqual(result, ["apple", "banana", "cherry#date"])
+        
+    def test_tuple_separators_with_maxsplit_negative(self):
+        """Test splitting with tuple separators when maxsplit is negative"""
+        result = khandy.str_split("apple-banana~cherry#date", ('-', '~', '#'), maxsplit=-1)
+        self.assertEqual(result, ["apple", "banana", "cherry", "date"])
+        
+    def test_empty_string_input(self):
+        """Test splitting empty string"""
+        result = khandy.str_split("", ('-', '~', '#'))
+        self.assertEqual(result, [""])
+        
+    def test_empty_string_with_single_separator(self):
+        """Test splitting empty string with single separator"""
+        result = khandy.str_split("", "-")
+        self.assertEqual(result, [""])
+        
+    def test_no_matches_with_tuple_separators(self):
+        """Test when no separators are found in the string"""
+        result = khandy.str_split("applebanana", ('-', '~', '#'))
+        self.assertEqual(result, ["applebanana"])
+        
+    def test_consecutive_separators(self):
+        """Test handling consecutive separators"""
+        result = khandy.str_split("apple--banana~~cherry", ('-', '~'))
+        self.assertEqual(result, ["apple", "", "banana", "", "cherry"])
+        
+    def test_special_regex_chars_in_separators(self):
+        """Test separators containing special regex characters"""
+        result = khandy.str_split("apple.banana^cherry$end", ('.', '^', '$'))
+        self.assertEqual(result, ["apple", "banana", "cherry", "end"])
+        
+    def test_maxsplit_one_with_tuple(self):
+        """Test maxsplit=1 with tuple separators"""
+        result = khandy.str_split("apple-banana~cherry#date", ('-', '~'), maxsplit=1)
+        self.assertEqual(result, ["apple", "banana~cherry#date"])
+        
+    def test_original_behavior_preserved(self):
+        """Test that original string.split behavior is preserved for non-tuple separators"""
+        # Test with None
+        self.assertEqual(khandy.str_split("a b c"), ["a", "b", "c"])
+        # Test with single separator
+        self.assertEqual(khandy.str_split("a,b,c", ","), ["a", "b", "c"])
+        # Test with maxsplit
+        self.assertEqual(khandy.str_split("a,b,c,d", ",", maxsplit=1), ["a", "b,c,d"])
+        
+    def test_single_char_vs_tuple_with_same_char(self):
+        """Compare behavior between single char separator and tuple with same char"""
+        result1 = khandy.str_split("a-b-c", "-")
+        result2 = khandy.str_split("a-b-c", ("-",))
+        self.assertEqual(result1, result2)
+
+
 if __name__ == '__main__':
     unittest.main()
     

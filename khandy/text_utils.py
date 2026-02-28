@@ -388,3 +388,41 @@ def str_contains(
                 raise TypeError(f"expected str, not {type(item).__name__}")
         return any(s.find(item, start, end) != -1 for item in sub)
     raise TypeError(f"str_contains arg 1 must be str or tuple, not {type(sub).__name__}")
+
+
+def str_split(
+    string: str, 
+    sep: Union[str, Tuple[str, ...], None] = None, 
+    maxsplit: int = -1
+) -> List[str]:
+    """Split a string by separator(s) with enhanced functionality.
+    
+    This function extends Python's built-in str.split() method by allowing:
+    - Multiple separators via tuple input
+    - Consistent behavior with negative maxsplit values
+    
+    Args:
+        string (str): The string to be split.
+        sep (Union[str, Tuple[str, ...], None], optional): 
+            - If str: Single separator (same as built-in split)
+            - If tuple: Multiple separators to split on
+            - If None: Split on whitespace (same as built-in split)
+            Defaults to None.
+        maxsplit (int, optional): Maximum number of splits to perform.
+            - Negative values means no limit
+            - 0 returns the original string as a single element list
+            - Positive values limit the number of splits
+            Defaults to -1 (no limit).
+            
+    Returns:
+        List[str]: A list of substrings obtained by splitting the input string.
+    """
+    if isinstance(sep, tuple):
+        if maxsplit < 0:
+            maxsplit = 0
+        elif maxsplit == 0:
+            return [string]
+        pattern = '|'.join(re.escape(s) for s in sep)
+        return re.split(pattern, string, maxsplit=maxsplit)
+    return string.split(sep, maxsplit)
+
