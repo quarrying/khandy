@@ -426,3 +426,31 @@ def str_split(
         return re.split(pattern, string, maxsplit=maxsplit)
     return string.split(sep, maxsplit)
 
+
+def _generate_digit_trans_table():
+    groups = [
+        ('⓪①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳', 0),
+        ('㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚㉛㉜㉝㉞㉟㊱㊲㊳㊴㊵㊶㊷㊸㊹㊺㊻㊼㊽㊾㊿', 21),
+        ('🄋➀➁➂➃➄➅➆➇➈➉', 0),
+        ('⓿❶❷❸❹❺❻❼❽❾❿⓫⓬⓭⓮⓯⓰⓱⓲⓳⓴', 0),
+        ('🄌➊➋➌➍➎➏➐➑➒➓', 0),
+        ('⓵⓶⓷⓸⓹⓺⓻⓼⓽⓾', 1),
+        ('０１２３４５６７８９', 0),
+        ('⑴⑵⑶⑷⑸⑹⑺⑻⑼⑽⑾⑿⒀⒁⒂⒃⒄⒅⒆⒇', 1),
+        ('⒈⒉⒊⒋⒌⒍⒎⒏⒐⒑⒒⒓⒔⒕⒖⒗⒘⒙⒚⒛', 1),
+    ]
+    
+    mapping = {}
+    for chars, start_val in groups:
+        for i, char in enumerate(chars):
+            mapping[char] = str(i + start_val)
+    trans_table = str.maketrans(mapping)
+    return trans_table
+
+
+_GLOBAL_DIGIT_TRANS_TABLE = _generate_digit_trans_table()
+
+
+def normalize_digit_chars(string: str) -> str:
+    return string.translate(_GLOBAL_DIGIT_TRANS_TABLE)
+

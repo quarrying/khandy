@@ -423,6 +423,86 @@ class TestStrSplit(unittest.TestCase):
         self.assertEqual(result1, result2)
 
 
+class TestNormalizeDigitChars(unittest.TestCase):
+    
+    def test_empty_string(self):
+        """Test with empty string"""
+        self.assertEqual(khandy.normalize_digit_chars(""), "")
+    
+    def test_regular_digits_unchanged(self):
+        """Test that regular digits remain unchanged"""
+        self.assertEqual(khandy.normalize_digit_chars("1234567890"), "1234567890")
+    
+    def test_circled_numbers_basic(self):
+        """Test circled numbers conversion"""
+        input_str = "⓪①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳"
+        expected = "01234567891011121314151617181920"
+        self.assertEqual(khandy.normalize_digit_chars(input_str), expected)
+        input_str = "➀➁➂➃➄➅➆➇➈➉"
+        expected = "12345678910"
+        self.assertEqual(khandy.normalize_digit_chars(input_str), expected)
+        input_str = "➊➋➌➍➎➏➐➑➒➓"
+        expected = "12345678910"
+        self.assertEqual(khandy.normalize_digit_chars(input_str), expected)
+        input_str = "⓿❶❷❸❹❺❻❼❽❾❿⓫⓬⓭⓮⓯⓰⓱⓲⓳⓴"
+        expected = "01234567891011121314151617181920"
+        self.assertEqual(khandy.normalize_digit_chars(input_str), expected)
+        
+    def test_large_circled_numbers(self):
+        """Test 21-50 range (circled numbers)"""
+        input_str = "㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚㉛㉜㉝㉞㉟㊱㊲㊳㊴㊵㊶㊷㊸㊹㊺㊻㊼㊽㊾㊿"
+        expected = "212223242526272829303132333435363738394041424344454647484950"
+        self.assertEqual(khandy.normalize_digit_chars(input_str), expected)
+    
+    def test_double_circled_numbers(self):
+        """Test double circled numbers"""
+        input_str = "⓵⓶⓷⓸⓹⓺⓻⓼⓽⓾"
+        expected = "12345678910"
+        self.assertEqual(khandy.normalize_digit_chars(input_str), expected)
+    
+    def test_parenthesized_numbers(self):
+        """Test parenthesized numbers"""
+        input_str = "⑴⑵⑶⑷⑸⑹⑺⑻⑼⑽⑾⑿⒀⒁⒂⒃⒄⒅⒆⒇"
+        expected = "1234567891011121314151617181920"
+        self.assertEqual(khandy.normalize_digit_chars(input_str), expected)
+    
+    def test_full_width_numbers(self):
+        """Test full-width numbers"""
+        input_str = "０１２３４５６７８９"
+        expected = "0123456789"
+        self.assertEqual(khandy.normalize_digit_chars(input_str), expected)
+    
+    def test_dotted_numbers(self):
+        """Test dotted numbers"""
+        input_str = "⒈⒉⒊⒋⒌⒍⒎⒏⒐⒑⒒⒓⒔⒕⒖⒗⒘⒙⒚⒛"
+        expected = "1234567891011121314151617181920"
+        self.assertEqual(khandy.normalize_digit_chars(input_str), expected)
+    
+    def test_mixed_content(self):
+        """Test string with mixed content (numbers, letters, symbols)"""
+        input_str = "Room①, Section②, Item③, Code④⑤⑥"
+        expected = "Room1, Section2, Item3, Code456"
+        self.assertEqual(khandy.normalize_digit_chars(input_str), expected)
+    
+    def test_non_digit_chars_unchanged(self):
+        """Test that non-digit characters remain unchanged"""
+        input_str = "Hello World! @#$%^&*()"
+        expected = "Hello World! @#$%^&*()"
+        self.assertEqual(khandy.normalize_digit_chars(input_str), expected)
+    
+    def test_mixed_regular_and_special_digits(self):
+        """Test mix of regular digits and special digit formats"""
+        input_str = "Version1.②.③ build④⑤⑥"
+        expected = "Version1.2.3 build456"
+        self.assertEqual(khandy.normalize_digit_chars(input_str), expected)
+    
+    def test_unicode_combination(self):
+        """Test various unicode number formats together"""
+        input_str = "①➁❸➍５⑸"
+        expected = "123455"
+        self.assertEqual(khandy.normalize_digit_chars(input_str), expected)
+
+
 if __name__ == '__main__':
     unittest.main()
     
