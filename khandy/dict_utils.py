@@ -44,12 +44,28 @@ def create_multidict(key_list, value_list):
     return multidict_obj
 
 
-def convert_multidict_to_list(multidict_obj):
+def convert_multidict_to_list(
+    multidict_obj: Dict[Any, List[Any]]
+) -> Tuple[List[Any], List[Any]]:
     key_list, value_list = [], []
     for key, value in multidict_obj.items():
         key_list += [key] * len(value)
         value_list += value
     return key_list, value_list
+
+
+def convert_multidict_to_records(
+    multidict_obj: Dict[Any, List[Any]], 
+    value_first: bool = True
+) -> List[str]:
+    records = []
+    for key, values in multidict_obj.items():
+        for value in values:
+            if value_first:
+                records.append(f'{value},{key}')
+            else:
+                records.append(f'{key},{value}')
+    return records
 
 
 def rekey_multidict(
@@ -65,8 +81,12 @@ def rekey_multidict(
         raise_if_key_error: Whether to raise an error if a key is not found in key_map
         
     Returns:
-        A new multidict with remapped keys
+        If key_map is None, returns the original multidict. 
+        Otherwise, returns a new multidict with remapped keys.
     """
+    if key_map is None: 
+        return multidict_obj
+
     result = {}
     for key, values in multidict_obj.items():
         if raise_if_key_error:
@@ -86,27 +106,6 @@ def remap_multidict_keys(
     return rekey_multidict(multidict_obj, key_map, raise_if_key_error)
 
 
-def convert_multidict_to_records(
-    multidict_obj: Dict[Any, List[Any]], 
-    key_map: Dict[Any, Any], 
-    raise_if_key_error: bool = True,
-    value_first: bool = True
-) -> List[str]:
-    records = []
-    if key_map is None:
-        current_multidict = multidict_obj
-    else:
-        current_multidict = rekey_multidict(multidict_obj, key_map, raise_if_key_error)
-        
-    for key, values in current_multidict.items():
-        for value in values:
-            if value_first:
-                records.append(f'{value},{key}')
-            else:
-                records.append(f'{key},{value}')
-    return records
-    
-    
 def sample_multidict(
     multidict_obj: Dict[Any, List[Any]], 
     num_keys: Optional[int] = None, 

@@ -376,89 +376,49 @@ class TestConvertMultidictToRecords(unittest.TestCase):
     def test_basic_functionality_value_first(self):
         """Test basic conversion with value_first=True"""
         multidict = {'a': [1, 2], 'b': [3]}
-        key_map = None
-        result = khandy.convert_multidict_to_records(multidict, key_map, value_first=True)
+        result = khandy.convert_multidict_to_records(multidict, value_first=True)
         expected = ['1,a', '2,a', '3,b']
         self.assertEqual(result, expected)
     
     def test_basic_functionality_key_first(self):
         """Test basic conversion with value_first=False"""
         multidict = {'a': [1, 2], 'b': [3]}
-        key_map = None
-        result = khandy.convert_multidict_to_records(multidict, key_map, value_first=False)
+        result = khandy.convert_multidict_to_records(multidict, value_first=False)
         expected = ['a,1', 'a,2', 'b,3']
-        self.assertEqual(result, expected)
-    
-    def test_with_key_mapping(self):
-        """Test conversion with key mapping applied"""
-        multidict = {'old_a': [1, 2], 'old_b': [3]}
-        key_map = {'old_a': 'new_a', 'old_b': 'new_b'}
-        result = khandy.convert_multidict_to_records(multidict, key_map, value_first=True)
-        expected = ['1,new_a', '2,new_a', '3,new_b']
         self.assertEqual(result, expected)
     
     def test_empty_multidict(self):
         """Test with empty multidict"""
         multidict = {}
-        key_map = None
-        result = khandy.convert_multidict_to_records(multidict, key_map)
+        result = khandy.convert_multidict_to_records(multidict)
         expected = []
         self.assertEqual(result, expected)
     
     def test_multidict_with_empty_lists(self):
         """Test multidict containing empty lists"""
         multidict = {'a': [], 'b': [1, 2]}
-        key_map = None
-        result = khandy.convert_multidict_to_records(multidict, key_map)
+        result = khandy.convert_multidict_to_records(multidict)
         expected = ['1,b', '2,b']
         self.assertEqual(result, expected)
     
     def test_all_empty_lists(self):
         """Test multidict where all values are empty lists"""
         multidict = {'a': [], 'b': []}
-        key_map = None
-        result = khandy.convert_multidict_to_records(multidict, key_map)
+        result = khandy.convert_multidict_to_records(multidict)
         expected = []
         self.assertEqual(result, expected)
     
     def test_mixed_data_types(self):
         """Test with mixed data types as keys and values"""
         multidict = {1: ['x', 'y'], 'str_key': [99, None]}
-        key_map = None
-        result = khandy.convert_multidict_to_records(multidict, key_map, value_first=True)
+        result = khandy.convert_multidict_to_records(multidict, value_first=True)
         expected = ['x,1', 'y,1', '99,str_key', 'None,str_key']
         self.assertEqual(result, expected)
-    
-    def test_key_mapping_with_missing_keys_raise_error(self):
-        """Test key mapping when some keys are missing and raise_if_key_error=True"""
-        multidict = {'a': [1, 2], 'c': [3]}  # 'c' not in key_map
-        key_map = {'a': 'mapped_a', 'b': 'mapped_b'}  # 'c' missing from key_map
-        with self.assertRaises(KeyError):
-            khandy.convert_multidict_to_records(multidict, key_map, raise_if_key_error=True)
-    
-    def test_key_mapping_with_missing_keys_no_error(self):
-        """Test key mapping when some keys are missing and raise_if_key_error=False"""
-        multidict = {'a': [1, 2], 'c': [3]}  # 'c' not in key_map
-        key_map = {'a': 'mapped_a', 'b': 'mapped_b'}  # 'c' missing from key_map
-        result = khandy.convert_multidict_to_records(multidict, key_map, raise_if_key_error=False, value_first=True)
-        # 'a' gets mapped, 'c' stays as original
-        expected = ['1,mapped_a', '2,mapped_a', '3,c']
-        self.assertEqual(result, expected)
-    
-    def test_none_key_map_same_as_original(self):
-        """Test that key_map=None produces same result as identity mapping"""
-        multidict = {'x': [10], 'y': [20, 30]}
-        result_with_none = khandy.convert_multidict_to_records(multidict, None)
-        # Identity mapping should produce same result
-        identity_map = {'x': 'x', 'y': 'y'}
-        result_with_identity = khandy.convert_multidict_to_records(multidict, identity_map)
-        self.assertEqual(result_with_none, result_with_identity)
     
     def test_single_value_per_key(self):
         """Test with single value per key (each list has only one element)"""
         multidict = {'p': [100], 'q': [200]}
-        key_map = None
-        result = khandy.convert_multidict_to_records(multidict, key_map, value_first=True)
+        result = khandy.convert_multidict_to_records(multidict, value_first=True)
         expected = ['100,p', '200,q']
         self.assertEqual(result, expected)
     
@@ -473,10 +433,10 @@ class TestConvertMultidictToRecords(unittest.TestCase):
         obj1 = CustomObj("first")
         obj2 = CustomObj("second")
         multidict = {obj1: [42], 'string_key': [obj2]}
-        key_map = None
-        result = khandy.convert_multidict_to_records(multidict, key_map, value_first=True)
+        result = khandy.convert_multidict_to_records(multidict, value_first=True)
         expected = [f'42,{obj1}', f'{obj2},string_key']
         self.assertEqual(result, expected)
+
 
 if __name__ == '__main__':
     unittest.main()
