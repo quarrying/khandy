@@ -1,19 +1,19 @@
 import sys
 import warnings
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Tuple, Union
 
 if sys.version_info >= (3, 8):
     from typing import Literal
 else:
     from typing_extensions import Literal
-    
+
 import cv2
 import numpy as np
 
 import khandy
 
-interp_codes = {
+INTERP_CODES = {
     'nearest': cv2.INTER_NEAREST,
     'bilinear': cv2.INTER_LINEAR,
     'bicubic': cv2.INTER_CUBIC,
@@ -21,49 +21,62 @@ interp_codes = {
     'lanczos': cv2.INTER_LANCZOS4
 }
 
-InterpolationType = Literal['nearest', 'bilinear', 'bicubic', 'area', 'lanczos']
+InterpolationType = Union[Literal['nearest', 'bilinear', 'bicubic', 'area', 'lanczos'], int]
 
-def scale_image(image, x_scale, y_scale, return_scale=False, interpolation: InterpolationType = 'bilinear'):
-    """Scale image.
-    
-    Reference:
-        mmcv.imrescale
-    """
-    assert khandy.is_numpy_image(image)
-    src_height, src_width = image.shape[:2]
-    dst_width = int(round(x_scale * src_width))
-    dst_height = int(round(y_scale * src_height))
-    
-    resized_image = cv2.resize(image, (dst_width, dst_height), 
-                               interpolation=interp_codes[interpolation])
-    if not return_scale:
-        return resized_image
+
+def _normalize_interpolation(
+    interpolation: InterpolationType = 'bilinear'
+) -> int:
+    if isinstance(interpolation, str):
+        if interpolation not in INTERP_CODES:
+            raise ValueError(f"Unsupported interpolation method: '{interpolation}'. "
+                             f"Supported methods: {list(INTERP_CODES.keys())}")
+        interp_method = INTERP_CODES[interpolation]
     else:
-        x_scale = dst_width / src_width
-        y_scale = dst_height / src_height
-        return resized_image, x_scale, y_scale
+        interp_method = interpolation
+    return interp_method
 
 
-def resize_image(image, dst_width, dst_height, return_scale=False, interpolation: InterpolationType = 'bilinear'):
-    """Resize image to a given size.
+def resize_image(
+    image: np.ndarray, 
+    dst_width: int, 
+    dst_height: int, 
+    return_scale: bool = False,
+    interpolation: InterpolationType = 'bilinear', 
+    shrink_use_inter_area: bool = False
+) -> Union[np.ndarray, Tuple[np.ndarray, float, float]]:
+    """Resizes an image to the specified dimensions.
 
     Args:
-        image (ndarray): The input image.
-        dst_width (int): Target width.
-        dst_height (int): Target height.
+        image (np.ndarray): Input image as a NumPy array.
+        dst_width (int): Target width of the resized image.
+        dst_height (int): Target height of the resized image.
         return_scale (bool): Whether to return `x_scale` and `y_scale`.
-        interpolation (str): Interpolation method, accepted values are
-            "nearest", "bilinear", "bicubic", "area", "lanczos".
+        interpolation (InterpolationType, optional): Interpolation method.
+            Can be an integer (cv2 interpolation flag) or a string.
+            Supported strings: 'nearest', 'bilinear', 'bicubic', 'lanczos'.
+            Defaults to 'bilinear'.
+        shrink_use_inter_area (bool, optional): If True and the image is being
+            shrunk (both dimensions decrease), use cv2.INTER_AREA regardless
+            of the interpolation setting. Defaults to False.
 
     Returns:
         tuple or ndarray: (`resized_image`, `x_scale`, `y_scale`) or `resized_image`.
         
+    Raises:
+        ValueError: If an unsupported string value is passed for interpolation.
+
     Reference:
         mmcv.imresize
     """
     assert khandy.is_numpy_image(image)
-    resized_image = cv2.resize(image, (dst_width, dst_height), 
-                               interpolation=interp_codes[interpolation])
+    interpolation = _normalize_interpolation(interpolation)
+    src_height, src_width = image.shape[:2]
+    if shrink_use_inter_area and (dst_width < src_width and dst_height < src_height):
+        interpolation = cv2.INTER_AREA
+
+    resized_image = cv2.resize(image, (dst_width, dst_height), interpolation=interpolation)
+
     if not return_scale:
         return resized_image
     else:
@@ -71,32 +84,67 @@ def resize_image(image, dst_width, dst_height, return_scale=False, interpolation
         x_scale = dst_width / src_width
         y_scale = dst_height / src_height
         return resized_image, x_scale, y_scale
+
+
+def scale_image(
+    image: np.ndarray,
+    x_scale: float,
+    y_scale: float,
+    return_scale: bool = False,
+    interpolation: InterpolationType = "bilinear",
+    shrink_use_inter_area: bool = False
+) -> Union[np.ndarray, Tuple[np.ndarray, float, float]]:
+    """Scale image.
     
-    
-def resize_image_short(image, dst_size, return_scale=False, interpolation: InterpolationType = 'bilinear'):
-    """Resize an image so that the length of shorter side is dst_size while 
+    Reference:
+        mmcv.imrescale
+    """
+    assert khandy.is_numpy_image(image)
+    image_size = khandy.get_image_size(image)
+    image_size = image_size.scale(x_scale, y_scale)
+    return resize_image(
+        image,
+        image_size.width,
+        image_size.height,
+        return_scale,
+        interpolation,
+        shrink_use_inter_area,
+    )
+
+
+def resize_image_short(
+    image: np.ndarray,
+    dst_size: int,
+    return_scale: bool = False,
+    interpolation: InterpolationType = "bilinear",
+    shrink_use_inter_area: bool = False
+) -> Union[np.ndarray, Tuple[np.ndarray, float, float]]:
+    """Resize an image so that the length of shorter side is dst_size while
     preserving the original aspect ratio.
     
     References:
         `resize_min` in `https://github.com/pjreddie/darknet/blob/master/src/image.c`
     """
     assert khandy.is_numpy_image(image)
-    src_height, src_width = image.shape[:2]
-    scale = max(dst_size / src_width, dst_size / src_height)
-    dst_width = int(round(scale * src_width))
-    dst_height = int(round(scale * src_height))
-    
-    resized_image = cv2.resize(image, (dst_width, dst_height), 
-                               interpolation=interp_codes[interpolation])
-    if not return_scale:
-        return resized_image
-    else:
-        x_scale = dst_width / src_width
-        y_scale = dst_height / src_height
-        return resized_image, x_scale, y_scale
-    
-    
-def resize_image_long(image, dst_size, return_scale=False, interpolation: InterpolationType = 'bilinear'):
+    image_size = khandy.get_image_size(image)
+    image_size = image_size.resize_short_to(dst_size)
+    return resize_image(
+        image,
+        image_size.width,
+        image_size.height,
+        return_scale,
+        interpolation,
+        shrink_use_inter_area,
+    )
+
+
+def resize_image_long(
+    image: np.ndarray,
+    dst_size: int,
+    return_scale: bool = False,
+    interpolation: InterpolationType = "bilinear",
+    shrink_use_inter_area: bool = False
+) -> Union[np.ndarray, Tuple[np.ndarray, float, float]]:
     """Resize an image so that the length of longer side is dst_size while 
     preserving the original aspect ratio.
     
@@ -104,22 +152,26 @@ def resize_image_long(image, dst_size, return_scale=False, interpolation: Interp
         `resize_max` in `https://github.com/pjreddie/darknet/blob/master/src/image.c`
     """
     assert khandy.is_numpy_image(image)
-    src_height, src_width = image.shape[:2]
-    scale = min(dst_size / src_width, dst_size / src_height)
-    dst_width = int(round(scale * src_width))
-    dst_height = int(round(scale * src_height))
-    
-    resized_image = cv2.resize(image, (dst_width, dst_height), 
-                               interpolation=interp_codes[interpolation])
-    if not return_scale:
-        return resized_image
-    else:
-        x_scale = dst_width / src_width
-        y_scale = dst_height / src_height
-        return resized_image, x_scale, y_scale
-        
-        
-def resize_image_to_range(image, min_length, max_length, return_scale=False, interpolation: InterpolationType = 'bilinear'):
+    image_size = khandy.get_image_size(image)
+    image_size = image_size.resize_long_to(dst_size)
+    return resize_image(
+        image,
+        image_size.width,
+        image_size.height,
+        return_scale,
+        interpolation,
+        shrink_use_inter_area,
+    )
+
+
+def resize_image_to_range(
+    image: np.ndarray,
+    min_length: int,
+    max_length: int,
+    return_scale: bool = False,
+    interpolation: InterpolationType = 'bilinear',
+    shrink_use_inter_area: bool = False
+) -> Union[np.ndarray, Tuple[np.ndarray, float, float]]:
     """Resizes an image so its dimensions are within the provided value.
     
     Rescale the shortest side of the image up to `min_length` pixels 
@@ -142,26 +194,17 @@ def resize_image_to_range(image, min_length, max_length, return_scale=False, int
         mmcv.imrescale
     """
     assert khandy.is_numpy_image(image)
-    assert min_length < max_length
-    src_height, src_width = image.shape[:2]
-    
-    min_side_length = min(src_width, src_height)
-    max_side_length = max(src_width, src_height)
-    scale = min_length / min_side_length
-    if round(scale * max_side_length) > max_length:
-        scale = max_length / max_side_length
-    dst_width = int(round(scale * src_width))
-    dst_height = int(round(scale * src_height))
-    
-    resized_image = cv2.resize(image, (dst_width, dst_height), 
-                               interpolation=interp_codes[interpolation])
-    if not return_scale:
-        return resized_image
-    else:
-        x_scale = dst_width / src_width
-        y_scale = dst_height / src_height
-        return resized_image, x_scale, y_scale
-        
+    image_size = khandy.get_image_size(image)
+    image_size = image_size.resize_to_range(min_length, max_length)
+    return resize_image(
+        image,
+        image_size.width,
+        image_size.height,
+        return_scale,
+        interpolation,
+        shrink_use_inter_area,
+    )
+
 
 @dataclass
 class LetterBoxDetail:
@@ -181,12 +224,13 @@ LetterBoxLoc = Literal['top left', 'top center', 'top right',
 
 
 def letterbox_image(
-    image,
-    dst_width,
-    dst_height,
-    border_value=0, 
-    interpolation: InterpolationType = 'bilinear', 
-    loc: LetterBoxLoc = 'center'
+    image: np.ndarray,
+    dst_width: int,
+    dst_height: int,
+    border_value: int = 0,
+    interpolation: InterpolationType = 'bilinear',
+    loc: LetterBoxLoc = 'center',
+    shrink_use_inter_area: bool = False
 ) -> Tuple[np.ndarray, LetterBoxDetail]:
     """Resize an image while preserving its aspect ratio and pad it to match the desired dimensions.
   
@@ -206,15 +250,19 @@ def letterbox_image(
         letterbox_image` in `https://github.com/pjreddie/darknet/blob/master/src/image.c`
     """  
     assert khandy.is_numpy_image(image)
-    src_height, src_width = image.shape[:2]
-    scale = min(dst_width / src_width, dst_height / src_height)
-    resized_w = int(round(scale * src_width))
-    resized_h = int(round(scale * src_height))
 
-    resized_image = cv2.resize(image, (resized_w, resized_h), interpolation=interp_codes[interpolation])
-    
-    height_diff = dst_height - resized_h
-    width_diff = dst_width - resized_w
+    src_image_size = khandy.get_image_size(image)
+    resized_image_size = src_image_size.fit_contain(khandy.ImageSize(dst_width, dst_height))
+    resized_image = resize_image(
+        image,
+        resized_image_size.width,
+        resized_image_size.height,
+        interpolation=interpolation,
+        shrink_use_inter_area=shrink_use_inter_area
+    )
+
+    height_diff = dst_height - resized_image_size.height
+    width_diff = dst_width - resized_image_size.width
     pad_top, pad_left = {
         'top left': (0, 0),
         'top center': (0, width_diff // 2),
@@ -228,22 +276,29 @@ def letterbox_image(
     }[loc]
     pad_bottom = height_diff - pad_top
     pad_right = width_diff - pad_left
-    
-    padded_image = cv2.copyMakeBorder(resized_image, pad_top, pad_bottom, pad_left, pad_right,
-                                      cv2.BORDER_CONSTANT, value=border_value)
-    
+
+    padded_image = cv2.copyMakeBorder(
+        resized_image,
+        pad_top,
+        pad_bottom,
+        pad_left,
+        pad_right,
+        cv2.BORDER_CONSTANT,
+        value=border_value,
+    )
+
     lb_detail = LetterBoxDetail(
-        resized_w=resized_w,
-        resized_h=resized_h,
-        x_scale=resized_w / src_width,
-        y_scale=resized_h / src_height,
+        resized_w=resized_image_size.width,
+        resized_h=resized_image_size.height,
+        x_scale=resized_image_size.width / src_image_size.width,
+        y_scale=resized_image_size.height / src_image_size.height,
         pad_top=pad_top,
         pad_left=pad_left,
         pad_bottom=pad_bottom,
         pad_right=pad_right
     )
     return padded_image, lb_detail
-        
+
 
 def letterbox_resize_image(image, dst_width, dst_height, border_value=0,
                            return_scale=False, interpolation: InterpolationType = 'bilinear'):
@@ -253,4 +308,3 @@ def letterbox_resize_image(image, dst_width, dst_height, border_value=0,
         return dst_image
     else:
         return dst_image, lb_detail.x_scale, lb_detail.pad_top, lb_detail.pad_left
-    

@@ -51,12 +51,7 @@ class TestImageSize(unittest.TestCase):
         aligned_size = size.align_up_to(8)
         self.assertEqual(aligned_size.width, 104)  # Next multiple of 8 after 101
         self.assertEqual(aligned_size.height, 208)  # Next multiple of 8 after 203
-        
-        # Test with return_scale
-        aligned_size, x_scale, y_scale = size.align_up_to(8, return_scale=True)
-        self.assertEqual(x_scale, 104/101)
-        self.assertEqual(y_scale, 208/203)
-        
+
         # Test invalid alignment
         with self.assertRaises(ValueError):
             size.align_up_to(0)
@@ -70,11 +65,6 @@ class TestImageSize(unittest.TestCase):
         scaled_size = size.scale(1.5, 2.0)
         self.assertEqual(scaled_size.width, 150)
         self.assertEqual(scaled_size.height, 400)
-        
-        # Test with return_scale
-        scaled_size, x_scale, y_scale = size.scale(1.5, 2.0, return_scale=True)
-        self.assertEqual(x_scale, 1.5)
-        self.assertEqual(y_scale, 2.0)
     
     def test_resize_width_to(self):
         """Test resize_width_to method"""
@@ -83,11 +73,6 @@ class TestImageSize(unittest.TestCase):
         resized_size = size.resize_width_to(50)
         self.assertEqual(resized_size.width, 50)
         self.assertEqual(resized_size.height, 100)  # Maintains aspect ratio
-        
-        # Test with return_scale
-        resized_size, x_scale, y_scale = size.resize_width_to(50, return_scale=True)
-        self.assertEqual(x_scale, 0.5)
-        self.assertEqual(y_scale, 0.5)
     
     def test_resize_width_below(self):
         """Test resize_width_below method"""
@@ -124,11 +109,6 @@ class TestImageSize(unittest.TestCase):
         resized_size = size.resize_height_to(100)
         self.assertEqual(resized_size.width, 50)   # Maintains aspect ratio
         self.assertEqual(resized_size.height, 100)
-        
-        # Test with return_scale
-        resized_size, x_scale, y_scale = size.resize_height_to(100, return_scale=True)
-        self.assertEqual(x_scale, 0.5)
-        self.assertEqual(y_scale, 0.5)
     
     def test_resize_height_below(self):
         """Test resize_height_below method"""
@@ -254,11 +234,6 @@ class TestImageSize(unittest.TestCase):
         self.assertEqual(result.width, 150)
         self.assertEqual(result.height, 300)
         
-        # Test with return_scale
-        result, x_scale, y_scale = size.fit_contain(dst_size, return_scale=True)
-        self.assertEqual(x_scale, 1.5)
-        self.assertEqual(y_scale, 1.5)
-    
     def test_fit_cover(self):
         """Test fit_cover method"""
         size = ImageSize(100, 200)  # Aspect ratio 1:2
@@ -270,11 +245,6 @@ class TestImageSize(unittest.TestCase):
         # So we take the larger scale (width scaling)
         self.assertEqual(result.width, 200)
         self.assertEqual(result.height, 400)
-        
-        # Test with return_scale
-        result, x_scale, y_scale = size.fit_cover(dst_size, return_scale=True)
-        self.assertEqual(x_scale, 2.0)
-        self.assertEqual(y_scale, 2.0)
     
     def test_resize_below(self):
         """Test resize_below method"""
