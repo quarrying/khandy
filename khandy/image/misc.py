@@ -5,6 +5,7 @@ import numbers
 import warnings
 from dataclasses import dataclass, field
 from io import BytesIO
+from typing import Union, Tuple
 
 import cv2
 import khandy
@@ -17,6 +18,10 @@ class ImageSize:
     width: int
     height: int
 
+    def __post_init__(self):
+        if self.width <= 0 or self.height <= 0:
+            raise ValueError(f"Width and height must be positive, got ({self.width}, {self.height}).")
+        
     @property
     def cols(self) -> int:
         return self.width
@@ -36,6 +41,236 @@ class ImageSize:
     @property
     def ar(self) -> float:
         return self.width / self.height
+    
+    @property
+    def max_side(self) -> int:
+        return max(self.width, self.height)
+    
+    @property
+    def min_side(self) -> int:
+        return min(self.width, self.height)
+    
+    def as_tuple(self) -> Tuple[int, int]:
+        return self.width, self.height
+    
+    def _handle_return(
+        self, 
+        dst_width: Union[int, float], 
+        dst_height: Union[int, float], 
+        return_scale: bool
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        dst_width = round(dst_width)
+        dst_height = round(dst_height)
+        dst_size = ImageSize(dst_width, dst_height)
+        if not return_scale:
+            return dst_size
+        else:
+            x_scale = dst_width / self.width
+            y_scale = dst_height / self.height
+            return dst_size, x_scale, y_scale
+        
+    def align_up_to(
+        self, 
+        alignment: int,
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        if alignment <= 0:
+            raise ValueError("Alignment must be a positive integer.")
+        dst_width = ((self.width + alignment - 1) // alignment) * alignment
+        dst_height = ((self.height + alignment - 1) // alignment) * alignment
+        return self._handle_return(dst_width, dst_height, return_scale)
+    
+    def scale(
+        self, 
+        x_scale: float, 
+        y_scale: float, 
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        dst_width = self.width * x_scale
+        dst_height = self.height * y_scale
+        return self._handle_return(dst_width, dst_height, return_scale)
+        
+    def resize_width_to(
+        self,
+        dst_width: int,
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        dst_height = self.height * dst_width / self.width
+        return self._handle_return(dst_width, dst_height, return_scale)
+        
+    def resize_width_below(
+        self,
+        max_width: int,
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        if self.width <= max_width:
+            return self._handle_return(self.width, self.height, return_scale)
+        else:
+            return self.resize_width_to(max_width, return_scale)
+        
+    def resize_width_above(
+        self,
+        min_width: int,
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        if self.width >= min_width:
+            return self._handle_return(self.width, self.height, return_scale)
+        else:
+            return self.resize_width_to(min_width, return_scale)
+
+    def resize_height_to(
+        self,
+        dst_height: int,
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        dst_width = self.width * dst_height / self.height
+        return self._handle_return(dst_width, dst_height, return_scale)
+        
+    def resize_height_below(
+        self,
+        max_height: int,
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        if self.height <= max_height:
+            return self._handle_return(self.width, self.height, return_scale)
+        else:
+            return self.resize_height_to(max_height, return_scale)
+        
+    def resize_height_above(
+        self,
+        min_height: int,
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        if self.height >= min_height:
+            return self._handle_return(self.width, self.height, return_scale)
+        else:
+            return self.resize_height_to(min_height, return_scale)
+        
+    def resize_short_to(
+        self,
+        dst_size: int,
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        if self.width < self.height:
+            return self.resize_width_to(dst_size, return_scale)
+        else:
+            return self.resize_height_to(dst_size, return_scale)
+        
+    def resize_short_below(
+        self,
+        max_size: int,
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        if self.width < self.height:
+            return self.resize_width_below(max_size, return_scale)
+        else:
+            return self.resize_height_below(max_size, return_scale)
+        
+    def resize_short_above(
+        self,
+        min_size: int,
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        if self.width < self.height:
+            return self.resize_width_above(min_size, return_scale)
+        else:
+            return self.resize_height_above(min_size, return_scale)
+
+    def resize_long_to(
+        self,
+        dst_size: int,
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        if self.width > self.height:
+            return self.resize_width_to(dst_size, return_scale)
+        else:
+            return self.resize_height_to(dst_size, return_scale)
+        
+    def resize_long_below(
+        self,
+        max_size: int,
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        if self.width > self.height:
+            return self.resize_width_below(max_size, return_scale)
+        else:
+            return self.resize_height_below(max_size, return_scale)
+        
+    def resize_long_above(
+        self,
+        min_size: int,
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        if self.width > self.height:
+            return self.resize_width_above(min_size, return_scale)
+        else:
+            return self.resize_height_above(min_size, return_scale)
+
+    def fit_contain(
+        self,
+        dst_size: "ImageSize",
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        """
+        Notes:
+            The entire object is made to fill the box, while preserving its aspect ratio, 
+            so the object will be "letterboxed" or "pillarboxed" if its aspect ratio does 
+            not match the aspect ratio of the box.
+            
+        References:
+            https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/object-fit#contain
+        """
+        scale = min(dst_size.width / self.width, dst_size.height / self.height)
+        dst_width = self.width * scale
+        dst_height = self.height * scale
+        return self._handle_return(dst_width, dst_height, return_scale)
+    
+    def fit_cover(
+        self,
+        dst_size: "ImageSize",
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        """
+        References:
+            https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/object-fit#cover
+        """
+        scale = max(dst_size.width / self.width, dst_size.height / self.height)
+        dst_width = self.width * scale
+        dst_height = self.height * scale
+        return self._handle_return(dst_width, dst_height, return_scale)
+    
+    def resize_below(
+        self,
+        dst_size: "ImageSize",
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        scale = min(1.0, dst_size.width / self.width, dst_size.height / self.height)
+        dst_width = self.width * scale
+        dst_height = self.height * scale
+        return self._handle_return(dst_width, dst_height, return_scale)
+
+    def resize_above(
+        self,
+        dst_size: "ImageSize",
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        scale = max(1.0, dst_size.width / self.width, dst_size.height / self.height)
+        dst_width = self.width * scale
+        dst_height = self.height * scale
+        return self._handle_return(dst_width, dst_height, return_scale)
+
+    def resize_to_range(
+        self,
+        min_length: int,
+        max_length: int,
+        return_scale: bool = False
+    ) -> Union["ImageSize", Tuple["ImageSize", float, float]]:
+        scale = min_length / self.min_side
+        if round(scale * self.max_side) > max_length:
+            scale = max_length / self.max_side
+        dst_width = round(scale * self.width)
+        dst_height = round(scale * self.height)
+        return self._handle_return(dst_width, dst_height, return_scale)
     
     
 def get_image_size(obj) -> ImageSize:
