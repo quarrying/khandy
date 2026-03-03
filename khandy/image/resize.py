@@ -27,23 +27,27 @@ InterpolationType = Union[Literal['nearest', 'bilinear', 'bicubic', 'area', 'lan
 def _normalize_interpolation(
     interpolation: InterpolationType = 'bilinear'
 ) -> int:
+    if isinstance(interpolation, int):
+        return interpolation
+    
     if isinstance(interpolation, str):
-        if interpolation not in INTERP_CODES:
-            raise ValueError(f"Unsupported interpolation method: '{interpolation}'. "
-                             f"Supported methods: {list(INTERP_CODES.keys())}")
-        interp_method = INTERP_CODES[interpolation]
-    else:
-        interp_method = interpolation
-    return interp_method
+        lowered = interpolation.lower()
+        if lowered in INTERP_CODES:
+            return INTERP_CODES[lowered]
 
+    raise ValueError(
+        f"Unsupported interpolation type: {interpolation}. "
+        f"Supported strings are: {list(INTERP_CODES.keys())}"
+    )
 
 def resize_image(
     image: np.ndarray, 
     dst_width: int, 
     dst_height: int, 
-    return_scale: bool = False,
-    interpolation: InterpolationType = 'bilinear', 
-    shrink_use_inter_area: bool = False
+    interpolation: InterpolationType = 'bilinear',
+    *,
+    return_scale: bool = False, 
+    shrink_use_inter_area: bool = True
 ) -> Union[np.ndarray, Tuple[np.ndarray, float, float]]:
     """Resizes an image to the specified dimensions.
 
@@ -51,14 +55,16 @@ def resize_image(
         image (np.ndarray): Input image as a NumPy array.
         dst_width (int): Target width of the resized image.
         dst_height (int): Target height of the resized image.
-        return_scale (bool): Whether to return `x_scale` and `y_scale`.
         interpolation (InterpolationType, optional): Interpolation method.
             Can be an integer (cv2 interpolation flag) or a string.
-            Supported strings: 'nearest', 'bilinear', 'bicubic', 'lanczos'.
+            Supported strings: 'area', 'nearest', 'bilinear', 'bicubic', 'lanczos'.
             Defaults to 'bilinear'.
+        return_scale (bool, optional): Whether to return `x_scale` and `y_scale`.
+            If True, returns a tuple of (`resized_image`, `x_scale`, `y_scale`).
+            If False, returns just `resized_image`. Defaults to False.
         shrink_use_inter_area (bool, optional): If True and the image is being
             shrunk (both dimensions decrease), use cv2.INTER_AREA regardless
-            of the interpolation setting. Defaults to False.
+            of the interpolation setting. Defaults to True.
 
     Returns:
         tuple or ndarray: (`resized_image`, `x_scale`, `y_scale`) or `resized_image`.
@@ -68,9 +74,20 @@ def resize_image(
 
     Reference:
         mmcv.imresize
+        torch.nn.functional.interpolate
     """
     assert khandy.is_numpy_image(image)
     interpolation = _normalize_interpolation(interpolation)
+    
+    # In OpenCV (https://docs.opencv.org/3.4/da/d54/group__imgproc__transform.html)
+    #   To shrink an image, it will generally look best with INTER_AREA interpolation.
+    # In Pillow (https://pillow.readthedocs.io/en/stable/releasenotes/2.7.0.html)
+    #   From the beginning BILINEAR and BICUBIC filters were based on affine transformations 
+    #   and used a fixed number of pixels from the source image for every destination pixel 
+    #   (2x2 pixels for BILINEAR and 4x4 for BICUBIC). This gave an unsatisfactory result for 
+    #   downscaling. At the same time, a high quality convolutions-based algorithm with flexible 
+    #   kernel was used for ANTIALIAS filter. Starting from Pillow 2.7.0, a high quality 
+    #   convolutions-based algorithm is used for all of these three filters.
     src_height, src_width = image.shape[:2]
     if shrink_use_inter_area and (dst_width < src_width and dst_height < src_height):
         interpolation = cv2.INTER_AREA
@@ -80,7 +97,6 @@ def resize_image(
     if not return_scale:
         return resized_image
     else:
-        src_height, src_width = image.shape[:2]
         x_scale = dst_width / src_width
         y_scale = dst_height / src_height
         return resized_image, x_scale, y_scale
@@ -88,11 +104,12 @@ def resize_image(
 
 def scale_image(
     image: np.ndarray,
-    x_scale: float,
-    y_scale: float,
-    return_scale: bool = False,
+    x_scale: Union[float, int],
+    y_scale: Union[float, int],
     interpolation: InterpolationType = "bilinear",
-    shrink_use_inter_area: bool = False
+    *,
+    return_scale: bool = False,
+    shrink_use_inter_area: bool = True
 ) -> Union[np.ndarray, Tuple[np.ndarray, float, float]]:
     """Scale image.
     
@@ -106,18 +123,19 @@ def scale_image(
         image,
         image_size.width,
         image_size.height,
-        return_scale,
         interpolation,
-        shrink_use_inter_area,
+        return_scale=return_scale,
+        shrink_use_inter_area=shrink_use_inter_area
     )
 
 
 def resize_image_short(
     image: np.ndarray,
     dst_size: int,
-    return_scale: bool = False,
     interpolation: InterpolationType = "bilinear",
-    shrink_use_inter_area: bool = False
+    *,
+    return_scale: bool = False,
+    shrink_use_inter_area: bool = True
 ) -> Union[np.ndarray, Tuple[np.ndarray, float, float]]:
     """Resize an image so that the length of shorter side is dst_size while
     preserving the original aspect ratio.
@@ -132,18 +150,19 @@ def resize_image_short(
         image,
         image_size.width,
         image_size.height,
-        return_scale,
         interpolation,
-        shrink_use_inter_area,
+        return_scale=return_scale,
+        shrink_use_inter_area=shrink_use_inter_area
     )
 
 
 def resize_image_long(
     image: np.ndarray,
     dst_size: int,
-    return_scale: bool = False,
     interpolation: InterpolationType = "bilinear",
-    shrink_use_inter_area: bool = False
+    *,
+    return_scale: bool = False,
+    shrink_use_inter_area: bool = True
 ) -> Union[np.ndarray, Tuple[np.ndarray, float, float]]:
     """Resize an image so that the length of longer side is dst_size while 
     preserving the original aspect ratio.
@@ -158,9 +177,9 @@ def resize_image_long(
         image,
         image_size.width,
         image_size.height,
-        return_scale,
         interpolation,
-        shrink_use_inter_area,
+        return_scale=return_scale,
+        shrink_use_inter_area=shrink_use_inter_area
     )
 
 
@@ -168,9 +187,10 @@ def resize_image_to_range(
     image: np.ndarray,
     min_length: int,
     max_length: int,
-    return_scale: bool = False,
     interpolation: InterpolationType = 'bilinear',
-    shrink_use_inter_area: bool = False
+    *,
+    return_scale: bool = False,
+    shrink_use_inter_area: bool = True
 ) -> Union[np.ndarray, Tuple[np.ndarray, float, float]]:
     """Resizes an image so its dimensions are within the provided value.
     
@@ -200,9 +220,9 @@ def resize_image_to_range(
         image,
         image_size.width,
         image_size.height,
-        return_scale,
         interpolation,
-        shrink_use_inter_area,
+        return_scale=return_scale,
+        shrink_use_inter_area=shrink_use_inter_area
     )
 
 
@@ -229,8 +249,9 @@ def letterbox_image(
     dst_height: int,
     border_value: int = 0,
     interpolation: InterpolationType = 'bilinear',
+    *,
     loc: LetterBoxLoc = 'center',
-    shrink_use_inter_area: bool = False
+    shrink_use_inter_area: bool = True
 ) -> Tuple[np.ndarray, LetterBoxDetail]:
     """Resize an image while preserving its aspect ratio and pad it to match the desired dimensions.
   
@@ -240,7 +261,10 @@ def letterbox_image(
         dst_height (int): The desired height of the output image.  
         border_value: The color value to use for padding. Defaults to 0 (black).  
         interpolation (str, optional): The interpolation method to use for resizing. Defaults to 'bilinear'.  
-  
+        shrink_use_inter_area (bool, optional): If True and the image is being
+            shrunk (both dimensions decrease), use cv2.INTER_AREA regardless
+            of the interpolation setting. Defaults to True.
+            
     Returns:  
         tuple: A tuple containing:  
             padded_image (numpy.ndarray): The resized and padded image.  
@@ -257,7 +281,8 @@ def letterbox_image(
         image,
         resized_image_size.width,
         resized_image_size.height,
-        interpolation=interpolation,
+        interpolation,
+        return_scale=False,
         shrink_use_inter_area=shrink_use_inter_area
     )
 

@@ -68,7 +68,7 @@ class ImageSize:
         dst_height = ((self.height + alignment - 1) // alignment) * alignment
         return self._handle_return(dst_width, dst_height)
 
-    def scale(self, x_scale: float, y_scale: float) -> "ImageSize":
+    def scale(self, x_scale: Union[float, int], y_scale: Union[float, int]) -> "ImageSize":
         dst_width = self.width * x_scale
         dst_height = self.height * y_scale
         return self._handle_return(dst_width, dst_height)
