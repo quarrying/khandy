@@ -1,6 +1,8 @@
 import os
 import pathlib
 import unittest
+from unittest.mock import patch
+
 import khandy
 
 
@@ -144,6 +146,172 @@ class TestFsUtils(unittest.TestCase):
         self.assertEqual(khandy.replace_path_parent('foo/bar.txt', ''), 'bar.txt')
         self.assertEqual(khandy.replace_path_parent('foo/bar.txt', None), 'bar.txt')
         
-    
+
+original_relpath = os.path.relpath
+
+class TestListItemsInDir(unittest.TestCase):
+
+    @patch('khandy.fs_utils.os.path.isdir')
+    @patch('khandy.fs_utils.os.path.exists')
+    @patch('khandy.fs_utils.os.listdir')
+    @patch('khandy.fs_utils.os.getcwd')
+    @patch('khandy.fs_utils.os.path.expanduser')
+    def test_list_items_non_recursive_full_path(self, mock_expanduser, mock_getcwd, 
+                                                mock_listdir, mock_exists, mock_isdir):
+        """Test listing items non-recursively with full paths"""
+        mock_getcwd.return_value = '/current/dir'
+        mock_expanduser.return_value = '/mocked/path'
+        mock_exists.return_value = True
+        mock_isdir.return_value = True
+        mock_listdir.return_value = ['file1.txt', 'subdir1', 'file2.jpg']
+        
+        result = khandy.list_items_in_dir('/some/path', recursive=False, full_path=True)
+        
+        expected = [
+            os.path.join('/mocked/path', 'file1.txt'),
+            os.path.join('/mocked/path', 'file2.jpg'),
+            os.path.join('/mocked/path', 'subdir1')
+        ]
+        self.assertEqual(sorted(result), sorted(expected))
+
+    @patch('khandy.fs_utils.os.path.isdir')
+    @patch('khandy.fs_utils.os.path.exists')
+    @patch('khandy.fs_utils.os.listdir')
+    @patch('khandy.fs_utils.os.getcwd')
+    @patch('khandy.fs_utils.os.path.expanduser')
+    def test_list_items_non_recursive_relative_path(self, mock_expanduser, mock_getcwd, 
+                                                    mock_listdir, mock_exists, mock_isdir):
+        """Test listing items non-recursively without full paths"""
+        mock_getcwd.return_value = '/current/dir'
+        mock_expanduser.return_value = '/mocked/path'
+        mock_exists.return_value = True
+        mock_isdir.return_value = True
+        mock_listdir.return_value = ['file1.txt', 'subdir1', 'file2.jpg']
+        
+        result = khandy.list_items_in_dir('/some/path', recursive=False, full_path=False)
+        
+        expected = ['file1.txt', 'file2.jpg', 'subdir1']
+        self.assertEqual(sorted(result), sorted(expected))
+
+    @patch('khandy.fs_utils.os.walk')
+    @patch('khandy.fs_utils.os.path.isdir')
+    @patch('khandy.fs_utils.os.path.exists')
+    @patch('khandy.fs_utils.os.getcwd')
+    @patch('khandy.fs_utils.os.path.expanduser')
+    def test_list_items_recursive_full_path(self, mock_expanduser, mock_getcwd, 
+                                            mock_exists, mock_isdir, mock_walk):
+        """Test listing items recursively with full paths"""
+        mock_getcwd.return_value = '/current/dir'
+        mock_expanduser.return_value = '/mocked/path'
+        mock_exists.return_value = True
+        mock_isdir.return_value = True
+        mock_walk.return_value = iter([
+            ('/mocked/path', ['subdir1'], ['file1.txt']),
+            (os.path.join('/mocked/path', 'subdir1'), [], ['subfile1.txt'])
+        ])
+        
+        result = khandy.list_items_in_dir('/some/path', recursive=True, full_path=True)
+        
+        expected = [
+            os.path.join('/mocked/path', 'file1.txt'),
+            os.path.join('/mocked/path', 'subdir1'),
+            os.path.join('/mocked/path', 'subdir1', 'subfile1.txt')
+        ]
+        self.assertEqual(sorted(result), sorted(expected))
+
+    @patch('khandy.fs_utils.os.walk')
+    @patch('khandy.fs_utils.os.path.relpath')
+    @patch('khandy.fs_utils.os.path.isdir')
+    @patch('khandy.fs_utils.os.path.exists')
+    @patch('khandy.fs_utils.os.getcwd')
+    @patch('khandy.fs_utils.os.path.expanduser')
+    def test_list_items_recursive_relative_path(self, mock_expanduser, mock_getcwd, 
+                                                mock_exists, mock_isdir, mock_relpath, mock_walk):
+        """Test listing items recursively without full paths"""
+        mock_getcwd.return_value = '/current/dir'
+        mock_expanduser.return_value = '/mocked/path'
+        mock_exists.return_value = True
+        mock_isdir.return_value = True
+        mock_relpath.side_effect = lambda x, y: original_relpath(x, y)
+        mock_walk.return_value = iter([
+            ('/mocked/path', ['subdir1'], ['file1.txt']),
+            (os.path.join('/mocked/path', 'subdir1'), [], ['subfile1.txt'])
+        ])
+        
+        result = khandy.list_items_in_dir('/some/path', recursive=True, full_path=False)
+        
+        expected = [
+            'file1.txt',
+            'subdir1',
+            os.path.join('subdir1', 'subfile1.txt')
+        ]
+        self.assertEqual(sorted(result), sorted(expected))
+
+    @patch('khandy.fs_utils.os.path.isdir')
+    @patch('khandy.fs_utils.os.path.exists')
+    @patch('khandy.fs_utils.os.getcwd')
+    @patch('khandy.fs_utils.os.path.expanduser')
+    def test_path_not_exists(self, mock_expanduser, mock_getcwd, mock_exists, mock_isdir):
+        """Test behavior when path doesn't exist"""
+        mock_getcwd.return_value = '/current/dir'
+        mock_expanduser.return_value = '/mocked/path'
+        mock_exists.return_value = False
+        
+        with self.assertRaises(FileNotFoundError):
+            khandy.list_items_in_dir('/nonexistent/path')
+
+    @patch('khandy.fs_utils.os.path.isdir')
+    @patch('khandy.fs_utils.os.path.exists')
+    @patch('khandy.fs_utils.os.getcwd')
+    @patch('khandy.fs_utils.os.path.expanduser')
+    def test_path_is_not_directory(self, mock_expanduser, mock_getcwd, 
+                                   mock_exists, mock_isdir):
+        """Test behavior when path is not a directory"""
+        mock_getcwd.return_value = '/current/dir'
+        mock_expanduser.return_value = '/mocked/path'
+        mock_exists.return_value = True
+        mock_isdir.return_value = False
+        
+        with self.assertRaises(NotADirectoryError):
+            khandy.list_items_in_dir('/not/a/directory')
+
+    @patch('khandy.fs_utils.os.path.isdir')
+    @patch('khandy.fs_utils.os.path.exists')
+    @patch('khandy.fs_utils.os.listdir')
+    @patch('khandy.fs_utils.os.getcwd')
+    @patch('khandy.fs_utils.os.path.expanduser')
+    def test_empty_directory(self, mock_expanduser, mock_getcwd, 
+                             mock_listdir, mock_exists, mock_isdir):
+        """Test behavior with an empty directory"""
+        mock_getcwd.return_value = '/current/dir'
+        mock_expanduser.return_value = '/mocked/path'
+        mock_exists.return_value = True
+        mock_isdir.return_value = True
+        mock_listdir.return_value = []
+        
+        result = khandy.list_items_in_dir('/empty/dir', recursive=False, full_path=False)
+        
+        self.assertEqual(result, [])
+
+    @patch('khandy.fs_utils.os.path.isdir')
+    @patch('khandy.fs_utils.os.path.exists')
+    @patch('khandy.fs_utils.os.listdir')
+    @patch('khandy.fs_utils.os.getcwd')
+    @patch('khandy.fs_utils.os.path.expanduser')
+    def test_default_path(self, mock_expanduser, mock_getcwd, 
+                          mock_listdir, mock_exists, mock_isdir):
+        """Test behavior when no path is provided (uses current working directory)"""
+        mock_getcwd.return_value = '/current/dir'
+        mock_expanduser.return_value = '/current/dir'
+        mock_exists.return_value = True
+        mock_isdir.return_value = True
+        mock_listdir.return_value = ['file1.txt', 'subdir1']
+        
+        result = khandy.list_items_in_dir(recursive=False, full_path=False)
+        
+        expected = ['file1.txt', 'subdir1']
+        self.assertEqual(sorted(result), sorted(expected))
+        
+        
 if __name__ == '__main__':
     unittest.main()
