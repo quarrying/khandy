@@ -1,5 +1,6 @@
 import re
 import sys
+import warnings
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional, Tuple, Union
@@ -9,11 +10,11 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal, SupportsIndex
 
-CONTENT_WITH_HW_PAREN_PATTERN = r'(?:(?P<out_paren>[^(]+))?'
+CONTENT_WITH_HW_PAREN_PATTERN = r'(?:(?P<out_paren>[^(]*))?'
 CONTENT_WITH_HW_PAREN_PATTERN += r'(?:[(](?P<in_paren>[^)]*)[)])?'
 CONTENT_WITH_HW_PAREN_PATTERN_OBJ = re.compile(CONTENT_WITH_HW_PAREN_PATTERN)
 
-CONTENT_WITH_FW_PAREN_PATTERN = r'(?:(?P<out_paren>[^（]+))?'
+CONTENT_WITH_FW_PAREN_PATTERN = r'(?:(?P<out_paren>[^（]*))?'
 CONTENT_WITH_FW_PAREN_PATTERN += r'(?:（(?P<in_paren>[^）]*)）)?'
 CONTENT_WITH_FW_PAREN_PATTERN_OBJ = re.compile(CONTENT_WITH_FW_PAREN_PATTERN)
 
@@ -60,10 +61,10 @@ def has_nested_or_unmatched_paren(
     return len(stack) != 0
 
 
-def split_content_with_paren(
+def split_outer_inner(
     string: str, 
     paren_type: Literal['hw', 'fw'] = 'hw'
-) -> Tuple[Optional[str], Optional[str]]:
+) -> Tuple[str, Optional[str]]:
     """Split a string into content outside and inside parentheses.
     
     Args:
@@ -74,8 +75,8 @@ def split_content_with_paren(
             Defaults to 'hw'
             
     Returns:
-        Tuple[Optional[str], Optional[str]]: A tuple containing two optional string elements.
-            The first element is the part outside the parentheses (or None if not found).
+        Tuple[str, Optional[str]]: A tuple containing two optional string elements.
+            The first element is the part outside the parentheses.
             The second element is the part inside the parentheses (or None if not found).
         
     Raises:
@@ -99,6 +100,14 @@ def split_content_with_paren(
         raise ValueError(f'parse failure: "{string}"')
     outside, inside = matched.groups()
     return outside, inside
+
+
+def split_content_with_paren(
+    string: str, 
+    paren_type: Literal['hw', 'fw'] = 'hw'
+) -> Tuple[str, Optional[str]]:
+    warnings.warn("`split_content_with_paren` is deprecated, please use `split_outer_inner` instead", DeprecationWarning)
+    return split_outer_inner(string, paren_type)
 
 
 def split_before_after(

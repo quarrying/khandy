@@ -3,53 +3,53 @@ import unittest
 from typing import Optional, Tuple
 
 import khandy
-from khandy import split_content_with_paren
+from khandy import split_outer_inner
 from khandy import split_before_after
 
 
 class TestSplitContentWithParen(unittest.TestCase):
     def test_valid_parentheses(self):
         """Test with valid parentheses."""
-        self.assertEqual(split_content_with_paren("abc(def)", "hw"), ("abc", "def"))
-        self.assertEqual(split_content_with_paren("ghi（jkl）", "fw"), ("ghi", "jkl"))
-        self.assertEqual(split_content_with_paren("abc ( def )", "hw"), ("abc ", " def "))
-        self.assertEqual(split_content_with_paren(" ( )", "hw"), (" ", " "))
+        self.assertEqual(split_outer_inner("abc(def)", "hw"), ("abc", "def"))
+        self.assertEqual(split_outer_inner("ghi（jkl）", "fw"), ("ghi", "jkl"))
+        self.assertEqual(split_outer_inner("abc ( def )", "hw"), ("abc ", " def "))
+        self.assertEqual(split_outer_inner(" ( )", "hw"), (" ", " "))
         
     def test_no_outside_content(self):
         """Test when there's no outside content."""
-        self.assertEqual(split_content_with_paren("(def)", "hw"), (None, "def"))
-        self.assertEqual(split_content_with_paren("（jkl）", "fw"), (None, "jkl"))
+        self.assertEqual(split_outer_inner("(def)", "hw"), ("", "def"))
+        self.assertEqual(split_outer_inner("（jkl）", "fw"), ("", "jkl"))
         
     def test_no_paren(self):
         """Test when there's no parentheses in the string."""
-        self.assertEqual(split_content_with_paren("abc", "hw"), ("abc", None))
-        self.assertEqual(split_content_with_paren("", "hw"), (None, None))
+        self.assertEqual(split_outer_inner("abc", "hw"), ("abc", None))
+        self.assertEqual(split_outer_inner("", "hw"), ("", None))
         
     def test_no_content_inside_paren(self):
         """Test when there's no content inside the parentheses."""
-        self.assertEqual(split_content_with_paren("abc()", "hw"), ("abc", ""))
-        self.assertEqual(split_content_with_paren("()", "hw"), (None, ""))
+        self.assertEqual(split_outer_inner("abc()", "hw"), ("abc", ""))
+        self.assertEqual(split_outer_inner("()", "hw"), ("", ""))
 
     def test_nested_parentheses(self):
         """Test with nested parentheses (pattern does not support nesting)."""
         with self.assertRaises(ValueError):
-            split_content_with_paren("(a(b)c)", "hw")
+            split_outer_inner("(a(b)c)", "hw")
 
     def test_extra_content_after_paren(self):
         """Test with content after the closing parenthesis."""
         with self.assertRaises(ValueError):
-            split_content_with_paren("abc(def)ghi", "hw")
+            split_outer_inner("abc(def)ghi", "hw")
         with self.assertRaises(ValueError):
-            split_content_with_paren("(def)ghi", "hw")
+            split_outer_inner("(def)ghi", "hw")
         with self.assertRaises(ValueError):
-            split_content_with_paren("(def) ", "hw")
+            split_outer_inner("(def) ", "hw")
             
     def test_unmatched_parentheses(self):
         """Test with unmatched parentheses."""
         with self.assertRaises(ValueError):
-            split_content_with_paren("abc(def", "hw")
+            split_outer_inner("abc(def", "hw")
         with self.assertRaises(ValueError):
-            split_content_with_paren("abc)def", "hw")
+            split_outer_inner("abc)def", "hw")
  
 
 def split_before_after_v2(
