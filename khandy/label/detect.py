@@ -15,10 +15,18 @@ import numpy as np
 
 import khandy
 
-__all__ = ['DetectIrObject', 'DetectIrRecord', 'load_detect',
-           'save_detect', 'convert_detect', 'replace_detect_label',
-           'load_coco_class_names', 'crop_detect', 'fliter_detect', 
-           'fliter_detect_by_label']
+__all__ = [
+    "DetectIrObject",
+    "DetectIrRecord",
+    "load_detect",
+    "save_detect",
+    "convert_detect",
+    "replace_detect_label",
+    "load_coco_class_names",
+    "crop_detect",
+    "fliter_detect",
+    "fliter_detect_by_label",
+]
 
 
 @dataclass
@@ -76,8 +84,8 @@ class DetectIrRecord:
 
     def __len__(self):
         return len(self.objects)
-    
-    
+
+
 @dataclass
 class PascalVocSource:
     database: str = ''
@@ -374,6 +382,8 @@ class YoloHandler:
             width=kwargs.get('width', 1),
             height=kwargs.get('height', 1))
         for record in records:
+            if record.strip() == '':
+                continue
             record_parts = record.split()
             yolo_record.objects.append(YoloObject(
                 label=record_parts[0],
@@ -541,7 +551,7 @@ class LabelBeeObject:
     width: float
     height: float
     valid: bool = True
-    
+
 
 @dataclass
 class LabelBeeStep:
@@ -865,8 +875,8 @@ def fliter_detect(
         return list(filter(func, detect_ir))
     else:
         raise TypeError('detect_ir must be DetectIrRecord or list of DetectIrObject')
-    
-    
+
+
 def fliter_detect_by_label(
     detect_ir: Union[DetectIrRecord, List[DetectIrObject]], 
     labels: Union[str, List[str], Callable[[str], bool]]
@@ -877,4 +887,3 @@ def fliter_detect_by_label(
     else:
         label_checker = labels
     return fliter_detect(detect_ir, lambda obj: label_checker(obj.label))
-
