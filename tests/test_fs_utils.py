@@ -313,5 +313,105 @@ class TestListItemsInDir(unittest.TestCase):
         self.assertEqual(sorted(result), sorted(expected))
         
         
+class TestEscapeFilename(unittest.TestCase):
+    """Unit tests for fs_utils.khandy.escape_filename"""
+
+    def test_normal_filename(self):
+        """Test that a normal filename remains unchanged."""
+        self.assertEqual(khandy.escape_filename("normal_file.txt"), "normal_file.txt")
+        self.assertEqual(khandy.escape_filename("normal file.txt"), "normal file.txt")
+
+    def test_replace_backslash(self):
+        """Test replacement of backslash."""
+        filename = "file\\name.txt"
+        result = khandy.escape_filename(filename)
+        self.assertEqual(result, "file_name.txt")
+
+    def test_replace_forward_slash(self):
+        """Test replacement of forward slash."""
+        filename = "file/name.txt"
+        result = khandy.escape_filename(filename)
+        self.assertEqual(result, "file_name.txt")
+
+    def test_replace_asterisk(self):
+        """Test replacement of asterisk."""
+        filename = "file*name.txt"
+        result = khandy.escape_filename(filename)
+        self.assertEqual(result, "file_name.txt")
+
+    def test_replace_question_mark(self):
+        """Test replacement of question mark."""
+        filename = "file?name.txt"
+        result = khandy.escape_filename(filename)
+        self.assertEqual(result, "file_name.txt")
+
+    def test_replace_colon(self):
+        """Test replacement of colon."""
+        filename = "file:name.txt"
+        result = khandy.escape_filename(filename)
+        self.assertEqual(result, "file_name.txt")
+
+    def test_replace_double_quote(self):
+        """Test replacement of double quote."""
+        filename = 'file"name.txt'
+        result = khandy.escape_filename(filename)
+        self.assertEqual(result, "file_name.txt")
+
+    def test_replace_less_than(self):
+        """Test replacement of less than sign."""
+        filename = "file<name.txt"
+        result = khandy.escape_filename(filename)
+        self.assertEqual(result, "file_name.txt")
+
+    def test_replace_greater_than(self):
+        """Test replacement of greater than sign."""
+        filename = "file>name.txt"
+        result = khandy.escape_filename(filename)
+        self.assertEqual(result, "file_name.txt")
+
+    def test_replace_pipe(self):
+        """Test replacement of pipe character."""
+        filename = "file|name.txt"
+        result = khandy.escape_filename(filename)
+        self.assertEqual(result, "file_name.txt")
+
+    def test_replace_control_characters(self):
+        """Test replacement of control characters (0x00-0x1F)."""
+        # Testing a few common control characters like newline, tab, etc.
+        filename = "file\x00\x01\x02name.txt"
+        result = khandy.escape_filename(filename)
+        self.assertEqual(result, "file___name.txt")
+
+    def test_custom_replacement_char(self):
+        """Test using a custom replacement character."""
+        filename = "file/name.txt"
+        result = khandy.escape_filename(filename, new_char="-")
+        self.assertEqual(result, "file-name.txt")
+
+    def test_empty_string(self):
+        """Test handling of an empty string."""
+        filename = ""
+        result = khandy.escape_filename(filename)
+        self.assertEqual(result, "")
+
+    def test_only_invalid_chars(self):
+        """Test filename consisting only of invalid characters."""
+        filename = "/*?"
+        result = khandy.escape_filename(filename)
+        self.assertEqual(result, "___")
+
+    def test_no_extension(self):
+        """Test filename without extension."""
+        filename = "file/name"
+        result = khandy.escape_filename(filename)
+        self.assertEqual(result, "file_name")
+
+    def test_multiple_consecutive_invalid_chars(self):
+        """Test multiple consecutive invalid characters."""
+        filename = "file///name.txt"
+        result = khandy.escape_filename(filename)
+        self.assertEqual(result, "file___name.txt")
+
+
 if __name__ == '__main__':
     unittest.main()

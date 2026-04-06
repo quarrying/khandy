@@ -450,9 +450,9 @@ def get_folder_size(path: str) -> int:
 
 
 def escape_filename(filename: str, new_char: str = '_') -> str:
-    assert isinstance(new_char, str)
-    control_chars = ''.join((map(chr, range(0x00, 0x20))))
-    pattern = r'[\\/*?:"<>|{}]'.format(control_chars)
+    if not isinstance(new_char, str):
+        raise TypeError("new_char must be a string")
+    pattern = r'[\\/*?:"<>|\x00-\x1f]'
     return re.sub(pattern, new_char, filename)
 
 
