@@ -9,9 +9,17 @@ import khandy
 torch = khandy.import_torch()
 
 
-__all__ = ['ClassifierResultItem', 'ClassifierResults', 'BaseTopKClassifier',
-           'BaseClassifier', 'ClassCollectionItem', 'BaseCollectionsClassifier',
-           'Gallery', 'find_topk', 'find_topk_in_gallery']
+__all__ = [
+    "ClassifierResultItem",
+    "ClassifierResults",
+    "BaseTopKClassifier",
+    "BaseClassifier",
+    "ClassCollectionItem",
+    "BaseCollectionsClassifier",
+    "Gallery",
+    "find_topk",
+    "find_topk_in_gallery",
+]
 
 
 def find_topk(
@@ -151,8 +159,9 @@ class BaseTopKClassifier(ABC):
         pass
 
     def __call__(self, image: np.ndarray, **kwargs) -> ClassifierResults:
+        top_k = kwargs.pop('top_k', self.top_k)
         outputs = self.forward(image, **kwargs)
-        topk_probs, topk_inds = find_topk(outputs, None, self.top_k, not self.has_softmax)
+        topk_probs, topk_inds = find_topk(outputs, None, top_k, not self.has_softmax)
         results = ClassifierResults(confs=topk_probs[0], classes=topk_inds[0])
         if self.class_names is not None:
             results.class_names = [self.class_names[ind.item()] for ind in results.classes]
@@ -209,26 +218,36 @@ def find_topk_in_collections(
 
 
 class BaseCollectionsClassifier(BaseTopKClassifier):
-    def __init__(self, num_classes: int, 
-                 collections: Dict[str, List[ClassCollectionItem]], 
-                 top_k: int, has_softmax=False):
+
+    def __init__(
+        self,
+        num_classes: int,
+        collections: Dict[str, List[ClassCollectionItem]],
+        top_k: int,
+        has_softmax: bool = False,
+    ):
         super().__init__(num_classes, top_k, has_softmax)
         self._collections = collections
 
     @property
     def collections(self) -> Dict[str, List[ClassCollectionItem]]:
         return self._collections
-    
+
     def __call__(self, image: np.ndarray, **kwargs) -> Dict[str, ClassifierResults]:
+        top_k = kwargs.pop('top_k', self.top_k)
         outputs = self.forward(image, **kwargs)
-        topk_results = find_topk_in_collections(outputs, self.collections, self.top_k, not self.has_softmax)
+        topk_results = find_topk_in_collections(outputs, self.collections, top_k, not self.has_softmax)
         return topk_results[0]
 
 
 class Gallery:
-    def __init__(self, features: np.ndarray, 
-                 collections: Dict[str, List[ClassCollectionItem]], 
-                 model_name: str):
+
+    def __init__(
+        self,
+        features: np.ndarray,
+        collections: Dict[str, List[ClassCollectionItem]],
+        model_name: str,
+    ):
         self._features = features
         self._collections = collections
         self._model_name = model_name
