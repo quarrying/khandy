@@ -76,7 +76,7 @@ class ContextTimer(object):
             self.name = '{}, '.format(name.rstrip())
                 
     def __enter__(self):
-        self.start_time = time.time()
+        self.start_time = time.perf_counter()
         if not self.quiet:
             self._print_or_log('{}{} starts'.format(self.name, self._now_time_str))
         return self
@@ -97,7 +97,7 @@ class ContextTimer(object):
             print(output_str)
             
     def get_eplased_time(self):
-        return time.time() - self.start_time
+        return time.perf_counter() - self.start_time
         
     def enter(self):
         """Manually trigger enter"""
