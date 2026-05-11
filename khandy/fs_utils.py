@@ -449,16 +449,34 @@ def get_folder_size(path: str) -> int:
     return total_size
 
 
-def escape_filename(filename: str, new_char: str = '_') -> str:
+def sanitize_filename(filename: str, new_char: str = '_') -> str:
     if not isinstance(new_char, str):
         raise TypeError("new_char must be a string")
     pattern = r'[\\/*?:"<>|\x00-\x1f]'
-    return re.sub(pattern, new_char, filename)
+    filename = re.sub(pattern, new_char, filename)
+    
+    if os.name == 'nt':
+        filename = filename.rstrip(". ")
+        path_stem = filename.split('.')[0].upper()
+        reserved_devices = {
+            "CON", "PRN", "AUX", "NUL",
+            "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+            "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+        }
+        
+        if path_stem in reserved_devices:
+            filename = f"_{filename}_"
+    return filename
 
 
-def replace_invalid_filename_char(filename, new_char='_'):
-    warnings.warn('`replace_invalid_filename_char` will be deprecated, use `escape_filename` instead!')
-    return escape_filename(filename, new_char)
+def escape_filename(filename: str, new_char: str = '_') -> str:
+    warnings.warn('`escape_filename` will be deprecated, use `sanitize_filename` instead!')
+    return sanitize_filename(filename, new_char)
+
+
+def replace_invalid_filename_char(filename: str, new_char: str = '_') -> str:
+    warnings.warn('`replace_invalid_filename_char` will be deprecated, use `sanitize_filename` instead!')
+    return sanitize_filename(filename, new_char)
 
 
 def copy_file(
