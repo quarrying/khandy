@@ -47,6 +47,30 @@ def save_json(filename, data, encoding='utf-8', indent=4, cls=None, sort_keys=Fa
                   ensure_ascii=False, cls=cls, sort_keys=sort_keys)
 
 
+def load_text(filename: str, encoding='utf-8', errors=None) -> str:
+    """Open the file in text mode, read it, and close the file.
+    
+    References:
+        pathlib.Path.read_text
+    """
+    with open(filename, 'r', encoding=encoding, errors=errors) as f:
+        data = f.read()
+    return data
+
+
+def save_text(filename: str, data: str, encoding='utf-8', errors=None) -> int:
+    """Open the file in text mode, write to it, and close the file.
+    
+    References:
+        pathlib.Path.write_text
+    """
+    if not isinstance(data, str):
+        raise TypeError(f'data must be str, not {data.__class__.__name__}')
+    with open(filename, 'w', encoding=encoding, errors=errors) as f:
+        ret = f.write(data)
+    return ret
+
+
 def load_bytes(filename, use_base64: bool = False) -> bytes:
     """Open the file in bytes mode, read it, and close the file.
     
