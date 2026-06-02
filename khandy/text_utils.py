@@ -285,7 +285,7 @@ def dumps_markdown_table(table: MarkdownTable, align_header: bool = False) -> Li
     min_length = 5 
     lengths = [max(min_length, len(header)) for header in table.headers]
     for row in table.rows:
-        lengths = [max(len(cell), lengths[k]) for k, cell in enumerate(row)]
+        lengths = [max(len(f'{cell}'), lengths[k]) for k, cell in enumerate(row)]
 
     if align_header:
         header_cells = [f'{header}'.ljust(lengths[k]) for k, header in enumerate(table.headers)]
