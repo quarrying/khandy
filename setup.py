@@ -3,11 +3,15 @@ import re
 import sys
 from setuptools import find_packages, setup
 
-if sys.version_info >= (3, 8):
+if sys.version_info >= (3, 12):
     install_requires = ['numpy>=1.11.1', 'opencv-python', 'pillow', 'lxml', 'requests']
+elif sys.version_info >= (3, 8):
+    install_requires = ['numpy>=1.11.1', 'opencv-python', 'pillow', 'lxml', 'requests',
+                        'typing-extensions>=4.21']
 else:
-    install_requires = ['numpy>=1.11.1', 'opencv-python', 'pillow', 'lxml', 'requests<2.30', 'typing-extensions']
-    
+    install_requires = ['numpy>=1.11.1', 'opencv-python', 'pillow', 'lxml', 'requests<2.30',
+                        'typing-extensions']
+
 
 def get_version() -> str:
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -23,7 +27,7 @@ def get_long_description() -> str:
     current_dir = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(current_dir, "README.md"), encoding="utf-8") as f:
         return f.read()
-    
+
 
 setup(
     name='khandy',
