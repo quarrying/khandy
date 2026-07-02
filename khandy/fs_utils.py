@@ -465,7 +465,7 @@ def sanitize_filename(filename: str, new_char: str = '_') -> str:
         }
         
         if path_stem in reserved_devices:
-            filename = f"_{filename}_"
+            filename = f"_{filename}"
     return filename
 
 

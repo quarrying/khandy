@@ -29,5 +29,4 @@ def import_torch():
         import torch
         return torch
     except ImportError as e:
-        warnings.warn(f"PyTorch is not installed: {e}")
         return None
