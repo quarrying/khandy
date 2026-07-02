@@ -399,11 +399,13 @@ def get_git_repo_root(path: Optional[str] = None) -> Optional[str]:
         return None
     
     try:
-        output = subprocess.check_output(
+        output = subprocess.run(
             ['git', 'rev-parse', '--show-toplevel'],
+            stdout=subprocess.PIPE,
             text=True,
-            cwd=path
-        ).strip()
+            check=True,
+            cwd=path,
+        ).stdout.strip()
         if not output:
             return None
         return os.path.normpath(os.path.realpath(output))
@@ -428,7 +430,12 @@ def get_gpu_count() -> int:
         int: The number of GPUs found, or 0 if an error occurs while executing the 'nvidia-smi' command.
     """
     try:
-        output = subprocess.check_output(['nvidia-smi', '--list-gpus'], text=True)
+        output = subprocess.run(
+            ['nvidia-smi', '--list-gpus'],
+            stdout=subprocess.PIPE,
+            text=True,
+            check=True,
+        ).stdout
         return output.count('UUID')
     except FileNotFoundError:
         warnings.warn("nvidia-smi command not found.")
