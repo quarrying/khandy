@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 import khandy
 import numpy as np
 
@@ -20,7 +18,7 @@ def convert_feature_dict_to_array(feature_dict):
 
 def convert_feature_array_to_dict(key_list, feature_array):
     assert len(key_list) == len(feature_array)
-    feature_dict = OrderedDict()
+    feature_dict = {}
     for key, feat in zip(key_list, feature_array):
         feature_dict.setdefault(key, []).append(feat)
     for label in feature_dict.keys():

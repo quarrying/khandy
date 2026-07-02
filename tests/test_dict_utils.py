@@ -1,6 +1,5 @@
 import random
 import unittest
-from collections import OrderedDict
 
 import khandy
 
@@ -13,7 +12,7 @@ class TestDictUtils(unittest.TestCase):
             khandy.get_dict_first_item({}, raise_if_empty=True)
         self.assertIsNone(khandy.get_dict_first_item({}))
         self.assertEqual(khandy.get_dict_first_item({'a': 1}), ('a', 1))
-        self.assertEqual(khandy.get_dict_first_item(OrderedDict([('a', 1), ('b', 2)])), ('a', 1))
+        self.assertEqual(khandy.get_dict_first_item(dict([('a', 1), ('b', 2)])), ('a', 1))
 
 
 class TestSampleMultidict(unittest.TestCase):

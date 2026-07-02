@@ -4,7 +4,6 @@ import numbers
 import os
 import pickle
 import warnings
-from collections import OrderedDict
 from typing import List
 
 
@@ -35,7 +34,7 @@ def save_list(filename, list_obj, encoding='utf-8', append_break=True):
 
 def load_json(filename, encoding='utf-8'):
     with open(filename, 'r', encoding=encoding) as f:
-        data = json.load(f, object_pairs_hook=OrderedDict)
+        data = json.load(f)
     return data
 
 

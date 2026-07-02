@@ -5,7 +5,7 @@ import numbers
 import os
 import warnings
 import xml.etree.ElementTree as ET
-from collections import OrderedDict
+
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Union
 
@@ -478,7 +478,7 @@ class CocoHandler:
         for cat_item in categories:
             label_map[cat_item['id']] = cat_item['name']
 
-        coco_records = OrderedDict()
+        coco_records = {}
         for image_item in images:
             coco_records[image_item['id']] = CocoRecord(
                 filename=image_item['file_name'],

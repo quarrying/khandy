@@ -1,6 +1,5 @@
 import random
 import warnings
-from collections import OrderedDict
 from typing import Any, Dict, List, Tuple, Optional
 
 
@@ -33,7 +32,7 @@ def get_dict_first_item(
 
 
 def sort_dict(dict_obj, key=None, reverse=False):
-    return OrderedDict(sorted(dict_obj.items(), key=key, reverse=reverse))
+    return dict(sorted(dict_obj.items(), key=key, reverse=reverse))
 
 
 def create_multidict(key_list, value_list):
@@ -235,7 +234,7 @@ def sort_multidict_by_number(multidict_obj, num_keys_to_keep=None, reverse=True)
     else:
         num_keys_to_keep = min(num_keys_to_keep, len(multidict_obj))
     sorted_items = sorted(multidict_obj.items(), key=lambda x: len(x[1]), reverse=reverse)
-    filtered_dict = OrderedDict()
+    filtered_dict = {}
     for i in range(num_keys_to_keep):
         filtered_dict[sorted_items[i][0]] = sorted_items[i][1]
     return filtered_dict
