@@ -1,3 +1,4 @@
+import itertools
 import numbers
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -30,7 +31,7 @@ def find_topk(
 ) -> Tuple[np.ndarray, np.ndarray]:
     if indices_list is not None:
         if do_softmax:
-            valid_indices = list(set(sum(indices_list, [])))
+            valid_indices = list(set(itertools.chain.from_iterable(indices_list)))
             inputs = khandy.softmax(inputs, axis=-1, valid_indices=valid_indices)
         probs = khandy.sum_by_indices_list(inputs, indices_list, axis=-1)
     elif do_softmax:
