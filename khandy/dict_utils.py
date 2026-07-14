@@ -182,8 +182,8 @@ def get_multidict_info(multidict_obj, with_print=False, desc=None):
     num_list = [len(val) for val in multidict_obj.values()]
     num_keys = len(num_list)
     num_values = sum(num_list)
-    max_values_per_key = max(num_list)
-    min_values_per_key = min(num_list)
+    max_values_per_key = max(num_list, default=0)
+    min_values_per_key = min(num_list, default=0)
     if num_keys == 0:
         avg_values_per_key = 0
     else:
