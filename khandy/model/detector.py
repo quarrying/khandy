@@ -421,6 +421,7 @@ class DetObjects(khandy.EqLenSequences):
         elif sort_by == DetObjectSortBy.BY_AREA:
             boxes = khandy.Boxes(self.boxes)
             sorted_inds = np.argsort(boxes.areas, axis=0)
+            sorted_inds = np.squeeze(sorted_inds, axis=1)
         elif sort_by == DetObjectSortBy.BY_CLASS:
             sorted_inds = np.argsort(self.classes, axis=0)
         if direction == DetObjectSortDir.DESC:
