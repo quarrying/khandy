@@ -78,24 +78,20 @@ def convert_boxes_format(boxes, in_fmt, out_fmt, copy=True):
         torchvision.ops.box_convert
     """
     allowed_fmts = ("xyxy", "xywh", "cxcywh")
-    if in_fmt not in allowed_fmts or out_fmt not in allowed_fmts:
-        raise ValueError("Unsupported Bounding Box Conversions for given in_fmt and out_fmt")
-    if copy:
-        boxes = boxes.copy()
+    if in_fmt not in allowed_fmts:
+        raise ValueError(f"Unsupported `in_fmt`, got {in_fmt}")
+    if out_fmt not in allowed_fmts:
+        raise ValueError(f"Unsupported `out_fmt`, got {out_fmt}")
     if in_fmt == out_fmt:
-        return boxes
+        return boxes.copy() if copy else boxes
 
-    if (in_fmt, out_fmt) == ("xyxy", "xywh"):
-        boxes = convert_xyxy_to_xywh(boxes, copy=False)
-    elif (in_fmt, out_fmt) == ("xywh", "xyxy"):
-        boxes = convert_xywh_to_xyxy(boxes, copy=False)
-    elif (in_fmt, out_fmt) == ("xywh", "cxcywh"):
-        boxes = convert_xywh_to_cxcywh(boxes, copy=False)
-    elif (in_fmt, out_fmt) == ("cxcywh", "xywh"):
-        boxes = convert_cxcywh_to_xywh(boxes, copy=False)
-    elif (in_fmt, out_fmt) == ("xyxy", "cxcywh"):
-        boxes = convert_xyxy_to_cxcywh(boxes, copy=False)
-    elif (in_fmt, out_fmt) == ("cxcywh", "xyxy"):
-        boxes = convert_cxcywh_to_xyxy(boxes, copy=False)
-    return boxes
-    
+    convert_map = {
+        ('xyxy', 'xywh'):    convert_xyxy_to_xywh,
+        ('xywh', 'xyxy'):    convert_xywh_to_xyxy,
+        ('xywh', 'cxcywh'):  convert_xywh_to_cxcywh,
+        ('cxcywh', 'xywh'):  convert_cxcywh_to_xywh,
+        ('xyxy', 'cxcywh'):  convert_xyxy_to_cxcywh,
+        ('cxcywh', 'xyxy'):  convert_cxcywh_to_xyxy,
+    }
+    convert_fn = convert_map[(in_fmt, out_fmt)]
+    return convert_fn(boxes, copy=copy)
