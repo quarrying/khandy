@@ -20,8 +20,8 @@ class HashAlgo(Protocol):
     def digest(self) -> bytes: ...
 
 
-def _get_hash_object(hash_object: Union[str, HashAlgo, None]) -> HashAlgo:
-    """Normalize hash_object to a hashlib-style object.
+def _resolve_hash_object(hash_object: Union[str, HashAlgo, None]) -> HashAlgo:
+    """Resolve hash_object to a hashlib-style object.
 
     Accepts None (defaults to MD5), an algorithm name (e.g. "sha256"), or
     any object that quacks like a hashlib hash object.
@@ -90,7 +90,7 @@ def calc_hash(
     Returns:
         The hex digest string, or the hash object when return_str=False.
     """
-    h = _get_hash_object(hash_object)
+    h = _resolve_hash_object(hash_object)
     h.update(content)
     return h.hexdigest() if return_str else h
 
@@ -131,7 +131,7 @@ def calc_file_hash(
     Returns:
         The hex digest string, or the hash object when return_str=False.
     """
-    h = _get_hash_object(hash_object)
+    h = _resolve_hash_object(hash_object)
     if isinstance(file, (str, Path)):
         with open(file, "rb") as f:
             _update_hash(f, h, chunk_size)
