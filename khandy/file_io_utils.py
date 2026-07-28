@@ -90,7 +90,7 @@ def save_bytes(filename, data: bytes, use_base64: bool = False) -> int:
         pathlib.Path.write_bytes
     """
     if use_base64:
-        data = base64.b64decode(data)
+        data = base64.b64decode(data, validate=True)
     with open(filename, 'wb') as f:
         ret = f.write(data)
     return ret
