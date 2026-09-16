@@ -230,9 +230,9 @@ class TestFilterMultidictByNumber(unittest.TestCase):
         }
         self.assertEqual(result, expected)
     
-    def test_assertion_error_when_lower_greater_than_upper(self):
-        """Test that assertion error is raised when lower > upper"""
-        with self.assertRaises(AssertionError) as context:
+    def test_value_error_when_lower_greater_than_upper(self):
+        """Test that ValueError is raised when lower > upper"""
+        with self.assertRaises(ValueError) as context:
             khandy.filter_multidict_by_number(self.test_dict, lower=5, upper=3)
         self.assertIn('lower must not be greater than upper', str(context.exception))
     
@@ -369,6 +369,74 @@ class TestRekeyMultidict(unittest.TestCase):
         result = khandy.rekey_multidict(multidict_obj, key_map, raise_if_key_error=True)
         self.assertEqual(result, expected)
         
+
+class TestCreateMultidict(unittest.TestCase):
+
+    def test_basic_grouping(self):
+        result = khandy.create_multidict(['a', 'b', 'a'], [1, 2, 3])
+        self.assertEqual(result, {'a': [1, 3], 'b': [2]})
+
+    def test_value_container_is_list(self):
+        result = khandy.create_multidict(['a', 'a'], [1, 2])
+        for value in result.values():
+            self.assertIsInstance(value, list)
+
+    def test_duplicate_values_preserved_per_key(self):
+        result = khandy.create_multidict(['a', 'a', 'a'], [1, 1, 1])
+        self.assertEqual(result, {'a': [1, 1, 1]})
+
+    def test_iterables_supported(self):
+        # Any Iterable (tuple, generator, ...) is accepted; not just list.
+        result = khandy.create_multidict(
+            ('a', 'b', 'a'),
+            (x for x in (1, 2, 3)),
+        )
+        self.assertEqual(result, {'a': [1, 3], 'b': [2]})
+
+    def test_length_mismatch_raises(self):
+        with self.assertRaises(ValueError) as ctx:
+            khandy.create_multidict(['a', 'b'], [1])
+        self.assertIn('must have the same length', str(ctx.exception))
+
+    def test_empty_inputs(self):
+        self.assertEqual(khandy.create_multidict([], []), {})
+
+
+class TestCreateMultidictUnique(unittest.TestCase):
+
+    def test_basic_grouping(self):
+        result = khandy.create_multidict_unique(['a', 'b', 'a'], [1, 2, 3])
+        self.assertEqual(result, {'a': {1, 3}, 'b': {2}})
+
+    def test_value_container_is_set(self):
+        result = khandy.create_multidict_unique(['a', 'a'], [1, 2])
+        for value in result.values():
+            self.assertIsInstance(value, set)
+
+    def test_duplicate_values_deduped_per_key(self):
+        result = khandy.create_multidict_unique(['a', 'a', 'a'], [1, 1, 1])
+        self.assertEqual(result, {'a': {1}})
+
+    def test_unhashable_values_raise(self):
+        with self.assertRaises(TypeError):
+            khandy.create_multidict_unique(['a', 'b'], [[1, 2], [3, 4]])
+
+    def test_iterables_supported(self):
+        # Any Iterable (tuple, generator, ...) is accepted; not just list.
+        result = khandy.create_multidict_unique(
+            ('a', 'b', 'a'),
+            (x for x in (1, 2, 3)),
+        )
+        self.assertEqual(result, {'a': {1, 3}, 'b': {2}})
+
+    def test_length_mismatch_raises(self):
+        with self.assertRaises(ValueError) as ctx:
+            khandy.create_multidict_unique(['a', 'b'], [1])
+        self.assertIn('must have the same length', str(ctx.exception))
+
+    def test_empty_inputs(self):
+        self.assertEqual(khandy.create_multidict_unique([], []), {})
+
 
 class TestConvertMultidictToRecords(unittest.TestCase):
     
