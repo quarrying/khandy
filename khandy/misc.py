@@ -380,44 +380,78 @@ def download_file(
     return file_bytes
     
 
-def get_git_repo_root(path: Optional[str] = None) -> Optional[str]:
-    """Get the root directory of a Git repository.
+def get_git_repo_root(path: Optional[str] = None) -> str:
+    """Return the absolute path of the top-level directory of the Git repository
+    containing `path`.
 
     Args:
-        path (Optional[str]): The path to the directory where the Git repository is located.
-            If not provided, the current working directory will be used.
+        path: A path inside (or equal to) the Git repository whose top-level
+            directory should be returned. If `None`, the current working
+            directory is used.
 
     Returns:
-        Optional[str]: The absolute path of the top-level directory of the Git repository.
-            If the Git repository is not found or an error occurs, None will be returned.
+        The absolute, realpath-normalized path of the Git repository's
+        top-level directory.
+
+    Raises:
+        FileNotFoundError: If `path` does not exist, or if the `git`
+            executable is not found on `PATH`.
+        NotADirectoryError: If `path` exists but is not a directory.
+        RuntimeError: If `path` is not inside any Git repository, or if
+            the `git rev-parse` call fails for any other reason.
+        subprocess.TimeoutExpired: If the `git` subprocess does not
+            complete within the configured timeout.
     """
     if path is None:
         path = os.getcwd()
-        
+
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Path does not exist: {path!r}")
     if not os.path.isdir(path):
-        warnings.warn(f"The specified path '{path}' is not a valid directory.")
-        return None
-    
+        raise NotADirectoryError(f"Path is not a directory: {path!r}")
+
+    path_abs = os.path.abspath(path)  # avoid relative-cwd ambiguity in subprocess
     try:
-        output = subprocess.run(
+        completed = subprocess.run(
             ['git', 'rev-parse', '--show-toplevel'],
             stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
             check=True,
-            cwd=path,
-        ).stdout.strip()
-        if not output:
-            return None
-        return os.path.normpath(os.path.realpath(output))
+            timeout=5,
+            cwd=path_abs,
+        )
     except FileNotFoundError:
-        warnings.warn("Git command not found. Ensure Git is installed and accessible in your PATH.")
-        return None
+        raise FileNotFoundError(
+            "Git command not found. Ensure Git is installed and accessible in your PATH."
+        ) from None
     except subprocess.CalledProcessError as e:
-        warnings.warn(f"Failed to execute Git command: {e}.")
-        return None
+        stderr = (e.stderr or "").strip()
+        if "not a git repository" in stderr.lower():
+            raise RuntimeError(
+                f"Not a git repository (or any of the parent directories): {path_abs}"
+            ) from e
+        raise RuntimeError(
+            f"`git rev-parse --show-toplevel` failed for {path_abs!r}: {stderr or e}"
+        ) from e
+    except subprocess.TimeoutExpired:
+        raise
     except Exception as e:
-        warnings.warn(f"Error occurred while getting Git repo root: {e}")
-        return None
+        # Fallback: prevent unexpected exceptions (e.g. permission, OS errors)
+        # from being silently swallowed.
+        raise RuntimeError(
+            f"Unexpected error while resolving git repo root for {path_abs!r}: {e}"
+        ) from e
+
+    output = completed.stdout.strip()
+    if not output:
+        # Defensive: with check=True and a successful exit code this should not
+        # happen, but guard against an empty stdout edge case.
+        raise RuntimeError(
+            f"`git rev-parse --show-toplevel` returned empty output in {path!r}"
+        )
+
+    return os.path.normpath(os.path.realpath(output))
 
 
 def get_gpu_count() -> int:

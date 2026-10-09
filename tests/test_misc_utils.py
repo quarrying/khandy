@@ -1,4 +1,7 @@
+import os
+import tempfile
 import unittest
+
 import khandy
 
 
@@ -36,6 +39,46 @@ class TestIsNumberBetween(unittest.TestCase):
         self.assertFalse(khandy.is_number_between(5, 10, 10, lower_close=False, upper_close=False))
 
 
+class TestGetGitRepoRoot(unittest.TestCase):
+    def test_returns_root_for_repo(self):
+        # Test suite is itself run from inside this repository
+        root = khandy.get_git_repo_root()
+        self.assertTrue(os.path.isabs(root))
+        self.assertTrue(os.path.isdir(root))
+        self.assertTrue(os.path.exists(os.path.join(root, '.git')))
+
+    def test_default_arg_matches_cwd(self):
+        self.assertEqual(
+            khandy.get_git_repo_root(),
+            khandy.get_git_repo_root('.'),
+        )
+
+    def test_nested_path_returns_root(self):
+        here = os.path.dirname(os.path.abspath(__file__))
+        root_from_here = khandy.get_git_repo_root(here)
+        root_from_root = khandy.get_git_repo_root('.')
+        self.assertEqual(os.path.normpath(root_from_here),
+                         os.path.normpath(root_from_root))
+
+    def test_nonexistent_path_raises(self):
+        with self.assertRaises(FileNotFoundError):
+            khandy.get_git_repo_root('Z:/definitely/not/here/12345')
+
+    def test_file_not_directory_raises(self):
+        this_file = os.path.abspath(__file__)
+        with self.assertRaises(NotADirectoryError):
+            khandy.get_git_repo_root(this_file)
+
+    def test_not_a_git_repo_raises(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(RuntimeError):
+                khandy.get_git_repo_root(tmp)
+
+    def test_returns_normalized_path(self):
+        root = khandy.get_git_repo_root('.')
+        # Should not contain . or .. segments
+        self.assertNotIn('..', root.split(os.sep))
+
+
 if __name__ == '__main__':
     unittest.main()
-
