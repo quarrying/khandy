@@ -1,22 +1,41 @@
 import base64
 import json
-import numbers
 import os
 import pickle
 import warnings
-from typing import List
+from typing import List, Optional
 
 
-def load_list(filename, encoding='utf-8', start=0, stop=None) -> List[str]:
-    assert isinstance(start, numbers.Integral) and start >= 0
-    assert (stop is None) or (isinstance(stop, numbers.Integral) and stop > start)
+def load_list(filename: str, encoding: str = 'utf-8',
+              start: int = 0, stop: Optional[int] = None) -> List[str]:
+    """Read lines from a text file.
+
+    Args:
+        filename: Path to the text file.
+        encoding: Text encoding used to decode the file.
+        start: Number of leading lines to skip. Defaults to 0.
+        stop: Exclusive stop line index, i.e. return lines[start:stop].
+            None means reading to the end of file.
+
+    Returns:
+        A list of lines with trailing newline characters removed.
+    """
+    if not isinstance(start, int):
+        raise TypeError(f'start must be an int, got {type(start)}')
+    if start < 0:
+        raise ValueError(f'start must be non-negative, got {start}')
+    if stop is not None:
+        if not isinstance(stop, int):
+            raise TypeError(f'stop must be an int or None, got {type(stop)}')
+        if stop <= start:
+            raise ValueError(f'stop must be greater than start, got start={start}, stop={stop}')
     
     lines = []
     with open(filename, 'r', encoding=encoding) as f:
         for _ in range(start):
             f.readline()
         for k, line in enumerate(f):
-            if (stop is not None) and (k + start > stop):
+            if (stop is not None) and (k + start >= stop):
                 break
             lines.append(line.rstrip('\n'))
     return lines
