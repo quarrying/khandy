@@ -278,19 +278,43 @@ def filter_multidict_by_number(
     lower: int | None = None,
     upper: int | None = None,
 ) -> MultiDictT[K, V]:
+    """Filter a multidict by the number of values per key.
+
+    Keeps keys whose value lists have a length in the closed interval
+    ``[lower, upper]``. Either bound may be ``None`` to disable it.
+
+    Args:
+        multidict_obj: A mapping from key to a list of values.
+        lower: Inclusive lower bound on ``len(value)``. ``None`` means no
+            lower bound (i.e. ``0``). May be negative.
+        upper: Inclusive upper bound on ``len(value)``. ``None`` means no
+            upper bound.
+
+    Returns:
+        A new multidict containing only the keys whose value lists satisfy
+        the bounds. Lists are the same objects as in the input, not copies.
+        If both bounds are ``None``, a shallow copy of the input is
+        returned.
+
+    Raises:
+        TypeError: If ``multidict_obj`` is not a ``dict``.
+        ValueError: If both ``lower`` and ``upper`` are not ``None`` and
+            ``lower > upper``.
+    """
+    if not isinstance(multidict_obj, dict):
+        raise TypeError(f'multidict_obj should be a dict, got {type(multidict_obj)}')
     if lower is None and upper is None:
         return multidict_obj.copy()
-    elif lower is None:
-        return {key: value for key, value in multidict_obj.items()
-                if len(value) <= upper}
-    elif upper is None:
-        return {key: value for key, value in multidict_obj.items()
-                if lower <= len(value) }
-    else:
-        if lower > upper:
-            raise ValueError('lower must not be greater than upper')
-        return {key: value for key, value in multidict_obj.items()
-                if lower <= len(value) <= upper }
+    if lower is not None and upper is not None and lower > upper:
+        raise ValueError('lower must not be greater than upper')
+
+    lo = 0 if lower is None else lower
+    hi = float('inf') if upper is None else upper
+    return {
+        key: value
+        for key, value in multidict_obj.items()
+        if lo <= len(value) <= hi
+    }
 
 
 def sort_multidict_by_number(

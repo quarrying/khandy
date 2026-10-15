@@ -242,6 +242,32 @@ class TestFilterMultidictByNumber(unittest.TestCase):
         expected = {'c': [6]}  # Only 'c' has length exactly 1
         self.assertEqual(result, expected)
 
+    def test_non_dict_raises_type_error(self):
+        """Non-dict input raises TypeError with a descriptive message."""
+        with self.assertRaises(TypeError) as ctx:
+            khandy.filter_multidict_by_number([])  # type: ignore[arg-type]
+        self.assertIn('multidict_obj should be a dict', str(ctx.exception))
+
+        with self.assertRaises(TypeError):
+            khandy.filter_multidict_by_number(None)  # type: ignore[arg-type]
+
+    def test_lower_negative_includes_empty_lists(self):
+        """Negative lower bound keeps all keys including those with empty lists."""
+        result = khandy.filter_multidict_by_number(self.test_dict, lower=-1)
+        self.assertEqual(result, self.test_dict)
+
+    def test_lists_are_same_objects(self):
+        """Returned lists are the same objects as in the input (no copies)."""
+        result = khandy.filter_multidict_by_number(self.test_dict, lower=2, upper=3)
+        for key in result:
+            self.assertIs(result[key], self.test_dict[key])
+
+    def test_no_bounds_returns_copy_not_same_object(self):
+        """No-bounds path returns a shallow copy, not the same dict object."""
+        result = khandy.filter_multidict_by_number(self.test_dict)
+        self.assertIsNot(result, self.test_dict)
+        self.assertEqual(result, self.test_dict)
+
 
 class TestRekeyMultidict(unittest.TestCase):
     
