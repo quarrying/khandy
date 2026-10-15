@@ -505,6 +505,100 @@ class TestConvertMultidictToRecords(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
+class TestSortMultidictByNumber(unittest.TestCase):
+
+    def setUp(self):
+        self.test_multidict = {
+            'a': [1, 2, 3, 4],          # length 4
+            'b': [5, 6, 7],             # length 3
+            'c': [8, 9],                # length 2
+            'd': [10, 11, 12, 13, 14],  # length 5
+            'e': [15],                  # length 1
+        }
+
+    def test_reverse_true_descending_default(self):
+        """Default reverse=True returns keys ordered by descending length."""
+        result = khandy.sort_multidict_by_number(self.test_multidict)
+        self.assertEqual(list(result.keys()), ['d', 'a', 'b', 'c', 'e'])
+
+    def test_reverse_false_ascending(self):
+        """reverse=False returns keys ordered by ascending length."""
+        result = khandy.sort_multidict_by_number(self.test_multidict, reverse=False)
+        self.assertEqual(list(result.keys()), ['e', 'c', 'b', 'a', 'd'])
+
+    def test_num_keys_none_keeps_all(self):
+        """num_keys_to_keep=None retains all keys (sorted)."""
+        result = khandy.sort_multidict_by_number(self.test_multidict, num_keys_to_keep=None)
+        self.assertEqual(set(result.keys()), set(self.test_multidict.keys()))
+        self.assertEqual(len(result), len(self.test_multidict))
+
+    def test_num_keys_positive_truncates(self):
+        """num_keys_to_keep=N keeps exactly N keys (in sort order)."""
+        result = khandy.sort_multidict_by_number(self.test_multidict, num_keys_to_keep=2)
+        # Default reverse=True: top-2 by length are 'd' (5) then 'a' (4).
+        self.assertEqual(list(result.keys()), ['d', 'a'])
+        self.assertEqual(len(result), 2)
+
+    def test_num_keys_exceeds_len_keeps_all(self):
+        """num_keys_to_keep greater than len is clamped to len."""
+        result = khandy.sort_multidict_by_number(self.test_multidict, num_keys_to_keep=100)
+        self.assertEqual(set(result.keys()), set(self.test_multidict.keys()))
+        self.assertEqual(len(result), len(self.test_multidict))
+
+    def test_num_keys_zero_or_negative_keeps_all(self):
+        """num_keys_to_keep=0 or negative is treated as 'keep all' (matches sample_multidict)."""
+        for bad_value in (0, -1, -100):
+            with self.subTest(num_keys_to_keep=bad_value):
+                result = khandy.sort_multidict_by_number(
+                    self.test_multidict, num_keys_to_keep=bad_value,
+                )
+                self.assertEqual(set(result.keys()), set(self.test_multidict.keys()))
+                self.assertEqual(len(result), len(self.test_multidict))
+
+    def test_empty_multidict(self):
+        """Empty input returns empty dict."""
+        result = khandy.sort_multidict_by_number({})
+        self.assertEqual(result, {})
+
+        result = khandy.sort_multidict_by_number({}, num_keys_to_keep=3)
+        self.assertEqual(result, {})
+
+    def test_lists_are_same_objects(self):
+        """Returned lists must be the same objects as in the input (no copies)."""
+        result = khandy.sort_multidict_by_number(self.test_multidict, num_keys_to_keep=2)
+        for key in result:
+            self.assertIs(result[key], self.test_multidict[key])
+
+    def test_tie_break_is_stable(self):
+        """Keys with equal-length values keep their original insertion order."""
+        # Insertion order: 'a' (2), 'b' (2), 'c' (2) all length 2.
+        tied = {'a': [1, 2], 'b': [3, 4], 'c': [5, 6]}
+        result = khandy.sort_multidict_by_number(tied, reverse=False)
+        self.assertEqual(list(result.keys()), ['a', 'b', 'c'])
+
+        result_desc = khandy.sort_multidict_by_number(tied, reverse=True)
+        self.assertEqual(list(result_desc.keys()), ['a', 'b', 'c'])
+
+    def test_non_dict_raises_type_error(self):
+        """Non-dict input raises TypeError with a descriptive message."""
+        with self.assertRaises(TypeError) as ctx:
+            khandy.sort_multidict_by_number([])  # type: ignore[arg-type]
+        self.assertIn('multidict_obj should be a dict', str(ctx.exception))
+
+        with self.assertRaises(TypeError):
+            khandy.sort_multidict_by_number(None)  # type: ignore[arg-type]
+
+    def test_default_is_descending_docstring_regression(self):
+        """Locks in the corrected docstring semantics: default returns descending."""
+        # With the old (buggy) docstring saying 'ascending when True', a caller
+        # expecting descending would have called with reverse=False. Verify the
+        # function still behaves as documented in the new docstring.
+        multidict = {'x': [1, 2, 3], 'y': [1], 'z': [1, 2]}
+        result = khandy.sort_multidict_by_number(multidict)
+        # 'x' has length 3, 'z' has length 2, 'y' has length 1.
+        self.assertEqual(list(result.keys()), ['x', 'z', 'y'])
+
+
 if __name__ == '__main__':
     unittest.main()
 

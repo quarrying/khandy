@@ -282,19 +282,38 @@ def sort_multidict_by_number(
     num_keys_to_keep: int | None = None,
     reverse: bool = True,
 ) -> dict[Any, list[Any]]:
-    """
+    """Sort a multidict by the number of values per key and keep the top/bottom N keys.
+
     Args:
-        reverse: sort in ascending order when is True.
+        multidict_obj: A mapping from key to a list of values.
+        num_keys_to_keep: Number of keys to retain after sorting. If ``None``,
+            non-positive, or greater than the number of keys, all keys are
+            retained (sorted).
+        reverse: If ``True`` (default), sort by descending length so that
+            keys with the most values come first; if ``False``, sort ascending.
+
+    Returns:
+        A new multidict containing at most ``num_keys_to_keep`` keys, ordered
+        by ``len(value)``. Lists are the same objects as in the input, not
+        copies. Ties break by original insertion order (Python's ``sorted``
+        is stable).
+
+    Raises:
+        TypeError: If ``multidict_obj`` is not a ``dict``.
     """
-    if num_keys_to_keep is None:
-        num_keys_to_keep = len(multidict_obj)
-    else:
-        num_keys_to_keep = min(num_keys_to_keep, len(multidict_obj))
-    sorted_items = sorted(multidict_obj.items(), key=lambda x: len(x[1]), reverse=reverse)
-    filtered_dict = {}
-    for i in range(num_keys_to_keep):
-        filtered_dict[sorted_items[i][0]] = sorted_items[i][1]
-    return filtered_dict
+    if not isinstance(multidict_obj, dict):
+        raise TypeError(f'multidict_obj should be a dict, got {type(multidict_obj)}')
+
+    n = len(multidict_obj)
+    if num_keys_to_keep is None or num_keys_to_keep < 1 or num_keys_to_keep > n:
+        num_keys_to_keep = n
+
+    sorted_items = sorted(
+        multidict_obj.items(),
+        key=lambda kv: len(kv[1]),
+        reverse=reverse,
+    )
+    return dict(sorted_items[:num_keys_to_keep])
 
 
 def merge_multidict(
