@@ -6,7 +6,6 @@ from typing import Any, Callable, Dict, Iterable, Iterator, List, Sequence, Set,
 
 K = TypeVar('K')
 V = TypeVar('V')
-K2 = TypeVar('K2')   # target key type for rekey_multidict
 
 MultiDictT = Dict[K, List[V]]
 UniqueMultiDictT = Dict[K, Set[V]]
@@ -121,38 +120,39 @@ def convert_multidict_to_records(
 
 def rekey_multidict(
     multidict_obj: MultiDictT[K, V],
-    key_map: dict[K, K2],
+    key_map: dict[K, K] | None = None,
     raise_if_key_error: bool = True,
-) -> MultiDictT[K2, V]:
+) -> MultiDictT[K, V]:
     """Apply key mapping to a multidict object.
 
     Args:
         multidict_obj: Input multidict object where each key maps to a list of values
-        key_map: Dictionary mapping old keys to new keys
+        key_map: Dictionary mapping old keys to new keys. If ``None``, the original
+            multidict is returned unchanged (no remapping is performed).
         raise_if_key_error: Whether to raise an error if a key is not found in key_map
 
     Returns:
-        If key_map is None, returns the original multidict.
+        If key_map is None, returns the original multidict (same object).
         Otherwise, returns a new multidict with remapped keys.
     """
     if key_map is None:
         return multidict_obj
 
-    result = {}
+    result: dict[K, list[V]] = {}
     for key, values in multidict_obj.items():
         if raise_if_key_error:
             mapped_key = key_map[key]  # This will raise KeyError if key not in key_map
         else:
-            mapped_key = key_map.get(key, key)  # Use original key if not in key_map
+            mapped_key = key_map.get(key, key)  # Keep original key if absent
         result.setdefault(mapped_key, []).extend(values)
     return result
 
 
 def remap_multidict_keys(
     multidict_obj: MultiDictT[K, V],
-    key_map: dict[K, K2],
+    key_map: dict[K, K],
     raise_if_key_error: bool = True,
-) -> MultiDictT[K2, V]:
+) -> MultiDictT[K, V]:
     warnings.warn('`remap_multidict_keys` will be deprecated, use `rekey_multidict` instead!')
     return rekey_multidict(multidict_obj, key_map, raise_if_key_error)
 

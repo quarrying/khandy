@@ -394,6 +394,29 @@ class TestRekeyMultidict(unittest.TestCase):
         expected = {'x': [1, 2, 3, 4]}  # Values from both 'a' and 'b' should be combined under 'x'
         result = khandy.rekey_multidict(multidict_obj, key_map, raise_if_key_error=True)
         self.assertEqual(result, expected)
+
+    def test_none_key_map_returns_original_object(self):
+        """When key_map is None, the input object itself should be returned unchanged."""
+        multidict_obj = {'a': [1, 2], 'b': [3, 4]}
+
+        result = khandy.rekey_multidict(multidict_obj, key_map=None)
+
+        self.assertEqual(result, multidict_obj)
+        # The implementation returns the same object, not a copy, so identity holds.
+        self.assertIs(result, multidict_obj)
+
+    def test_none_key_map_ignores_raise_if_key_error(self):
+        """When key_map is None, raise_if_key_error should be irrelevant (no lookup happens)."""
+        multidict_obj = {'a': [1, 2]}  # 'a' is missing from key_map
+
+        # Both True and False should return the original object without raising.
+        result_true = khandy.rekey_multidict(multidict_obj, key_map=None,
+                                             raise_if_key_error=True)
+        result_false = khandy.rekey_multidict(multidict_obj, key_map=None,
+                                              raise_if_key_error=False)
+
+        self.assertEqual(result_true, multidict_obj)
+        self.assertEqual(result_false, multidict_obj)
         
 
 class TestCreateMultidict(unittest.TestCase):
