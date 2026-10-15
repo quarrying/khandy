@@ -2,24 +2,25 @@ from __future__ import annotations
 
 import random
 import warnings
-from typing import Any, Callable, Iterable, Iterator, Sequence, TypeVar
+from typing import Any, Callable, Dict, Iterable, Iterator, List, Sequence, Set, TypeVar
 
 K = TypeVar('K')
 V = TypeVar('V')
+K2 = TypeVar('K2')   # target key type for rekey_multidict
+
+MultiDictT = Dict[K, List[V]]
+UniqueMultiDictT = Dict[K, Set[V]]
 
 
-def get_dict_first_item(
-    dict_obj: dict,
-    raise_if_empty: bool = False,
-) -> tuple[Any, Any] | None:
+def get_dict_first_item(dict_obj: dict[K, V], raise_if_empty: bool = False) -> tuple[K, V] | None:
     """Retrieve the first key-value pair from a dictionary.
 
     Args:
-        dict_obj (dict): The dictionary to retrieve the first item from.
+        dict_obj (dict[K, V]): The dictionary to retrieve the first item from.
         raise_if_empty (bool): Whether to raise an error if the dictionary is empty.
 
     Returns:
-        tuple[Any, Any] | None: The first key-value pair, or None if the dictionary
+        tuple[K, V] | None: The first key-value pair, or None if the dictionary
             is empty and raise_if_empty is False.
 
     Raises:
@@ -37,17 +38,14 @@ def get_dict_first_item(
 
 
 def sort_dict(
-    dict_obj: dict[Any, Any],
-    key: Callable[[tuple[Any, Any]], Any] | None = None,
+    dict_obj: dict[K, V],
+    key: Callable[[tuple[K, V]], Any] | None = None,
     reverse: bool = False,
-) -> dict[Any, Any]:
+) -> dict[K, V]:
     return dict(sorted(dict_obj.items(), key=key, reverse=reverse))
 
 
-def _zip_equal_length(
-    keys: Iterable[K],
-    values: Iterable[V],
-) -> Iterator[tuple[K, V]]:
+def _zip_equal_length(keys: Iterable[K], values: Iterable[V]) -> Iterator[tuple[K, V]]:
     """Iterate (key, value) pairs, raising ValueError if lengths differ."""
     keys_list = list(keys)
     values_list = list(values)
@@ -59,29 +57,41 @@ def _zip_equal_length(
     return zip(keys_list, values_list)
 
 
-def create_multidict(
-    keys: Iterable[K],
-    values: Iterable[V],
-) -> dict[K, list[V]]:
-    multidict_obj: dict[K, list[V]] = {}
+def create_multidict(keys: Iterable[K], values: Iterable[V]) -> MultiDictT[K, V]:
+    """Build a multidict by pairing ``keys`` and ``values`` positionally.
+
+    Each key maps to the list of values that share its index. Repeated keys
+    accumulate values in encounter order; non-uniqueness of values is
+    preserved (use :func:`create_multidict_unique` for set semantics).
+
+    Raises:
+        ValueError: If ``keys`` and ``values`` have different lengths.
+    """
+    multidict_obj: MultiDictT[K, V] = {}
     for key, value in _zip_equal_length(keys, values):
         multidict_obj.setdefault(key, []).append(value)
     return multidict_obj
 
 
-def create_multidict_unique(
-    keys: Iterable[K],
-    values: Iterable[V],
-) -> dict[K, set[V]]:
-    multidict_obj: dict[K, set[V]] = {}
+def create_multidict_unique(keys: Iterable[K], values: Iterable[V]) -> UniqueMultiDictT[K, V]:
+    """Build a multidict that deduplicates values per key via ``set``.
+
+    Raises:
+        ValueError: If ``keys`` and ``values`` have different lengths.
+        TypeError: If any value is unhashable.
+    """
+    multidict_obj: UniqueMultiDictT[K, V] = {}
     for key, value in _zip_equal_length(keys, values):
         multidict_obj.setdefault(key, set()).add(value)
     return multidict_obj
 
 
-def convert_multidict_to_list(
-    multidict_obj: dict[Any, list[Any]],
-) -> tuple[list[Any], list[Any]]:
+def convert_multidict_to_list(multidict_obj: MultiDictT[K, V]) -> tuple[list[K], list[V]]:
+    """Flatten a multidict into parallel ``(keys, values)`` lists.
+
+    The ``keys`` list repeats each key once per associated value, so the two
+    returned lists have the same length and are aligned positionally.
+    """
     key_list, value_list = [], []
     for key, value in multidict_obj.items():
         key_list += [key] * len(value)
@@ -90,9 +100,15 @@ def convert_multidict_to_list(
 
 
 def convert_multidict_to_records(
-    multidict_obj: dict[Any, list[Any]],
+    multidict_obj: MultiDictT[K, V],
     value_first: bool = True,
 ) -> list[str]:
+    """Flatten a multidict to CSV-style ``"value,key"`` (or ``"key,value"``) records.
+
+    Args:
+        multidict_obj: Source multidict.
+        value_first: If ``True``, emit ``"value,key"``; otherwise ``"key,value"``.
+    """
     records = []
     for key, values in multidict_obj.items():
         for value in values:
@@ -104,10 +120,10 @@ def convert_multidict_to_records(
 
 
 def rekey_multidict(
-    multidict_obj: dict[Any, list[Any]],
-    key_map: dict[Any, Any],
+    multidict_obj: MultiDictT[K, V],
+    key_map: dict[K, K2],
     raise_if_key_error: bool = True,
-) -> dict[Any, list[Any]]:
+) -> MultiDictT[K2, V]:
     """Apply key mapping to a multidict object.
 
     Args:
@@ -133,29 +149,29 @@ def rekey_multidict(
 
 
 def remap_multidict_keys(
-    multidict_obj: dict[Any, list[Any]],
-    key_map: dict[Any, Any],
+    multidict_obj: MultiDictT[K, V],
+    key_map: dict[K, K2],
     raise_if_key_error: bool = True,
-) -> dict[Any, list[Any]]:
+) -> MultiDictT[K2, V]:
     warnings.warn('`remap_multidict_keys` will be deprecated, use `rekey_multidict` instead!')
     return rekey_multidict(multidict_obj, key_map, raise_if_key_error)
 
 
 def sample_multidict(
-    multidict_obj: dict[Any, list[Any]],
+    multidict_obj: MultiDictT[K, V],
     num_keys: int | None = None,
     num_per_key: int | None = None,
-) -> dict[Any, list[Any]]:
+) -> MultiDictT[K, V]:
     """Randomly samples key-value pairs from a multi-dict object.
 
     Args:
-        multidict_obj (dict[Any, list[Any]]): Input multi-dict object where each key maps to a list of values.
+        multidict_obj (MultiDictT[K, V]): Input multi-dict object where each key maps to a list of values.
         num_keys (int | None): Number of keys to sample. If None or less than 1, all keys are used.
         num_per_key (int | None): Number of values to sample per key. If None or less than 1, all values
             for each selected key are retained.
 
     Returns:
-        dict[Any, list[Any]]: A new multi-dict containing the sampled key-value pairs.
+        MultiDictT[K, V]: A new multi-dict containing the sampled key-value pairs.
     """
     if num_keys is None or num_keys < 1:
         num_keys = len(multidict_obj)
@@ -175,10 +191,10 @@ def sample_multidict(
 
 
 def split_multidict_on_key(
-    multidict_obj: dict[Any, list[Any]],
+    multidict_obj: MultiDictT[K, V],
     split_ratio: Sequence[float],
     use_shuffle: bool = False,
-) -> list[dict[Any, list[Any]]]:
+) -> list[MultiDictT[K, V]]:
     """Split multidict_obj on its key.
     """
     if not isinstance(multidict_obj, dict):
@@ -195,17 +211,17 @@ def split_multidict_on_key(
 
     be_split_list = []
     for i in range(len(split_ratio)):
-        part_keys = dict_keys[indices[i]: indices[i + 1]]
+        part_keys = dict_keys[indices[i]:indices[i + 1]]
         part_dict = dict([(key, multidict_obj[key]) for key in part_keys])
         be_split_list.append(part_dict)
     return be_split_list
 
 
 def split_multidict_on_value(
-    multidict_obj: dict[Any, list[Any]],
+    multidict_obj: MultiDictT[K, V],
     split_ratio: Sequence[float],
     use_shuffle: bool = False,
-) -> list[dict[Any, list[Any]]]:
+) -> list[MultiDictT[K, V]]:
     """Split multidict_obj on its value.
     """
     if not isinstance(multidict_obj, dict):
@@ -222,12 +238,12 @@ def split_multidict_on_value(
         if use_shuffle:
             random.shuffle(cloned)
         for i in range(len(split_ratio)):
-            be_split_list[i][key] = cloned[indices[i]: indices[i + 1]]
+            be_split_list[i][key] = cloned[indices[i]:indices[i + 1]]
     return be_split_list
 
 
 def get_multidict_info(
-    multidict_obj: dict[Any, list[Any]],
+    multidict_obj: MultiDictT[K, V],
     with_print: bool = False,
     desc: str | None = None,
 ) -> dict[str, float | int]:
@@ -258,10 +274,10 @@ def get_multidict_info(
 
 
 def filter_multidict_by_number(
-    multidict_obj: dict[Any, list[Any]],
+    multidict_obj: MultiDictT[K, V],
     lower: int | None = None,
     upper: int | None = None,
-) -> dict[Any, list[Any]]:
+) -> MultiDictT[K, V]:
     if lower is None and upper is None:
         return multidict_obj.copy()
     elif lower is None:
@@ -278,10 +294,10 @@ def filter_multidict_by_number(
 
 
 def sort_multidict_by_number(
-    multidict_obj: dict[Any, list[Any]],
+    multidict_obj: MultiDictT[K, V],
     num_keys_to_keep: int | None = None,
     reverse: bool = True,
-) -> dict[Any, list[Any]]:
+) -> MultiDictT[K, V]:
     """Sort a multidict by the number of values per key and keep the top/bottom N keys.
 
     Args:
@@ -316,20 +332,26 @@ def sort_multidict_by_number(
     return dict(sorted_items[:num_keys_to_keep])
 
 
-def merge_multidict(
-    *mdicts: dict[Any, list[Any]],
-) -> dict[Any, list[Any]]:
-    merged_multidict: dict[Any, list[Any]] = {}
+def merge_multidict(*mdicts: MultiDictT[K, V]) -> MultiDictT[K, V]:
+    """Merge multiple multidicts, concatenating value lists for shared keys.
+
+    All inputs are assumed to share the same ``K`` and ``V`` types; later
+    arguments do not overwrite earlier ones — values are appended in order.
+    """
+    merged_multidict: MultiDictT[K, V] = {}
     for item in mdicts:
         for key, value in item.items():
             merged_multidict.setdefault(key, []).extend(value)
     return merged_multidict
 
 
-def invert_multidict(
-    multidict_obj: dict[Any, list[Any]],
-) -> dict[Any, list[Any]]:
-    inverted_dict: dict[Any, list[Any]] = {}
+def invert_multidict(multidict_obj: MultiDictT[K, V]) -> MultiDictT[V, K]:
+    """Invert a multidict: each value becomes a key mapping to its parent keys.
+
+    Output keys (originally values) must be hashable. Multiple occurrences of
+    the same value in the input accumulate into a list under one output key.
+    """
+    inverted_dict: MultiDictT[V, K] = {}
     for key, value in multidict_obj.items():
         for item in value:
             inverted_dict.setdefault(item, []).append(key)
