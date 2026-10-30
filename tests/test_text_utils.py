@@ -196,9 +196,32 @@ class TestParseRangeString(unittest.TestCase):
         self.assertEqual(khandy.parse_range_string("1,1,2,2,3"), [1, 2, 3])
         # Test overlapping ranges
         self.assertEqual(khandy.parse_range_string("1-3,2-4"), [1, 2, 3, 4])
-        # Test reverse range (should work)
+        # Test reverse range (start > end, returns empty)
         self.assertEqual(khandy.parse_range_string("5-1"), [])
-    
+        self.assertEqual(khandy.parse_range_string("10-8"), [])
+
+    def test_negative_numbers(self):
+        # Test single negative number
+        self.assertEqual(khandy.parse_range_string("-3"), [-3])
+        # Test negative range
+        self.assertEqual(khandy.parse_range_string("-5--1"), [-5, -4, -3, -2, -1])
+        # Test negative numbers mixed with positive ones
+        self.assertEqual(khandy.parse_range_string("1, -3, 7~9"), [-3, 1, 7, 8, 9])
+        # Test range spanning zero
+        self.assertEqual(khandy.parse_range_string("-2-2"), [-2, -1, 0, 1, 2])
+        # Test range with a negative end point (start > end, returns empty)
+        self.assertEqual(khandy.parse_range_string("1--5"), [])
+
+    def test_tuple_separators(self):
+        # Test multiple part separators
+        self.assertEqual(
+            khandy.parse_range_string("1,3-5;7|9", sep=(',', ';', '|')), [1, 3, 4, 5, 7, 9]
+        )
+        # Test whitespace as part separator
+        self.assertEqual(
+            khandy.parse_range_string("1 3-5 -2--1", sep=' '), [-2, -1, 1, 3, 4, 5]
+        )
+
     def test_invalid_inputs(self):
         # Test invalid range format
         with self.assertRaises(ValueError):
@@ -206,6 +229,12 @@ class TestParseRangeString(unittest.TestCase):
         # Test invalid range with non-numeric values
         with self.assertRaises(ValueError):
             khandy.parse_range_string("1-a")
+        # Test invalid number
+        with self.assertRaises(ValueError):
+            khandy.parse_range_string("abc")
+        # Test overlapping separators between 'sep' and 'range_sep'
+        with self.assertRaises(ValueError):
+            khandy.parse_range_string("1-3", sep='-', range_sep='-')
 
 
 class TestStrContains(unittest.TestCase):

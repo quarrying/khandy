@@ -412,36 +412,64 @@ def normalize_digit_chars(string: str) -> str:
 
 
 def parse_range_string(
-    range_string: str, 
-    sep: str = ',', 
+    range_string: str,
+    sep: Union[str, Tuple[str, ...]] = ',',
     range_sep: Union[str, Tuple[str, ...]] = ('-', '~')
 ) -> List[int]:
     """Parse a string representing a range of numbers and return a sorted list of integers.
-    
+
     Args:
-        range_string: A string containing comma-separated numbers or ranges (e.g., "1,3-5,7")
-        sep: Separator for different parts in the range string, default is ','
-        range_sep: Separator used to denote ranges, default is ('-', '~')
-        
+        range_string: A string containing separator-delimited numbers or ranges (e.g., "1,3-5,7")
+        sep: Separator(s) for different parts in the range string, default is ','
+        range_sep: Separator(s) used to denote ranges, default is ('-', '~')
+
     Returns:
         A sorted list of unique integers parsed from the input string
-        
+
     Raises:
-        ValueError: If a range part is invalid (doesn't contain exactly two parts separated by range_sep)
+        ValueError: If a part is neither a valid number nor a valid range (e.g., "1-2-3", "1-a")
+        ValueError: If 'sep' and 'range_sep' share a separator (e.g., sep='-', range_sep='-')
+
+    Notes:
+        A range denotes every integer between its two endpoints. If the start
+        is greater than the end, the range is ignored (treated as empty).
+        Negative numbers are supported, e.g., "-5--1" yields [-5, -4, -3, -2, -1].
     """
-    range_string = normalize_digit_chars(range_string)
-    
-    result = []
-    for part in range_string.split(sep):
-        if str_contains(part, range_sep):
-            subparts = str_split(part, range_sep)
-            if len(subparts) != 2:
+    seps = (sep,) if isinstance(sep, str) else tuple(sep)
+    range_seps = (range_sep,) if isinstance(range_sep, str) else tuple(range_sep)
+
+    common_seps = set(seps).intersection(range_seps)
+    if common_seps:
+        raise ValueError(f"Separator cannot overlap between 'sep' and 'range_sep': {common_seps}")
+
+    # Longer separators must be matched first, otherwise a separator is shadowed by its own prefix
+    range_seps = sorted(range_seps, key=len, reverse=True)
+    range_sep_pattern = '|'.join(re.escape(s) for s in range_seps)
+    # The lookbehind ensures a digit precedes the separator, so that the leading sign of a
+    # negative number is not mistaken for a range separator
+    range_sep_pattern = rf"(?<=\d)\s*(?:{range_sep_pattern})\s*"
+
+    result = set()
+    for part in str_split(normalize_digit_chars(range_string), sep):
+        part = part.strip()
+        if not part:
+            continue
+
+        match = re.search(range_sep_pattern, part)
+        if match:
+            try:
+                start = int(part[:match.start()].strip())
+                end = int(part[match.end():].strip())
+            except ValueError:
                 raise ValueError(f"Invalid range part: {part}")
-            start, end = map(int, subparts)
-            result.extend(range(start, end + 1))
+            if start > end:
+                continue
+            result.update(range(start, end + 1))
         else:
-            if part.strip() != '':
-                result.append(int(part))
-    result = sorted(set(result))
-    return result
+            try:
+                result.add(int(part))
+            except ValueError:
+                raise ValueError(f"Invalid number: {part}")
+
+    return sorted(result)
 
